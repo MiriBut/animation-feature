@@ -16,7 +16,6 @@ export class ConversionManager {
   }
 
   private updateProgress(progress: number, step: string) {
-    console.log(`Progress update - ${step}: ${progress}%`); // Debug log
     const estimatedTimeLeft = this.calculateEstimatedTime(progress);
     this.currentProgressCallback?.({
       progress,
@@ -89,8 +88,6 @@ export class ConversionManager {
       ffmpeg.on(
         "progress",
         ({ ratio, time }: { ratio: number; time: number }) => {
-          console.log("Progress event:", { ratio, time }); // Debug full event
-
           let percent: number;
           if (isNaN(ratio) || ratio < 0) {
             // If ratio is invalid, try to estimate progress
@@ -101,7 +98,6 @@ export class ConversionManager {
 
           if (percent > lastValidProgress) {
             lastValidProgress = percent;
-            console.log(`FFmpeg progress: ${percent}%`);
             this.updateProgress(percent, "Processing");
           }
         }
