@@ -10,6 +10,7 @@ export class AudioManager {
   private isLoaded: boolean = false;
   private audioSource?: MediaElementAudioSourceNode;
   private isAudioSourceConnected: boolean = false;
+  private isMusicPlaying: boolean = false;
 
   constructor(scene: Scene) {
     this.scene = scene;
@@ -21,6 +22,8 @@ export class AudioManager {
   }
 
   create(): void {
+    if (this.isMusicPlaying) return;
+
     if (!this.isLoaded) {
       console.error("Audio not loaded yet");
       return;
@@ -67,6 +70,8 @@ export class AudioManager {
     } catch (error) {
       console.error("Error in create:", error);
     }
+
+    this.isMusicPlaying = true;
   }
 
   private setupAudioSource(): void {
@@ -155,9 +160,9 @@ export class AudioManager {
   }
 
   stopMusic(): void {
-    console.log("stop music +++++++++");
     if (this.bgMusic?.isPlaying) this.bgMusic.stop();
     if (this.audioElement) this.audioElement.pause();
+    this.isMusicPlaying = false;
   }
 
   destroy(): void {
