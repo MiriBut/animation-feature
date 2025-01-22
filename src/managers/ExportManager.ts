@@ -25,6 +25,7 @@ export class ExportManager {
 
     try {
       const videoStream = this.scene.game.canvas.captureStream(30);
+      // כאן אנחנו מקבלים את זרם השמע הקיים
       const audioStream = await this.audioManager.getAudioStream();
 
       if (!audioStream || audioStream.getAudioTracks().length === 0) {
