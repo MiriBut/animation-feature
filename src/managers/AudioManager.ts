@@ -22,6 +22,7 @@ export class AudioManager {
   }
 
   create(): void {
+    console.log("this.isMusicPlaying  " + this.isMusicPlaying);
     if (this.isMusicPlaying) return;
 
     if (!this.isLoaded) {
