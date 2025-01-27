@@ -64,6 +64,39 @@ export class ConversionManager {
     }
   }
 
+  async concatenateVideos(blobs: Blob[]): Promise<Blob> {
+    if (blobs.length === 1) return blobs[0];
+
+    try {
+      await this.loadFFmpeg();
+      const ffmpeg = this.ffmpegInstance;
+
+      // Write first input
+      await ffmpeg.writeFile("input.webm", await this.fetchFile(blobs[0]));
+
+      // Add second video
+      await ffmpeg.writeFile("input2.webm", await this.fetchFile(blobs[1]));
+
+      // Simple concatenation
+      await ffmpeg.exec([
+        "-i",
+        "input.webm",
+        "-i",
+        "input2.webm",
+        "-filter_complex",
+        "[0:v][0:a][1:v][1:a]concat=n=2:v=1:a=1",
+        "output.webm",
+      ]);
+
+      // Read and return result
+      const outputData = await ffmpeg.readFile("output.webm");
+      return new Blob([outputData], { type: "video/webm" });
+    } catch (error) {
+      console.error("Error in concatenateVideos:", error);
+      throw error;
+    }
+  }
+
   async convertWebMToMP4(
     webmBlob: Blob,
     onProgress?: (progress: ConversionProgress) => void
@@ -113,6 +146,8 @@ export class ConversionManager {
       await ffmpeg.exec([
         "-i",
         "input.webm",
+        "-vf",
+        "scale=iw:ih", // שמירה על הרזולוציה המקורית
         "-c:v",
         "libx264",
         "-preset",

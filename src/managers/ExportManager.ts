@@ -24,32 +24,28 @@ export class ExportManager {
     if (this.isRecording) return;
 
     try {
-      const videoStream = this.scene.game.canvas.captureStream(30);
-      // כאן אנחנו מקבלים את זרם השמע הקיים
+      const canvas = this.scene.game.canvas;
+      const videoStream = canvas.captureStream(30);
+
+      // Directly use the game canvas stream instead of creating a new canvas
       const audioStream = await this.audioManager.getAudioStream();
 
       if (!audioStream || audioStream.getAudioTracks().length === 0) {
         throw new Error("No audio tracks available");
       }
 
-      if (videoStream.getVideoTracks().length === 0) {
-        throw new Error("No video tracks available");
-      }
-
-      const combinedTracks = [
+      const combinedTracks = new MediaStream([
         ...videoStream.getVideoTracks(),
         ...audioStream.getAudioTracks(),
-      ];
-      const combinedStream = new MediaStream(combinedTracks);
+      ]);
 
-      this.mediaRecorder = new MediaRecorder(combinedStream, {
+      this.mediaRecorder = new MediaRecorder(combinedTracks, {
         mimeType: this.getSupportedMimeType(),
         videoBitsPerSecond: 8000000,
         audioBitsPerSecond: 128000,
       });
 
       this.chunks = [];
-
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           this.chunks.push(event.data);
@@ -58,16 +54,57 @@ export class ExportManager {
 
       this.mediaRecorder.onstop = () => {
         this.isRecording = false;
-        this.saveRecordingFromChunks();
+        const webmBlob = new Blob(this.chunks, {
+          type: this.mediaRecorder?.mimeType || "video/webm",
+        });
+        this.saveRecording(webmBlob);
+        this.chunks = [];
       };
 
       this.mediaRecorder.start();
       this.isRecording = true;
-      console.log("Recording started");
     } catch (error) {
       console.error("Error starting recording:", error);
       this.isRecording = false;
       throw error;
+    }
+  }
+
+  public async changeResolution(
+    newWidth: number,
+    newHeight: number
+  ): Promise<void> {
+    if (!this.scene) throw new Error("Scene is not initialized.");
+
+    // שמירה על יחס גובה-רוחב
+    const originalWidth = this.scene.game.canvas.width;
+    const originalHeight = this.scene.game.canvas.height;
+    const aspectRatio = originalWidth / originalHeight;
+
+    if (Math.abs(newWidth / newHeight - aspectRatio) > 0.01) {
+      console.warn("New resolution doesn't match the original aspect ratio.");
+    }
+
+    // עצירת הקלטה זמנית
+    const wasRecording = this.isRecording;
+    if (this.isRecording) {
+      // this.pouseRecording();
+      this.mediaRecorder?.pause();
+    }
+
+    // שינוי הרזולוציה
+    this.scene.scale.resize(newWidth, newHeight);
+
+    // התאמת תוכן הקנבס לגודל החדש
+    const ctx = this.scene.game.canvas.getContext("2d");
+    if (ctx) {
+      ctx.scale(newWidth / originalWidth, newHeight / originalHeight);
+    }
+
+    // התחלת הקלטה מחדש אם היא פעלה קודם
+    if (wasRecording) {
+      this.mediaRecorder?.resume();
+      //await this.startRecording();
     }
   }
 
@@ -76,18 +113,9 @@ export class ExportManager {
     this.mediaRecorder.stop();
   }
 
-  private async saveRecordingFromChunks(): Promise<void> {
-    if (this.chunks.length === 0) {
-      console.warn("No recording data available");
-      return;
-    }
-
-    const webmBlob = new Blob(this.chunks, {
-      type: this.mediaRecorder?.mimeType || "video/webm",
-    });
-
-    await this.saveRecording(webmBlob);
-    this.chunks = [];
+  pouseRecording(): void {
+    if (!this.isRecording || !this.mediaRecorder) return;
+    this.mediaRecorder.pause();
   }
 
   public async saveRecording(blob: Blob): Promise<void> {

@@ -70,7 +70,7 @@ export class CharacterManager {
 
         animationNames.forEach((animationName, index) => {
           setTimeout(() => {
-            console.log("Playing animation:", animationName);
+            //console.log("Playing animation:", animationName);
             this.spineCharacter?.animationState.setAnimation(
               0,
               animationName,

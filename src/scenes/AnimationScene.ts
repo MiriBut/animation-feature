@@ -147,7 +147,9 @@ export class AnimationScene extends Scene {
     });
 
     this.scale.setGameSize(width, height);
-
+    this.exportManager.changeResolution(width, height).catch((error) => {
+      console.error("Failed to change resolution:", error);
+    });
     this.cameras.main.setBounds(0, 0, width, height);
     await new Promise((resolve) => setTimeout(resolve, 50));
     this.scene.restart();
