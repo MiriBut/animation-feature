@@ -4,6 +4,64 @@ import { SceneUI } from "../ui/SceneUI";
 import { AudioManager } from "../managers/AudioManager";
 import { CharacterManager } from "../managers/CharacterManager";
 import { ExportManager } from "../managers/ExportManager";
+import { ErrorModal } from "../ui/ErrorModal/ErrorModal";
+
+interface AssetJson {
+  assets: Array<{
+    assetName: string;
+    assetUrl: string;
+    assetType: string;
+    scale_override: {
+      x: number;
+      y: number;
+    };
+    aspect_ratio_override: {
+      width: number;
+      height: number;
+    };
+    pivot_override: {
+      x: number;
+      y: number;
+    };
+  }>;
+}
+
+// נעדכן את הממשק של TimelineJson כך שיתאים למבנה החדש
+interface TimelineJson {
+  "template video json": Array<{
+    elementName: string;
+    assetType: string;
+    assetName: string;
+    initialState: {
+      position?: {
+        x: number;
+        y: number;
+        z: number;
+      };
+      scale?: {
+        x: number;
+        y: number;
+      };
+      opacity?: number;
+      color?: string;
+      rotation?: number;
+    };
+    timeline?: {
+      scale?: Array<{
+        startTime: number;
+        endTime: number;
+        startValue: { x: number; y: number };
+        endValue: { x: number; y: number };
+        easeIn: string;
+        easeOut: string;
+      }>;
+      position?: Array<any>;
+      color?: Array<any>;
+      opacity?: Array<any>;
+      rotation?: Array<any>;
+    };
+  }>;
+}
 
 export class AnimationScene extends Scene {
   private ui?: SceneUI;
@@ -68,11 +126,263 @@ export class AnimationScene extends Scene {
         this.handleMusicChange.bind(this),
         this.handleCharacterChange.bind(this),
         this.startRecording.bind(this),
-        this.stopRecording.bind(this)
+        this.stopRecording.bind(this),
+        this.onAssetsJson.bind(this),
+        this.onTimelineJson.bind(this)
       );
     }
 
     this.isResizing = false;
+  }
+
+  private async validateAndHandleJson(file: File): Promise<any> {
+    const text = await file.text();
+    const json = JSON.parse(text);
+
+    if (!json || typeof json !== "object") {
+      throw new Error("קובץ JSON לא תקין");
+    }
+
+    const isTemplate = json["template video json"] !== undefined;
+    const isAsset = json.assets !== undefined;
+
+    if (!isTemplate && !isAsset) {
+      throw new Error("לא ניתן לזהות את סוג קובץ ה-JSON");
+    }
+
+    return json;
+  }
+
+  private async onAssetsJson(file: File): Promise<void> {
+    const errors: string[] = [];
+
+    try {
+      const json = (await this.validateAndHandleJson(file)) as AssetJson;
+
+      if (!json.assets || !Array.isArray(json.assets)) {
+        errors.push("Could not process JSON file - missing assets list");
+        return;
+      }
+
+      // בדיקת כל הנכסים
+      for (const asset of json.assets) {
+        if (!asset.assetName || !asset.assetUrl || !asset.assetType) {
+          errors.push(
+            `Invalid asset: ${
+              asset.assetName || "Unknown asset"
+            } - missing required properties`
+          );
+          continue;
+        }
+
+        // בדיקת תקינות ה-URL
+        try {
+          new URL(asset.assetUrl, window.location.origin);
+        } catch {
+          errors.push(`Invalid URL for asset: ${asset.assetName}`);
+          continue;
+        }
+
+        // בדיקה אם הקובץ קיים
+        const exists = await this.checkAssetExists(asset.assetUrl);
+        if (!exists) {
+          const fileExtension = asset.assetUrl.split(".").pop() || "";
+          errors.push(
+            `Could not find file: ${asset.assetName} (.${fileExtension} file)`
+          );
+          continue;
+        }
+      }
+
+      // אם יש שגיאות, מציגים אותן למשתמש
+      if (errors.length > 0) {
+        new ErrorModal({
+          isOpen: true,
+          title: "Issues Found in Assets File",
+          errors: errors,
+        });
+        return;
+      }
+
+      // אם אין שגיאות, ממשיכים בטעינה
+      let loadErrors = false;
+      this.load.on("loaderror", (file: any) => {
+        errors.push(`Failed to load: ${file.key}`);
+        loadErrors = true;
+      });
+
+      for (const asset of json.assets) {
+        if (asset.assetType === "image") {
+          this.load.image(asset.assetName, asset.assetUrl);
+        }
+        // אפשר להוסיף כאן טיפול בסוגי נכסים נוספים
+      }
+
+      await new Promise<void>((resolve) => {
+        this.load.once("complete", () => {
+          if (loadErrors) {
+            new ErrorModal({
+              isOpen: true,
+              title: "Asset Loading Issues",
+              errors: errors,
+            });
+          }
+          resolve();
+        });
+        this.load.start();
+      });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      new ErrorModal({
+        isOpen: true,
+        title: "Unexpected Error",
+        errors: [
+          `An error occurred while processing the assets file. Please try again.`,
+        ],
+      });
+      console.error("Debug info:", errorMessage);
+    }
+  }
+
+  private async checkAssetExists(url: string): Promise<boolean> {
+    try {
+      const response = await fetch(url, { method: "HEAD" });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  private async onTimelineJson(file: File): Promise<void> {
+    const errors: string[] = [];
+
+    try {
+      const json = await this.validateAndHandleJson(file);
+
+      if (
+        !json["template video json"] ||
+        !Array.isArray(json["template video json"])
+      ) {
+        errors.push(
+          "Could not process JSON file - missing template video json array"
+        );
+        new ErrorModal({
+          isOpen: true,
+          title: "Timeline JSON Structure Error",
+          errors: errors,
+        });
+        return;
+      }
+
+      // בדיקת תקינות האלמנטים
+      for (const element of json["template video json"]) {
+        // בדיקת שדות חובה
+        const missingFields = [];
+        if (!element.elementName) missingFields.push("elementName");
+        if (!element.assetType) missingFields.push("assetType");
+        if (!element.assetName) missingFields.push("assetName");
+
+        if (missingFields.length > 0) {
+          errors.push(
+            `Invalid element: ${
+              element.elementName || "Unknown element"
+            } - missing required fields: ${missingFields.join(", ")}`
+          );
+          continue;
+        }
+
+        // בדיקת תקינות ה-initialState
+        if (element.initialState) {
+          const state = element.initialState;
+          // בדיקת מיקום
+          if (
+            state.position &&
+            (typeof state.position.x !== "number" ||
+              typeof state.position.y !== "number" ||
+              typeof state.position.z !== "number")
+          ) {
+            errors.push(
+              `Invalid position values for element: ${element.elementName}`
+            );
+          }
+
+          // בדיקת scale
+          if (
+            state.scale &&
+            (typeof state.scale.x !== "number" ||
+              typeof state.scale.y !== "number")
+          ) {
+            errors.push(
+              `Invalid scale values for element: ${element.elementName}`
+            );
+          }
+
+          // בדיקת שקיפות
+          if (
+            state.opacity !== undefined &&
+            (typeof state.opacity !== "number" ||
+              state.opacity < 0 ||
+              state.opacity > 1)
+          ) {
+            errors.push(
+              `Invalid opacity value for element: ${element.elementName}`
+            );
+          }
+        }
+
+        // בדיקת תקינות ה-timeline
+        if (element.timeline) {
+          // בדיקת אנימציות scale
+          if (element.timeline.scale) {
+            for (const scaleAnim of element.timeline.scale) {
+              if (
+                scaleAnim.startTime == null ||
+                scaleAnim.endTime == null ||
+                scaleAnim.startValue == null ||
+                scaleAnim.endValue == null
+              ) {
+                errors.push(
+                  `Invalid scale animation for element: ${
+                    element.elementName
+                  } (startTime: ${scaleAnim.startTime}, endTime: ${
+                    scaleAnim.endTime
+                  }, startValue: ${JSON.stringify(
+                    scaleAnim.startValue
+                  )}, endValue: ${JSON.stringify(scaleAnim.endValue)})`
+                );
+              }
+            }
+          }
+
+          // בדיקות דומות לשאר סוגי האנימציות
+          // position, color, opacity, rotation
+        }
+      }
+
+      // אם נמצאו שגיאות, מציגים אותן למשתמש
+      if (errors.length > 0) {
+        new ErrorModal({
+          isOpen: true,
+          title: "Issues Found in Timeline File",
+          errors: errors,
+        });
+        return;
+      }
+
+      console.log("Timeline JSON processed successfully");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      new ErrorModal({
+        isOpen: true,
+        title: "Unexpected Error",
+        errors: [
+          "An error occurred while processing the timeline file. Please check the file format and try again.",
+        ],
+      });
+      console.error("Debug info:", errorMessage);
+    }
   }
 
   private initializeScene(): void {

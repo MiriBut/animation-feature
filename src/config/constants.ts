@@ -11,7 +11,7 @@ export const SUPPORTED_RESOLUTIONS: Resolution[] = [
 export const DEFAULT_ASSETS = {
   background: {
     key: "default-bg",
-    path: "assets/default-background.jpg",
+    path: "assets/images/default-background.jpg",
   },
   music: {
     key: "default-bg-music",

@@ -1,0 +1,89 @@
+{
+  "assets": [
+    {
+      "assetName": "background_image",
+      "assetUrl": "assets/images/background_image.jpg",
+      "assetType": "image",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "character_image",
+      "assetUrl": "assets/images/character_image.png",
+      "assetType": "image",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "logo_image",
+      "assetUrl": "assets/images/logo_image.png",
+      "assetType": "image",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 4,
+        "height": 3
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "icon_image",
+      "assetUrl": "assets/images/icon_image.png",
+      "assetType": "image",
+      "scale_override": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "aspect_ratio_override": {
+        "width": 1,
+        "height": 1
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "banner_image",
+      "assetUrl": "assets/images/banner_image.webp",
+      "assetType": "image",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  ]
+}
