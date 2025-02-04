@@ -292,8 +292,7 @@ export class AnimationScene extends Scene {
         throw new Error("Failed to parse timeline JSON");
       }
 
-      await this.videoEngine.loadTimeline(timelineData);
-      await this.videoEngine.animate();
+      await this.videoEngine.loadTimelineWithDelay(timelineData);
     } catch (error) {
       console.error("Error processing timeline JSON:", error);
       // הצג הודעת שגיאה למשתמש

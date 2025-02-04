@@ -1,78 +1,6 @@
 {
   "template video json": [
     {
-      "elementName": "bannerImage",
-      "assetType": "image",
-      "assetName": "banner_image",
-      "initialState": {
-        "position": {
-          "x": 200,
-          "y": 100,
-          "z": 0
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 1,
-        "color": "0x0000FF"
-      },
-      "timeline": {
-        "position": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": {
-              "x": 200,
-              "y": 100
-            },
-            "endValue": {
-              "x": 50,
-              "y": 50
-            },
-            "easeIn": "Circ.easeIn",
-            "easeOut": "Circ.easeOut"
-          }
-        ],
-        "scale": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
-          }
-        ],
-        "color": [
-          {
-            "startTime": 12,
-            "endTime": 20,
-            "startValue": "0x0000FF",
-            "endValue": "0x0000FF",
-            "easeIn": "Sine.easeIn",
-            "easeOut": "Sine.easeOut"
-          }
-        ],
-        "opacity": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": 1,
-            "endValue": 0.3,
-            "easeIn": "Back.easeIn",
-            "easeOut": "Back.easeOut"
-          }
-        ]
-      }
-    },
-    {
       "elementName": "backgroundImage",
       "assetType": "image",
       "assetName": "background_image",
@@ -191,7 +119,7 @@
         "position": {
           "x": 0,
           "y": -20,
-          "z": 0
+          "z": 1
         },
         "scale": {
           "x": 1,
@@ -230,6 +158,79 @@
             },
             "easeIn": "Quad.easeIn",
             "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+
+    {
+      "elementName": "bannerImage",
+      "assetType": "image",
+      "assetName": "banner_image",
+      "initialState": {
+        "position": {
+          "x": 200,
+          "y": 100,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1,
+        "color": "0x0000FF"
+      },
+      "timeline": {
+        "position": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": {
+              "x": 200,
+              "y": 100
+            },
+            "endValue": {
+              "x": 50,
+              "y": 50
+            },
+            "easeIn": "Circ.easeIn",
+            "easeOut": "Circ.easeOut"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "color": [
+          {
+            "startTime": 12,
+            "endTime": 20,
+            "startValue": "0x0000FF",
+            "endValue": "0x0000FF",
+            "easeIn": "Sine.easeIn",
+            "easeOut": "Sine.easeOut"
+          }
+        ],
+        "opacity": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": 1,
+            "endValue": 0.3,
+            "easeIn": "Back.easeIn",
+            "easeOut": "Back.easeOut"
           }
         ]
       }

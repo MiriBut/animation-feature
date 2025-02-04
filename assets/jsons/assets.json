@@ -1,23 +1,6 @@
 {
   "assets": [
     {
-      "assetName": "banner_image",
-      "assetUrl": "assets/images/Banner_image.webp",
-      "assetType": "image",
-      "scale_override": {
-        "x": 1,
-        "y": 1
-      },
-      "aspect_ratio_override": {
-        "width": 16,
-        "height": 9
-      },
-      "pivot_override": {
-        "x": 0.5,
-        "y": 0.5
-      }
-    },
-    {
       "assetName": "background_image",
       "assetUrl": "assets/images/background_image.jpg",
       "assetType": "image",
@@ -88,6 +71,23 @@
     {
       "assetName": "banner_image",
       "assetUrl": "assets/images/banner_image.webp",
+      "assetType": "image",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "banner_image",
+      "assetUrl": "assets/images/Banner_image.webp",
       "assetType": "image",
       "scale_override": {
         "x": 1,
