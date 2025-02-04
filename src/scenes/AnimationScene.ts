@@ -4,9 +4,9 @@ import { SceneUI } from "../ui/SceneUI";
 import { AudioManager } from "../managers/AudioManager";
 import { CharacterManager } from "../managers/CharacterManager";
 import { JsonManager } from "../managers/JsonManager";
-import { VideoEngine } from "./VideoEngine";
+import { VideoEngine } from "../managers/VideoEngine"; 
 import { ExportManager } from "../managers/ExportManager";
-import { AssetService } from "../JsonModal/AssetService";
+import { AssetService } from "../core/services/AssetService";
 
 interface AssetJson {
   assets: Array<{
@@ -93,9 +93,9 @@ export class AnimationScene extends Scene {
       this.characterManager = new CharacterManager(this);
       this.audioManager = new AudioManager(this);
       this.exportManager = new ExportManager(this, this.audioManager);
-      this.jsonManager = new JsonManager(this);
       this.assetService = new AssetService(this); // the order is importent, must be started before video engine
-      this.videoEngine = new VideoEngine(this, this.assetService);
+      this.jsonManager = new JsonManager(this, this.assetService); // העבר את ה-assetService
+      this.videoEngine = new VideoEngine(this, this.assetService); // העבר את ה-assetService
     }
 
     this.stopAndRemoveScene("default");
@@ -119,9 +119,9 @@ export class AnimationScene extends Scene {
     console.log("AnimationScene create started");
     this.initializeScene();
 
-    this.backgroundManager.create();
-    this.characterManager.create();
-    this.audioManager.create();
+    //this.backgroundManager.create();
+    //this.characterManager.create();
+    //this.audioManager.create();
 
     if (this.currentBackground && this.isResizing) {
       await this.reloadBackground();
@@ -262,15 +262,44 @@ export class AnimationScene extends Scene {
   }
 
   private async onAssetsJson(file: File): Promise<void> {
-    await this.jsonManager.handleAssetsJson(file);
+    try {
+      console.log("Starting to load assets JSON");
+      await this.jsonManager.handleAssetsJson(file);
+      console.log("Assets loaded successfully");
+      // הדפס את מצב הנכסים אחרי הטעינה
+      this.assetService.debugAssetsState();
+    } catch (error) {
+      console.error("Error loading assets:", error);
+      // אופציונלי: הצג הודעת שגיאה למשתמש
+      throw error;
+    }
   }
 
   private async onTimelineJson(file: File): Promise<void> {
-    await this.jsonManager.handleTimelineJson(file);
-    const timelineData = await this.jsonManager.parseTimelineJson(file);
+    try {
+      console.log("Starting to load timeline JSON");
+      // בדוק שיש נכסים טעונים
+      const assetsMap = this.assetService.getAssetsMap();
+      console.log("Current assets:", Array.from(assetsMap.keys()));
 
-    await this.videoEngine.loadTimeline(timelineData);
-    await this.videoEngine.animate();
+      if (assetsMap.size === 0) {
+        throw new Error("No assets loaded. Please load assets JSON first.");
+      }
+
+      await this.jsonManager.handleTimelineJson(file);
+      const timelineData = await this.jsonManager.parseTimelineJson(file);
+
+      if (!timelineData) {
+        throw new Error("Failed to parse timeline JSON");
+      }
+
+      await this.videoEngine.loadTimeline(timelineData);
+      await this.videoEngine.animate();
+    } catch (error) {
+      console.error("Error processing timeline JSON:", error);
+      // הצג הודעת שגיאה למשתמש
+      throw error;
+    }
   }
 
   private async startRecording(): Promise<void> {

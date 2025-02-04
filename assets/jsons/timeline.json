@@ -15,7 +15,7 @@
           "y": 1
         },
         "opacity": 1,
-        "color": "0xFFFFFF"
+        "color": "0x0000FF"
       },
       "timeline": {
         "position": [
@@ -54,7 +54,7 @@
           {
             "startTime": 12,
             "endTime": 20,
-            "startValue": "0xFFFFFF",
+            "startValue": "0x0000FF",
             "endValue": "0x0000FF",
             "easeIn": "Sine.easeIn",
             "easeOut": "Sine.easeOut"

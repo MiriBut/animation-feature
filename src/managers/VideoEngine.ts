@@ -19,11 +19,17 @@ export class VideoEngine {
     this.setupScene();
   }
 
+  /**
+   * הגדרת סצנה ראשונית
+   */
   private setupScene(): void {
     this.scene.cameras.main.setBackgroundColor("#ffffff");
     this.scene.scale.setGameSize(1920, 1080);
   }
 
+  /**
+   * טעינת טיימליין חדש
+   */
   public async loadTimeline(timeline: TimelineJson): Promise<void> {
     console.log("Loading timeline:", timeline);
     this.timelineData = timeline;
@@ -31,6 +37,9 @@ export class VideoEngine {
     await this.initializeElements();
   }
 
+  /**
+   * טעינת כל הנכסים הנדרשים לטיימליין
+   */
   private async loadAssets(): Promise<void> {
     if (!this.timelineData) return;
 
@@ -51,6 +60,9 @@ export class VideoEngine {
     }
   }
 
+  /**
+   * אתחול האלמנטים על הבמה
+   */
   private async initializeElements(): Promise<void> {
     if (!this.timelineData) return;
 
@@ -59,19 +71,23 @@ export class VideoEngine {
         const initialProperties = {
           x: element.initialState.position?.x ?? 0,
           y: element.initialState.position?.y ?? 0,
-          z: element.initialState.position?.z ?? 0, // להוסיף ברירת מחדל
+          z: element.initialState.position?.z ?? 0,
           scale: element.initialState.scale?.x ?? 1,
           alpha: element.initialState.opacity ?? 1,
+          rotation: element.initialState.rotation,
+          tint: element.initialState.color
+            ? parseInt(element.initialState.color)
+            : undefined,
         };
 
         try {
-          // יצירת הספרייט עם המצב ההתחלתי
+          // יצירת הספרייט
           const sprite = this.assetService.displayAsset(
             element.assetName,
             initialProperties
           );
 
-          // הפעלת האנימציות על הספרייט
+          // הפעלת האנימציות
           this.animationService.applyAnimations(element, sprite);
 
           console.log(`${element.assetName} initialized and animated`);
@@ -82,13 +98,99 @@ export class VideoEngine {
     }
   }
 
+  /**
+   * התחלת האנימציה
+   */
   public async animate(): Promise<void> {
-    // אין צורך בלוגיקה נוספת כי האנימציות כבר מופעלות דרך Phaser Tweens
     console.log("Animations started via Phaser Tweens");
   }
 
+  /**
+   * חישוב משך הוידאו הכולל
+   */
+  public calculateTotalDuration(): number {
+    if (!this.timelineData) return 0;
+
+    let maxEndTime = 0;
+
+    this.timelineData["template video json"].forEach((element) => {
+      if (element.timeline) {
+        const animationTypes = [
+          "scale",
+          "position",
+          "color",
+          "opacity",
+          "rotation",
+        ];
+
+        animationTypes.forEach((type) => {
+          const animations =
+            element.timeline![type as keyof typeof element.timeline];
+          if (Array.isArray(animations)) {
+            animations.forEach((anim) => {
+              maxEndTime = Math.max(maxEndTime, anim.endTime);
+            });
+          }
+        });
+      }
+    });
+
+    return maxEndTime;
+  }
+
+  /**
+   * ניקוי המצב הנוכחי
+   */
   public cleanup(): void {
     this.timelineData = null;
     this.assetService.hideAllAssets();
+  }
+
+  /**
+   * קבלת מידע על מצב הנוכחי של המנוע
+   */
+  public getEngineState(): {
+    isTimelineLoaded: boolean;
+    totalDuration: number;
+    activeElements: string[];
+  } {
+    const activeElements = this.timelineData
+      ? this.timelineData["template video json"].map(
+          (element) => element.elementName
+        )
+      : [];
+
+    return {
+      isTimelineLoaded: this.timelineData !== null,
+      totalDuration: this.calculateTotalDuration(),
+      activeElements,
+    };
+  }
+
+  /**
+   * עצירת כל האנימציות
+   */
+  public stopAllAnimations(): void {
+    this.scene.tweens.getTweens().forEach((tween: Phaser.Tweens.Tween) => {
+      tween.stop();
+    });
+  }
+
+  /**
+   * השהיית כל האנימציות
+   */
+  public pauseAllAnimations(): void {
+    this.scene.tweens.getTweens().forEach((tween: Phaser.Tweens.Tween) => {
+      tween.pause();
+    });
+  }
+
+  /**
+   * המשך האנימציות מהנקודה שנעצרו
+   */
+  public resumeAllAnimations(): void {
+    this.scene.tweens.getTweens().forEach((tween: Phaser.Tweens.Tween) => {
+      tween.resume();
+    });
   }
 }

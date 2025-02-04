@@ -1,6 +1,10 @@
-import { TimelineJson, TimelineElement, TimelineAnimation } from "./Interfaces";
-import { Validators } from "./Validators";
-import { Helpers } from "./Helpers";
+import {
+  TimelineJson,
+  TimelineElement,
+  TimelineAnimation,
+} from "../../types/interfaces/TimelineInterfaces";
+import { Validators } from "../utils/Validators";
+import { Helpers } from "../utils/Helpers";
 
 type AnimationType = "scale" | "position" | "color" | "opacity" | "rotation";
 
@@ -15,7 +19,7 @@ export class TimelineService {
     const errors: string[] = [];
 
     try {
-      // 1. Validate basic structure
+      // 1. בדיקת מבנה בסיסי
       if (
         !json["template video json"] ||
         !Array.isArray(json["template video json"])
@@ -23,22 +27,22 @@ export class TimelineService {
         throw new Error("Missing template video json array");
       }
 
-      // 2. Normalize elements
+      // 2. נרמול האלמנטים
       const normalizedElements = json["template video json"].map(
         this.normalizeTimelineElement
       );
 
-      // 3. Validate individual timeline elements
+      // 3. בדיקת תקינות לכל אלמנט
       const elementErrors = normalizedElements.flatMap((element, index) =>
         Validators.validateTimelineElement(element, index)
       );
       errors.push(...elementErrors);
 
-      // 4. Validate timeline sequence
+      // 4. בדיקת רצף הזמן
       const sequenceErrors = this.validateTimelineSequence(normalizedElements);
       errors.push(...sequenceErrors);
 
-      // 5. Cross-reference with assets
+      // 5. הצלבה עם הנכסים הקיימים
       const assetReferenceErrors = await this.validateAssetReferences(
         normalizedElements
       );
@@ -103,7 +107,9 @@ export class TimelineService {
           for (let j = i + 1; j < animations.length; j++) {
             if (Helpers.isTimeRangeOverlapping(animations[i], animations[j])) {
               errors.push(
-                `${prefix}: Overlapping ${type} animations detected between ${animations[i].startTime}-${animations[i].endTime} and ${animations[j].startTime}-${animations[j].endTime}`
+                `${prefix}: Overlapping ${type} animations detected between ` +
+                  `${animations[i].startTime}-${animations[i].endTime} and ` +
+                  `${animations[j].startTime}-${animations[j].endTime}`
               );
             }
           }

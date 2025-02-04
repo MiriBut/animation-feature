@@ -1,4 +1,8 @@
-import { Asset, TimelineElement, TimelineAnimation } from "./Interfaces";
+import {
+  TimelineElement,
+  TimelineAnimation,
+} from "../../types/interfaces/TimelineInterfaces";
+import { Asset } from "../../types/interfaces/AssetInterfaces";
 
 export class Validators {
   static isValidNumberPair(
@@ -51,31 +55,31 @@ export class Validators {
     const validEquations = [
       "Linear",
       "Quad.easeIn",
-      "Cubic.easeIn",
-      "Quart.easeIn",
-      "Quint.easeIn",
-      "Sine.easeIn",
-      "Expo.easeIn",
-      "Circ.easeIn",
-      "Back.easeIn",
-      "Bounce.easeIn",
       "Quad.easeOut",
-      "Cubic.easeOut",
-      "Quart.easeOut",
-      "Quint.easeOut",
-      "Sine.easeOut",
-      "Expo.easeOut",
-      "Circ.easeOut",
-      "Back.easeOut",
-      "Bounce.easeOut",
       "Quad.easeInOut",
+      "Cubic.easeIn",
+      "Cubic.easeOut",
       "Cubic.easeInOut",
+      "Quart.easeIn",
+      "Quart.easeOut",
       "Quart.easeInOut",
+      "Quint.easeIn",
+      "Quint.easeOut",
       "Quint.easeInOut",
+      "Sine.easeIn",
+      "Sine.easeOut",
       "Sine.easeInOut",
+      "Expo.easeIn",
+      "Expo.easeOut",
       "Expo.easeInOut",
+      "Circ.easeIn",
+      "Circ.easeOut",
       "Circ.easeInOut",
+      "Back.easeIn",
+      "Back.easeOut",
       "Back.easeInOut",
+      "Bounce.easeIn",
+      "Bounce.easeOut",
       "Bounce.easeInOut",
     ];
 
@@ -136,12 +140,12 @@ export class Validators {
     const errors: string[] = [];
     const prefix = `Template element ${index + 1}:`;
 
-    // Basic validations
+    // בדיקות בסיסיות
     if (!element.elementName) errors.push(`${prefix} Missing elementName`);
     if (!element.assetType) errors.push(`${prefix} Missing assetType`);
     if (!element.assetName) errors.push(`${prefix} Missing assetName`);
 
-    // Initial state validations
+    // בדיקת מצב התחלתי
     if (element.initialState) {
       if (typeof element.initialState !== "object") {
         errors.push(`${prefix} initialState must be an object`);
@@ -150,7 +154,7 @@ export class Validators {
       }
     }
 
-    // Timeline validations
+    // בדיקת טיימליין
     if (element.timeline) {
       const timelineErrors = this.validateTimeline(
         element.timeline,

@@ -2,7 +2,7 @@
   "assets": [
     {
       "assetName": "banner_image",
-      "assetUrl": "assets/images/banner_image.webp",
+      "assetUrl": "assets/images/Banner_image.webp",
       "assetType": "image",
       "scale_override": {
         "x": 1,

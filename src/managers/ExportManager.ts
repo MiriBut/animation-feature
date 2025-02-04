@@ -4,70 +4,129 @@ import {
   LoadingModal,
   LoadingModalProps,
 } from "../ui/LoadingModal/LoadingModal";
+import { AudioManager } from "./AudioManager";
 
 export class ExportManager {
   private scene: Scene;
-  private audioManager: any;
+  private audioManager: AudioManager;
   private mediaRecorder?: MediaRecorder;
   private chunks: BlobPart[] = [];
   private isRecording: boolean = false;
   private conversionManager: ConversionManager;
   private loadingModal: LoadingModal | null = null;
+  private initializationAttempts: number = 0;
+  private readonly MAX_INIT_ATTEMPTS = 3;
 
-  constructor(scene: Scene, audioManager: any) {
+  constructor(scene: Scene, audioManager: AudioManager) {
     this.scene = scene;
     this.audioManager = audioManager;
     this.conversionManager = new ConversionManager();
   }
 
-  async startRecording(): Promise<void> {
-    if (this.isRecording) return;
+  private async ensureAudioInitialized(): Promise<boolean> {
+    if (this.initializationAttempts >= this.MAX_INIT_ATTEMPTS) {
+      console.error("Max audio initialization attempts reached");
+      return false;
+    }
 
     try {
+      this.initializationAttempts++;
+
+      if (!this.audioManager.isAudioReady()) {
+        console.log("Audio not ready, attempting initialization...");
+        await this.audioManager.initialize();
+
+        // Wait for a short period to ensure audio context is properly started
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      return this.audioManager.isAudioReady();
+    } catch (error) {
+      console.error("Error initializing audio:", error);
+      return false;
+    }
+  }
+
+  async startRecording(): Promise<void> {
+    if (this.isRecording) {
+      console.log("Already recording, ignoring start request");
+      return;
+    }
+
+    try {
+      // Ensure audio is initialized before starting
+      const isAudioReady = await this.ensureAudioInitialized();
+      if (!isAudioReady) {
+        throw new Error(
+          "Failed to initialize audio system after multiple attempts"
+        );
+      }
+
       const canvas = this.scene.game.canvas;
       const videoStream = canvas.captureStream(30);
 
-      // Directly use the game canvas stream instead of creating a new canvas
-      const audioStream = await this.audioManager.getAudioStream();
-
-      if (!audioStream || audioStream.getAudioTracks().length === 0) {
-        throw new Error("No audio tracks available");
+      // Get audio stream with retry logic
+      const audioStream = await this.retryGetAudioStream();
+      if (!audioStream) {
+        throw new Error("Failed to initialize audio stream");
       }
+
+      const audioTracks = audioStream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        throw new Error("No audio tracks available - ensure audio is playing");
+      }
+
+      console.log("Audio tracks found:", audioTracks.length);
+      console.log("Audio track settings:", audioTracks[0].getSettings());
 
       const combinedTracks = new MediaStream([
         ...videoStream.getVideoTracks(),
-        ...audioStream.getAudioTracks(),
+        ...audioTracks,
       ]);
 
+      const mimeType = this.getSupportedMimeType();
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        throw new Error("MediaRecorder format not supported on this browser");
+      }
+
       this.mediaRecorder = new MediaRecorder(combinedTracks, {
-        mimeType: this.getSupportedMimeType(),
+        mimeType: mimeType,
         videoBitsPerSecond: 8000000,
         audioBitsPerSecond: 128000,
       });
 
-      this.chunks = [];
-      this.mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          this.chunks.push(event.data);
-        }
-      };
-
-      this.mediaRecorder.onstop = () => {
-        this.isRecording = false;
-        const webmBlob = new Blob(this.chunks, {
-          type: this.mediaRecorder?.mimeType || "video/webm",
-        });
-        this.saveRecording(webmBlob);
-        this.chunks = [];
-      };
-
+      this.setupRecorderHandlers();
       this.mediaRecorder.start();
       this.isRecording = true;
+      console.log("Recording started successfully");
     } catch (error) {
       console.error("Error starting recording:", error);
       this.isRecording = false;
       throw error;
     }
+  }
+
+  private async retryGetAudioStream(
+    maxAttempts: number = 3
+  ): Promise<MediaStream | undefined> {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const stream = await this.audioManager.getAudioStream();
+        if (stream) {
+          return stream;
+        }
+        console.log(
+          `Attempt ${attempt}: No audio stream available, retrying...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error(`Attempt ${attempt}: Error getting audio stream:`, error);
+        if (attempt === maxAttempts) {
+          throw error;
+        }
+      }
+    }
+    return undefined;
   }
 
   public async changeResolution(
@@ -76,7 +135,6 @@ export class ExportManager {
   ): Promise<void> {
     if (!this.scene) throw new Error("Scene is not initialized.");
 
-    // שמירה על יחס גובה-רוחב
     const originalWidth = this.scene.game.canvas.width;
     const originalHeight = this.scene.game.canvas.height;
     const aspectRatio = originalWidth / originalHeight;
@@ -85,37 +143,65 @@ export class ExportManager {
       console.warn("New resolution doesn't match the original aspect ratio.");
     }
 
-    // עצירת הקלטה זמנית
     const wasRecording = this.isRecording;
     if (this.isRecording) {
-      // this.pouseRecording();
       this.mediaRecorder?.pause();
     }
 
-    // שינוי הרזולוציה
     this.scene.scale.resize(newWidth, newHeight);
 
-    // התאמת תוכן הקנבס לגודל החדש
     const ctx = this.scene.game.canvas.getContext("2d");
     if (ctx) {
       ctx.scale(newWidth / originalWidth, newHeight / originalHeight);
     }
 
-    // התחלת הקלטה מחדש אם היא פעלה קודם
     if (wasRecording) {
       this.mediaRecorder?.resume();
-      //await this.startRecording();
     }
+  }
+
+  private setupRecorderHandlers(): void {
+    if (!this.mediaRecorder) return;
+
+    this.chunks = [];
+    this.mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        this.chunks.push(event.data);
+      }
+    };
+
+    this.mediaRecorder.onstop = () => {
+      this.isRecording = false;
+      const webmBlob = new Blob(this.chunks, {
+        type: this.mediaRecorder?.mimeType || "video/webm",
+      });
+      this.saveRecording(webmBlob);
+      this.chunks = [];
+    };
+
+    this.mediaRecorder.onerror = (event) => {
+      console.error("MediaRecorder error:", event);
+      this.isRecording = false;
+      this.chunks = [];
+    };
   }
 
   stopRecording(): void {
     if (!this.isRecording || !this.mediaRecorder) return;
+    console.log("Stopping recording...");
     this.mediaRecorder.stop();
   }
 
-  pouseRecording(): void {
+  pauseRecording(): void {
     if (!this.isRecording || !this.mediaRecorder) return;
+    console.log("Pausing recording...");
     this.mediaRecorder.pause();
+  }
+
+  resumeRecording(): void {
+    if (!this.isRecording || !this.mediaRecorder) return;
+    console.log("Resuming recording...");
+    this.mediaRecorder.resume();
   }
 
   public async saveRecording(blob: Blob): Promise<void> {
@@ -187,5 +273,6 @@ export class ExportManager {
       this.loadingModal.close();
       this.loadingModal = null;
     }
+    this.initializationAttempts = 0;
   }
 }
