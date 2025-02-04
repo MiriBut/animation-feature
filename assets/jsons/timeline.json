@@ -1,0 +1,239 @@
+{
+  "template video json": [
+    {
+      "elementName": "backgroundImage",
+      "assetType": "image",
+      "assetName": "background_image",
+      "initialState": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 2,
+          "y": 2
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "scale": [
+          {
+            "startTime": 0,
+            "endTime": 5,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 2,
+              "y": 2
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "logoImage",
+      "assetType": "image",
+      "assetName": "logo_image",
+      "initialState": {
+        "position": {
+          "x": 50,
+          "y": 50,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0,
+        "opacity": 1
+      },
+      "timeline": {
+        "scale": [
+          {
+            "startTime": 0,
+            "endTime": 7,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 1.5,
+              "y": 1.5
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "rotation": [
+          {
+            "startTime": 0,
+            "endTime": 7,
+            "startValue": 0,
+            "endValue": 360,
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "characterImage",
+      "assetType": "image",
+      "assetName": "character_image",
+      "initialState": {
+        "position": {
+          "x": -50,
+          "y": 0,
+          "z": 1
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "color": "0xFFFFFF",
+        "opacity": 1
+      },
+      "timeline": {
+        "color": [
+          {
+            "startTime": 2,
+            "endTime": 10,
+            "startValue": "0xFFFFFF",
+            "endValue": "0xFF0000",
+            "easeIn": "Sine.easeIn",
+            "easeOut": "Sine.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "iconImage",
+      "assetType": "image",
+      "assetName": "icon_image",
+      "initialState": {
+        "position": {
+          "x": 0,
+          "y": -20,
+          "z": 1
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "position": [
+          {
+            "startTime": 5,
+            "endTime": 12,
+            "startValue": {
+              "x": 0,
+              "y": -20
+            },
+            "endValue": {
+              "x": 100,
+              "y": 50
+            },
+            "easeIn": "Expo.easeIn",
+            "easeOut": "Expo.easeOut"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 5,
+            "endTime": 12,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 2,
+              "y": 2
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+
+    {
+      "elementName": "bannerImage",
+      "assetType": "image",
+      "assetName": "banner_image",
+      "initialState": {
+        "position": {
+          "x": 200,
+          "y": 100,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1,
+        "color": "0x0000FF"
+      },
+      "timeline": {
+        "position": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": {
+              "x": 200,
+              "y": 100
+            },
+            "endValue": {
+              "x": 50,
+              "y": 50
+            },
+            "easeIn": "Circ.easeIn",
+            "easeOut": "Circ.easeOut"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "color": [
+          {
+            "startTime": 12,
+            "endTime": 20,
+            "startValue": "0x0000FF",
+            "endValue": "0x0000FF",
+            "easeIn": "Sine.easeIn",
+            "easeOut": "Sine.easeOut"
+          }
+        ],
+        "opacity": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": 1,
+            "endValue": 0.3,
+            "easeIn": "Back.easeIn",
+            "easeOut": "Back.easeOut"
+          }
+        ]
+      }
+    }
+  ]
+}

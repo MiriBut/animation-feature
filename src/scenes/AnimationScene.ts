@@ -3,7 +3,65 @@ import { BackgroundManager } from "../managers/BackgroundManager";
 import { SceneUI } from "../ui/SceneUI";
 import { AudioManager } from "../managers/AudioManager";
 import { CharacterManager } from "../managers/CharacterManager";
+import { JsonManager } from "../managers/JsonManager";
+import { VideoEngine } from "../scenes/VideoEngine";
 import { ExportManager } from "../managers/ExportManager";
+import { AssetService } from "../core/services/AssetService";
+
+interface AssetJson {
+  assets: Array<{
+    assetName: string;
+    assetUrl: string;
+    assetType: string;
+    scale_override: {
+      x: number;
+      y: number;
+    };
+    aspect_ratio_override: {
+      width: number;
+      height: number;
+    };
+    pivot_override: {
+      x: number;
+      y: number;
+    };
+  }>;
+}
+interface TimelineJson {
+  "template video json": Array<{
+    elementName: string;
+    assetType: string;
+    assetName: string;
+    initialState: {
+      position?: {
+        x: number;
+        y: number;
+        z: number;
+      };
+      scale?: {
+        x: number;
+        y: number;
+      };
+      opacity?: number;
+      color?: string;
+      rotation?: number;
+    };
+    timeline?: {
+      scale?: Array<{
+        startTime: number;
+        endTime: number;
+        startValue: { x: number; y: number };
+        endValue: { x: number; y: number };
+        easeIn: string;
+        easeOut: string;
+      }>;
+      position?: Array<any>;
+      color?: Array<any>;
+      opacity?: Array<any>;
+      rotation?: Array<any>;
+    };
+  }>;
+}
 
 export class AnimationScene extends Scene {
   private ui?: SceneUI;
@@ -13,7 +71,10 @@ export class AnimationScene extends Scene {
   private backgroundManager!: BackgroundManager;
   private characterManager!: CharacterManager;
   private audioManager!: AudioManager;
+  private jsonManager!: JsonManager;
   private exportManager!: ExportManager;
+  private videoEngine!: VideoEngine;
+  private assetService!: AssetService;
 
   private readonly DEFAULT_WIDTH = 1920;
   private readonly DEFAULT_HEIGHT = 1080;
@@ -30,6 +91,9 @@ export class AnimationScene extends Scene {
       this.characterManager = new CharacterManager(this);
       this.audioManager = new AudioManager(this);
       this.exportManager = new ExportManager(this, this.audioManager);
+      this.assetService = new AssetService(this); // the order is importent, must be started before video engine
+      this.jsonManager = new JsonManager(this, this.assetService); // העבר את ה-assetService
+      this.videoEngine = new VideoEngine(this, this.assetService); // העבר את ה-assetService
     }
 
     this.stopAndRemoveScene("default");
@@ -53,9 +117,10 @@ export class AnimationScene extends Scene {
     console.log("AnimationScene create started");
     this.initializeScene();
 
-    this.backgroundManager.create();
-    this.characterManager.create();
-    this.audioManager.create();
+    // יצירת אלמנטים דיפולטיביים על המסך
+    //this.backgroundManager.create();
+    //this.characterManager.create();
+    //this.audioManager.create();
 
     if (this.currentBackground && this.isResizing) {
       await this.reloadBackground();
@@ -68,7 +133,9 @@ export class AnimationScene extends Scene {
         this.handleMusicChange.bind(this),
         this.handleCharacterChange.bind(this),
         this.startRecording.bind(this),
-        this.stopRecording.bind(this)
+        this.stopRecording.bind(this),
+        this.onAssetsJson.bind(this),
+        this.onTimelineJson.bind(this)
       );
     }
 
@@ -190,6 +257,46 @@ export class AnimationScene extends Scene {
     } catch (error) {
       console.error("Error changing music:", error);
       alert("Failed to change music. Please try again.");
+    }
+  }
+
+  private async onAssetsJson(file: File): Promise<void> {
+    try {
+      console.log("Starting to load assets JSON");
+      await this.jsonManager.handleAssetsJson(file);
+      console.log("Assets loaded successfully");
+      // הדפס את מצב הנכסים אחרי הטעינה
+      this.assetService.debugAssetsState();
+    } catch (error) {
+      console.error("Error loading assets:", error);
+      // אופציונלי: הצג הודעת שגיאה למשתמש
+      throw error;
+    }
+  }
+
+  private async onTimelineJson(file: File): Promise<void> {
+    try {
+      console.log("Starting to load timeline JSON");
+      // בדוק שיש נכסים טעונים
+      const assetsMap = this.assetService.getAssetsMap();
+      console.log("Current assets:", Array.from(assetsMap.keys()));
+
+      if (assetsMap.size === 0) {
+        throw new Error("No assets loaded. Please load assets JSON first.");
+      }
+
+      await this.jsonManager.handleTimelineJson(file);
+      const timelineData = await this.jsonManager.parseTimelineJson(file);
+
+      if (!timelineData) {
+        throw new Error("Failed to parse timeline JSON");
+      }
+
+      await this.videoEngine.loadTimelineWithDelay(timelineData);
+    } catch (error) {
+      console.error("Error processing timeline JSON:", error);
+      // הצג הודעת שגיאה למשתמש
+      throw error;
     }
   }
 

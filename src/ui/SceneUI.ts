@@ -17,7 +17,9 @@ export class SceneUI {
       pngFiles: File[]
     ) => void,
     private onRecordingStart: () => Promise<void>,
-    private onRecordingStop: () => Promise<void>
+    private onRecordingStop: () => Promise<void>,
+    private onAssetsJson: (file: File) => void,
+    private onTimelineJson: (file: File) => void
   ) {
     console.log("scene ui starts");
     this.container = this.createContainer();
@@ -111,22 +113,32 @@ export class SceneUI {
 
     const bgButton = document.createElement("button");
     bgButton.textContent = "Change Background";
-    this.applyButtonStyles(bgButton, "#2196F3");
+    this.applyButtonStyles(bgButton, "#9C27B0");
     bgButton.onclick = () => this.handleBackgroundSelect();
 
     const musicButton = document.createElement("button");
     musicButton.textContent = "Change Music";
-    this.applyButtonStyles(musicButton, "#9C27B0");
+    this.applyButtonStyles(musicButton, "#3F51B5");
     musicButton.onclick = () => this.handleMusicSelect();
 
     const characterButton = document.createElement("button");
     characterButton.textContent = "Change Character";
-    this.applyButtonStyles(characterButton, "#673AB7");
+    this.applyButtonStyles(characterButton, "#2196F3");
     characterButton.onclick = () => this.handleCharacterSelect();
+
+    const assetJsonButton = document.createElement("button");
+    assetJsonButton.textContent = "Upload Asset JSON";
+    this.applyButtonStyles(assetJsonButton, "#00BCD4");
+    assetJsonButton.onclick = () => this.handleJsonSelect("asset");
+
+    const timelineJsonButton = document.createElement("button");
+    timelineJsonButton.textContent = "Upload Timeline JSON";
+    this.applyButtonStyles(timelineJsonButton, "#4CAF50");
+    timelineJsonButton.onclick = () => this.handleJsonSelect("timeline");
 
     const exportButton = document.createElement("button");
     exportButton.textContent = "Start Recording";
-    this.applyButtonStyles(exportButton, "#4CAF50");
+    this.applyButtonStyles(exportButton, "#8BC34A");
 
     exportButton.onclick = async () => {
       try {
@@ -137,14 +149,14 @@ export class SceneUI {
         } else {
           await this.onRecordingStop();
           exportButton.textContent = "Start Recording";
-          this.applyButtonStyles(exportButton, "#4CAF50");
+          this.applyButtonStyles(exportButton, "#8BC34A");
         }
       } catch (error) {
         console.error("Recording error:", error);
         exportButton.textContent = "Error";
         setTimeout(() => {
           exportButton.textContent = "Start Recording";
-          this.applyButtonStyles(exportButton, "#4CAF50");
+          this.applyButtonStyles(exportButton, "#8BC34A");
           exportButton.disabled = false;
         }, 2000);
       }
@@ -154,7 +166,31 @@ export class SceneUI {
     this.container.appendChild(bgButton);
     this.container.appendChild(musicButton);
     this.container.appendChild(characterButton);
+    this.container.appendChild(assetJsonButton);
+    this.container.appendChild(timelineJsonButton);
     this.container.appendChild(exportButton);
+  }
+
+  private handleJsonSelect(type: "asset" | "timeline"): void {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.style.display = "none";
+
+    input.onchange = (event: Event) => {
+      const target = event.target as HTMLInputElement;
+      if (target.files && target.files[0]) {
+        if (type == "asset") {
+          this.onAssetsJson(target.files[0]);
+        } else if (type == "timeline") {
+          this.onTimelineJson(target.files[0]);
+        }
+      }
+    };
+
+    document.body.appendChild(input);
+    input.click();
+    input.remove();
   }
 
   private handleBackgroundSelect(): void {
