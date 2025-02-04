@@ -279,7 +279,40 @@ export class AnimationScene extends Scene {
     try {
       console.log("Starting to load timeline JSON");
       const assetsMap = this.assetService.getAssetsMap();
-      console.log("Current assets:", Array.from(assetsMap.keys()));
+
+      // Read and parse the file content with proper type checking
+      const fileContent = await file.text();
+      let timelineJson: TimelineJson;
+
+      try {
+        // Use type assertion with the predefined interface
+        timelineJson = JSON.parse(fileContent) as TimelineJson;
+      } catch (parseError) {
+        throw new Error(`Invalid JSON: ${(parseError as Error).message}`);
+      }
+
+      // Ensure the parsed JSON has the correct structure
+      if (!timelineJson || !timelineJson["template video json"]) {
+        throw new Error("Invalid timeline JSON structure");
+      }
+
+      // Use the typed array for mapping
+      const requiredAssets = new Set(
+        timelineJson["template video json"].map((item) => item.assetName)
+      );
+
+      console.log("Required assets:", Array.from(requiredAssets));
+      console.log("Available assets:", Array.from(assetsMap.keys()));
+
+      // بדיקת אסטים חסרים
+      const missingAssets = Array.from(requiredAssets).filter(
+        (asset) => !assetsMap.has(asset)
+      );
+
+      if (missingAssets.length > 0) {
+        console.error("Missing assets:", missingAssets);
+        throw new Error(`Missing required assets: ${missingAssets.join(", ")}`);
+      }
 
       if (assetsMap.size === 0) {
         throw new Error("No assets loaded. Please load assets JSON first.");
@@ -295,7 +328,12 @@ export class AnimationScene extends Scene {
       await this.videoEngine.loadTimelineWithDelay(timelineData);
     } catch (error) {
       console.error("Error processing timeline JSON:", error);
-
+      showMessage({
+        isOpen: true,
+        type: "error",
+        title: "Timeline JSON Error",
+        messages: [error instanceof Error ? error.message : String(error)],
+      });
       throw error;
     }
   }
