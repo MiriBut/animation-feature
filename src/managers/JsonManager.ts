@@ -95,22 +95,22 @@ export class JsonManager {
           color = "0xFFFFFF",
         } = element.initialState;
 
-        try {
-          const sprite = this.assetService.displayAsset(element.assetName, {
-            x: position.x,
-            y: position.y,
-            scale: scale.x,
-            alpha: opacity,
-            rotation,
-            tint: parseInt(color),
-          });
+        // try {
+        //   const sprite = this.assetService.displayAsset(element.assetName, {
+        //     x: position.x,
+        //     y: position.y,
+        //     scale: scale.x,
+        //     alpha: opacity,
+        //     rotation,
+        //     tint: parseInt(color),
+        //   });
 
-          if (sprite) {
-            this.animationService.applyAnimations(element, sprite);
-          }
-        } catch (error) {
-          console.error("Error displaying asset:", error);
-        }
+        //   if (sprite) {
+        //     this.animationService.applyAnimations(element, sprite);
+        //   }
+        // } catch (error) {
+        //   console.error("Error displaying asset:", error);
+        // }
       }
     });
   }

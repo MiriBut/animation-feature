@@ -4,7 +4,7 @@ import { SceneUI } from "../ui/SceneUI";
 import { AudioManager } from "../managers/AudioManager";
 import { CharacterManager } from "../managers/CharacterManager";
 import { JsonManager } from "../managers/JsonManager";
-import { VideoEngine } from "../managers/VideoEngine"; 
+import { VideoEngine } from "../scenes/VideoEngine";
 import { ExportManager } from "../managers/ExportManager";
 import { AssetService } from "../core/services/AssetService";
 
@@ -27,8 +27,6 @@ interface AssetJson {
     };
   }>;
 }
-
-// נעדכן את הממשק של TimelineJson כך שיתאים למבנה החדש
 interface TimelineJson {
   "template video json": Array<{
     elementName: string;
@@ -119,6 +117,7 @@ export class AnimationScene extends Scene {
     console.log("AnimationScene create started");
     this.initializeScene();
 
+    // יצירת אלמנטים דיפולטיביים על המסך
     //this.backgroundManager.create();
     //this.characterManager.create();
     //this.audioManager.create();

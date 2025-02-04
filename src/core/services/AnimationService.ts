@@ -1,8 +1,4 @@
 import { Scene } from "phaser";
-import {
-  TimelineElement,
-  TimelineAnimation,
-} from "../../types/interfaces/TimelineInterfaces";
 
 export class AnimationService {
   private scene: Scene;
@@ -11,113 +7,98 @@ export class AnimationService {
     this.scene = scene;
   }
 
-  public applyAnimations(element: TimelineElement, gameObject: any): void {
-    if (!element.timeline) return;
+  public applyAnimations(gameObject: any, timeline: any): void {
+    if (!timeline) return;
 
-    // טיפול בכל סוגי האנימציות
-    this.applyColorAnimations(element.timeline.color, gameObject);
-    this.applyPositionAnimations(element.timeline.position, gameObject);
-    this.applyScaleAnimations(element.timeline.scale, gameObject);
-    this.applyOpacityAnimations(element.timeline.opacity, gameObject);
-    this.applyRotationAnimations(element.timeline.rotation, gameObject);
-  }
+    if (timeline.scale) {
+      const anim = timeline.scale[0]; // לוקח את האנימציה הראשונה
+      if (anim) {
+        this.scene.tweens.add({
+          targets: gameObject,
+          scaleX: anim.endValue.x,
+          scaleY: anim.endValue.y,
+          duration: (anim.endTime - anim.startTime) * 1000,
+          ease: anim.easeIn || "Linear",
+          delay: anim.startTime * 1000,
+        });
+      }
+    }
 
-  private applyColorAnimations(
-    colorAnimations?: TimelineAnimation[],
-    gameObject?: any
-  ): void {
-    if (!colorAnimations || !gameObject) return;
+    if (timeline.position) {
+      const anim = timeline.position[0];
+      if (anim) {
+        this.scene.tweens.add({
+          targets: gameObject,
+          x: anim.endValue.x,
+          y: anim.endValue.y,
+          duration: (anim.endTime - anim.startTime) * 1000,
+          ease: anim.easeIn || "Linear",
+          delay: anim.startTime * 1000,
+        });
+      }
+    }
 
-    colorAnimations.forEach((anim) => {
-      this.scene.tweens.add({
-        targets: gameObject,
-        tint: {
-          from: parseInt(anim.startValue),
-          to: parseInt(anim.endValue),
-        },
-        duration: (anim.endTime - anim.startTime) * 1000, // המרה למילישניות
-        ease: anim.easeIn,
-        delay: anim.startTime * 1000,
-      });
-    });
-  }
+    if (timeline.opacity) {
+      const anim = timeline.opacity[0];
+      if (anim) {
+        this.scene.tweens.add({
+          targets: gameObject,
+          alpha: anim.endValue,
+          duration: (anim.endTime - anim.startTime) * 1000,
+          ease: anim.easeIn || "Linear",
+          delay: anim.startTime * 1000,
+        });
+      }
+    }
 
-  private applyPositionAnimations(
-    positionAnimations?: TimelineAnimation[],
-    gameObject?: any
-  ): void {
-    if (!positionAnimations || !gameObject) return;
+    if (timeline.rotation) {
+      const anim = timeline.rotation[0];
+      if (anim) {
+        this.scene.tweens.add({
+          targets: gameObject,
+          angle: anim.endValue,
+          duration: (anim.endTime - anim.startTime) * 1000,
+          ease: anim.easeIn || "Linear",
+          delay: anim.startTime * 1000,
+        });
+      }
+    }
 
-    positionAnimations.forEach((anim) => {
-      console.log(
-        `${anim.startValue.elementName} - Starting position animation: ` +
-          `X: ${anim.startValue.x} -> ${anim.endValue.x}, ` +
-          `Y: ${anim.startValue.y} -> ${anim.endValue.y}`
-      );
+    if (timeline.color) {
+      const anim = timeline.color[0];
+      if (anim) {
+        // קבע את הצבע ההתחלתי
+        const startColor = parseInt(anim.startValue.replace("0x", ""), 16);
+        const endColor = parseInt(anim.endValue.replace("0x", ""), 16);
 
-      this.scene.tweens.add({
-        targets: gameObject,
-        x: { from: anim.startValue.x, to: anim.endValue.x },
-        y: { from: anim.startValue.y, to: anim.endValue.y },
-        duration: (anim.endTime - anim.startTime) * 1000,
-        ease: anim.easeIn,
-        delay: anim.startTime * 1000,
-      });
-    });
-  }
+        gameObject.setTint(startColor);
 
-  private applyScaleAnimations(
-    scaleAnimations?: TimelineAnimation[],
-    gameObject?: any
-  ): void {
-    if (!scaleAnimations || !gameObject) return;
+        // צור אנימציית צבע
+        this.scene.tweens.add({
+          targets: {}, // dummy target
+          tint: { from: 0, to: 1 }, // נשתמש בזה כפרוגרס
+          duration: (anim.endTime - anim.startTime) * 1000,
+          delay: anim.startTime * 1000,
+          ease: anim.easeIn || "Linear",
+          onUpdate: (tween) => {
+            const value = tween.getValue();
+            const r1 = (startColor >> 16) & 0xff;
+            const g1 = (startColor >> 8) & 0xff;
+            const b1 = startColor & 0xff;
 
-    scaleAnimations.forEach((anim) => {
-      this.scene.tweens.add({
-        targets: gameObject,
-        scaleX: { from: anim.startValue.x, to: anim.endValue.x },
-        scaleY: { from: anim.startValue.y, to: anim.endValue.y },
-        duration: (anim.endTime - anim.startTime) * 1000,
-        ease: anim.easeIn,
-        delay: anim.startTime * 1000,
-      });
-    });
-  }
+            const r2 = (endColor >> 16) & 0xff;
+            const g2 = (endColor >> 8) & 0xff;
+            const b2 = endColor & 0xff;
 
-  private applyOpacityAnimations(
-    opacityAnimations?: TimelineAnimation[],
-    gameObject?: any
-  ): void {
-    if (!opacityAnimations || !gameObject) return;
+            const r = Math.floor(r1 + (r2 - r1) * value);
+            const g = Math.floor(g1 + (g2 - g1) * value);
+            const b = Math.floor(b1 + (b1 - b1) * value);
 
-    opacityAnimations.forEach((anim) => {
-      this.scene.tweens.add({
-        targets: gameObject,
-        alpha: { from: anim.startValue, to: anim.endValue },
-        duration: (anim.endTime - anim.startTime) * 1000,
-        ease: anim.easeIn,
-        delay: anim.startTime * 1000,
-      });
-    });
-  }
-
-  private applyRotationAnimations(
-    rotationAnimations?: TimelineAnimation[],
-    gameObject?: any
-  ): void {
-    if (!rotationAnimations || !gameObject) return;
-
-    rotationAnimations.forEach((anim) => {
-      this.scene.tweens.add({
-        targets: gameObject,
-        rotation: {
-          from: anim.startValue * (Math.PI / 180), // המרה למעלות
-          to: anim.endValue * (Math.PI / 180),
-        },
-        duration: (anim.endTime - anim.startTime) * 1000,
-        ease: anim.easeIn,
-        delay: anim.startTime * 1000,
-      });
-    });
+            const currentColor = (r << 16) | (g << 8) | b;
+            gameObject.setTint(currentColor);
+          },
+        });
+      }
+    }
   }
 }
