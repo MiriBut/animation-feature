@@ -26,7 +26,25 @@ export class JsonManager {
       const json = (await Helpers.validateAndParseJson(file)) as AssetJson;
       console.log("Parsed assets JSON:", json);
       await this.assetService.handleAssetsJson(json);
+
+      showMessage({
+        isOpen: true,
+        type: "success",
+        title: "Assets Loaded Successfully",
+        messages: ["All assets have been loaded successfully"],
+        autoClose: true,
+        autoCloseTime: 3000,
+      });
     } catch (error) {
+      showMessage({
+        isOpen: true,
+        type: "error",
+        title: "Error Loading Assets",
+        messages: [
+          error instanceof Error ? error.message : "Failed to load assets",
+        ],
+        autoClose: false,
+      });
       console.error("Error in handleAssetsJson:", error);
       throw error;
     }

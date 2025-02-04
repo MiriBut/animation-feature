@@ -7,6 +7,7 @@ import { JsonManager } from "../managers/JsonManager";
 import { VideoEngine } from "../scenes/VideoEngine";
 import { ExportManager } from "../managers/ExportManager";
 import { AssetService } from "../core/services/AssetService";
+import { showMessage } from "../ui/ErrorModal/MessageModal";
 
 interface AssetJson {
   assets: Array<{
@@ -265,11 +266,11 @@ export class AnimationScene extends Scene {
       console.log("Starting to load assets JSON");
       await this.jsonManager.handleAssetsJson(file);
       console.log("Assets loaded successfully");
-      // הדפס את מצב הנכסים אחרי הטעינה
+
       this.assetService.debugAssetsState();
     } catch (error) {
       console.error("Error loading assets:", error);
-      // אופציונלי: הצג הודעת שגיאה למשתמש
+
       throw error;
     }
   }
@@ -277,7 +278,6 @@ export class AnimationScene extends Scene {
   private async onTimelineJson(file: File): Promise<void> {
     try {
       console.log("Starting to load timeline JSON");
-      // בדוק שיש נכסים טעונים
       const assetsMap = this.assetService.getAssetsMap();
       console.log("Current assets:", Array.from(assetsMap.keys()));
 
@@ -295,7 +295,7 @@ export class AnimationScene extends Scene {
       await this.videoEngine.loadTimelineWithDelay(timelineData);
     } catch (error) {
       console.error("Error processing timeline JSON:", error);
-      // הצג הודעת שגיאה למשתמש
+
       throw error;
     }
   }
