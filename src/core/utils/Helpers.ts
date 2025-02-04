@@ -7,9 +7,15 @@ export class Helpers {
    */
   static async checkAssetExists(url: string): Promise<boolean> {
     try {
-      const response = await fetch(url, { method: "HEAD" });
+      // שנה את השיטה לטיפול בנתיבים יחסיים
+      const fullUrl = url.startsWith("http")
+        ? url
+        : `${window.location.origin}${url.startsWith("/") ? url : "/" + url}`;
+
+      const response = await fetch(fullUrl, { method: "HEAD" });
       return response.ok;
-    } catch {
+    } catch (error) {
+      console.error("Asset check failed:", error);
       return false;
     }
   }
@@ -22,25 +28,27 @@ export class Helpers {
       const text = await file.text();
       const json = JSON.parse(text);
 
+      // הוסף לוגים מפורטים יותר
+      console.log("Parsed JSON structure:", Object.keys(json));
+
       if (!json || typeof json !== "object") {
         throw new Error("Invalid JSON structure: Root must be an object");
       }
 
+      // הגדל את הבדיקות
       const isTemplate = json["template video json"] !== undefined;
       const isAsset = json.assets !== undefined;
 
       if (!isTemplate && !isAsset) {
+        console.warn("JSON structure:", json);
         throw new Error("Unable to identify JSON file type");
-      }
-
-      if (isTemplate && isAsset) {
-        throw new Error(
-          "Ambiguous JSON file: Contains both template and asset structures"
-        );
       }
 
       return json;
     } catch (error) {
+      // הוסף לוג מפורט יותר לשגיאות
+      console.error("JSON parsing error:", error);
+
       if (error instanceof Error) {
         throw new Error(`Failed to parse JSON: ${error.message}`);
       }

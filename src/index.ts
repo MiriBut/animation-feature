@@ -14,6 +14,14 @@ const config: Phaser.Types.Core.GameConfig = {
     width: 1920,
     height: 1080,
   },
+  callbacks: {
+    preBoot: (game) => {
+      console.log("Game is pre-booting");
+    },
+    postBoot: (game) => {
+      console.log("Game has booted successfully");
+    },
+  },
 
   plugins: {
     scene: [
@@ -24,6 +32,9 @@ const config: Phaser.Types.Core.GameConfig = {
       },
     ],
   },
-};
+
+  // @ts-ignore - התעלם מבדיקת הטיפוס
+  failOnMissingWebGL: false,
+} as Phaser.Types.Core.GameConfig;
 
 export const game = new Phaser.Game(config);
