@@ -142,13 +142,43 @@ export class JsonManager {
   }
 
   public async parseTimelineJson(file: File): Promise<TimelineJson | null> {
-    await this.handleTimelineJson(file);
-    if (!this.currentTimelineJson) {
-      return null;
-    }
-    //throw new Error("No timeline JSON loaded");
+    try {
+      const fileContent = await file.text();
+      console.log("Full JSON content:", fileContent); // לוג מלא של תוכן JSON
 
-    return this.currentTimelineJson;
+      const json = JSON.parse(fileContent);
+
+      // בדיקות תקינות מפורטות
+      if (!json || typeof json !== "object") {
+        throw new Error("Invalid JSON structure");
+      }
+
+      if (
+        !json["template video json"] ||
+        !Array.isArray(json["template video json"])
+      ) {
+        throw new Error(
+          "Invalid timeline JSON: missing or invalid template video json"
+        );
+      }
+
+      // בדוק את המבנה של כל פריט
+      const invalidItems = json["template video json"].filter(
+        (item) => !item.assetName || !item.assetType
+      );
+
+      if (invalidItems.length > 0) {
+        console.error("Invalid timeline items:", invalidItems);
+        throw new Error("Some timeline items are missing required fields");
+      }
+
+      return json as TimelineJson;
+    } catch (error) {
+      console.error("JSON parsing detailed error:", error);
+      throw new Error(
+        `Failed to parse timeline JSON: ${(error as Error).message}`
+      );
+    }
   }
 
   public getAssetUrl(assetName: string): string | undefined {

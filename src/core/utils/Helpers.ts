@@ -1,5 +1,6 @@
 import { TimelineAnimation } from "../../types/interfaces/TimelineInterfaces";
 import { showMessage } from "../../ui/ErrorModal/MessageModal";
+import { TimelineJson } from "../../types/interfaces/TimelineInterfaces"; // וודא את הנתיב הנכון
 
 export class Helpers {
   /**
@@ -7,13 +8,22 @@ export class Helpers {
    */
   static async checkAssetExists(url: string): Promise<boolean> {
     try {
-      // שנה את השיטה לטיפול בנתיבים יחסיים
-      const fullUrl = url.startsWith("http")
-        ? url
-        : `${window.location.origin}${url.startsWith("/") ? url : "/" + url}`;
+      // נסה מספר אסטרטגיות לבדיקת נכס
+      const fullUrls = [
+        url, // הנתיב המקורי
+        `/assets/images/${url}`, // נסה עם תחילית סטטית
+        `${window.location.origin}/assets/images/${url}`, // נסה עם מקור מלא
+      ];
 
-      const response = await fetch(fullUrl, { method: "HEAD" });
-      return response.ok;
+      for (const fullUrl of fullUrls) {
+        try {
+          const response = await fetch(fullUrl, { method: "HEAD" });
+          if (response.ok) return true;
+        } catch {}
+      }
+
+      console.warn(`Asset not found: ${url}`);
+      return false;
     } catch (error) {
       console.error("Asset check failed:", error);
       return false;
@@ -54,6 +64,21 @@ export class Helpers {
       }
       throw new Error("Failed to parse JSON: Unknown error");
     }
+  }
+
+  static async validateAssetReferences(json: TimelineJson): Promise<void> {
+    const assetChecks = json["template video json"].map(async (item) => {
+      if (item.assetName) {
+        const exists = await this.checkAssetExists(item.assetName);
+        if (!exists) {
+          console.warn(`Asset not found: ${item.assetName}`);
+          // אופציונלי: זרוק שגיאה אם חסר נכס קריטי
+          // throw new Error(`Missing asset: ${item.assetName}`);
+        }
+      }
+    });
+
+    await Promise.all(assetChecks);
   }
 
   /**
