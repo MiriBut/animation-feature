@@ -300,12 +300,33 @@ export class AssetService {
     const errors: string[] = [];
 
     for (const asset of assets) {
+      console.log(
+        `Checking existence of asset: ${asset.assetName} at URL: ${asset.assetUrl}`
+      );
       const exists = await Helpers.checkAssetExists(asset.assetUrl);
+      console.log(`Asset ${asset.assetName} exists: ${exists}`);
+
       if (!exists) {
         const fileExtension = asset.assetUrl.split(".").pop() || "";
         errors.push(
           `File not found: ${asset.assetName} (.${fileExtension} file)`
         );
+
+        try {
+          const response = await fetch(asset.assetUrl);
+          const headerObj: Record<string, string> = {};
+          response.headers.forEach((value, key) => {
+            headerObj[key] = value;
+          });
+
+          console.log(`Direct fetch response for ${asset.assetName}:`, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: headerObj,
+          });
+        } catch (error) {
+          console.error(`Direct fetch error for ${asset.assetName}:`, error);
+        }
       }
     }
 
