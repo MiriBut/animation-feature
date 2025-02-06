@@ -150,13 +150,13 @@ export class VideoEngine {
         }
 
         // הצגת הנכס
-        const sprite = this.assetService.displayAsset(
-          asset.assetName,
-          initialProperties
-        );
-        if (sprite) {
-          this.activeSprites.set(asset.assetName, sprite);
-        }
+        // const sprite = this.assetService.displayAsset(
+        //   asset.assetName,
+        //   initialProperties
+        // );
+        // if (sprite) {
+        //   this.activeSprites.set(asset.assetName, sprite);
+        // }
       } catch (error) {
         console.error(`Failed to initialize asset ${asset.assetName}:`, error);
       }
