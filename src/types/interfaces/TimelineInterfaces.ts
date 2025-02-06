@@ -1,4 +1,5 @@
 export interface TimelineElement {
+  pivot: any;
   elementName: string;
   assetType: "image" | "video" | "text";
   assetName: string;

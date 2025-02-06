@@ -1,5 +1,9 @@
 import { Scene } from "phaser";
-import { Asset, AssetJson } from "../../types/interfaces/AssetInterfaces";
+import {
+  AssetElement,
+  AssetJson,
+  AssetDisplayProperties,
+} from "../../types/interfaces/AssetInterfaces";
 import { Validators } from "../utils/Validators";
 import { Helpers } from "../utils/Helpers";
 import { showMessage } from "../../ui/ErrorModal/MessageModal";
@@ -30,13 +34,36 @@ export class AssetService {
     return this.assetsMap.get(assetName);
   }
 
+  public debugAssetSizes(): void {
+    console.log("=== Asset Sizes Debug Info ===");
+
+    this.assetsMap.forEach((assetInfo, assetName) => {
+      if (assetInfo.sprite) {
+        const sprite = assetInfo.sprite;
+        const texture = sprite.texture;
+        const sourceImage = texture.getSourceImage();
+
+        console.log(`Asset: ${assetName}`);
+        console.log(
+          `- Original Size: ${sourceImage.width}x${sourceImage.height}`
+        );
+        console.log(
+          `- Display Size: ${sprite.displayWidth}x${sprite.displayHeight}`
+        );
+        console.log(`- Scale: ${sprite.scaleX}x${sprite.scaleY}`);
+        console.log(`- Origin: ${sprite.originX}x${sprite.originY}`);
+        console.log("------------------------");
+      }
+    });
+  }
+
   public isAssetLoaded(assetName: string): boolean {
     return this.loadedAssets.has(assetName);
   }
 
   public async handleAssetsJson(json: AssetJson): Promise<void> {
     try {
-      json.assets.forEach((asset: Asset) => {
+      json.assets.forEach((asset: AssetElement) => {
         this.assetsMap.set(asset.assetName, {
           url: asset.assetUrl,
           type: asset.assetType,
@@ -162,18 +189,10 @@ export class AssetService {
 
   public displayAsset(
     assetName: string,
-    properties: {
-      x: number;
-      y: number;
-      scale: number;
-      alpha: number;
-      rotation?: number;
-      tint?: number;
-    }
+    properties: AssetDisplayProperties
   ): Phaser.GameObjects.Sprite {
     const assetInfo = this.assetsMap.get(assetName);
     if (!assetInfo || !this.isAssetLoaded(assetName)) {
-      console.warn(`Asset ${assetName} not loaded`);
       throw new Error(`Asset ${assetName} not loaded`);
     }
 
@@ -190,13 +209,52 @@ export class AssetService {
       assetName
     );
 
+    const texture = sprite.texture;
+    const sourceImage = texture.getSourceImage();
+    console.log(`Creating sprite for ${assetName}:`);
+    console.log(
+      `- Original dimensions: ${sourceImage.width}x${sourceImage.height}`
+    );
+    console.log(`- Requested scale: ${properties.scale}`);
+    if (properties.ratio) {
+      console.log(
+        `- Requested ratio: ${properties.ratio.width}:${properties.ratio.height}`
+      );
+    }
+
     this.assetsMap.set(assetName, {
       ...assetInfo,
       sprite,
     });
 
-    sprite.setOrigin(0.5, 0.5);
-    sprite.setScale(properties.scale);
+    // טיפול ב-anchor
+    const anchorX = properties.anchor?.x ?? 0.5;
+    const anchorY = properties.anchor?.y ?? 0.5;
+    sprite.setOrigin(anchorX, anchorY);
+
+    // טיפול בסקיילינג עם aspect ratio
+    if (properties.ratio) {
+      const texture = sprite.texture;
+      const originalWidth = texture.getSourceImage().width;
+      const originalHeight = texture.getSourceImage().height;
+
+      const targetRatio = properties.ratio.width / properties.ratio.height;
+      const currentRatio = originalWidth / originalHeight;
+
+      let scaleX = properties.scale;
+      let scaleY = properties.scale;
+
+      if (targetRatio > currentRatio) {
+        scaleY = scaleX * (currentRatio / targetRatio);
+      } else {
+        scaleX = scaleY * (targetRatio / currentRatio);
+      }
+
+      sprite.setScale(scaleX, scaleY);
+    } else {
+      sprite.setScale(properties.scale);
+    }
+
     sprite.setAlpha(properties.alpha);
 
     if (properties.rotation !== undefined) {
@@ -205,6 +263,10 @@ export class AssetService {
 
     if (properties.tint !== undefined) {
       sprite.setTint(properties.tint);
+    }
+
+    if (properties.pivot) {
+      sprite.setOrigin(properties.pivot.x, properties.pivot.y);
     }
 
     return sprite;
@@ -265,7 +327,7 @@ export class AssetService {
     });
   }
 
-  private async loadAssets(assets: Asset[]): Promise<void> {
+  private async loadAssets(assets: AssetElement[]): Promise<void> {
     console.log(
       "Starting to load assets:",
       assets.map((a) => a.assetName)
@@ -296,7 +358,9 @@ export class AssetService {
     return errors;
   }
 
-  private async checkAssetsExistence(assets: Asset[]): Promise<string[]> {
+  private async checkAssetsExistence(
+    assets: AssetElement[]
+  ): Promise<string[]> {
     const errors: string[] = [];
 
     for (const asset of assets) {

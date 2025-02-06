@@ -33,6 +33,7 @@ export class TimelineService {
       );
 
       // 3. בדיקת תקינות לכל אלמנט
+      
       const elementErrors = normalizedElements.flatMap((element, index) =>
         Validators.validateTimelineElement(element, index)
       );

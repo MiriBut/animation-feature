@@ -69,8 +69,8 @@
       }
     },
     {
-      "assetName": "banner_image",
-      "assetUrl": "assets/images/banner_image.webp",
+      "assetName": "Banner_image",
+      "assetUrl": "assets/images/Banner_Image.webp",
       "assetType": "image",
       "scale_override": {
         "x": 1,

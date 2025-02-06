@@ -1,44 +1,114 @@
-import { Scene } from "phaser";
+import { TimelineElement } from "../../types/interfaces/TimelineInterfaces";
+import { AssetElement } from "../../types/interfaces/AssetInterfaces";
+import { Scene, GameObjects } from "phaser";
 
 export class AnimationService {
   private scene: Scene;
+  private debugPoints: Map<string, GameObjects.Graphics> = new Map();
 
   constructor(scene: Scene) {
     this.scene = scene;
   }
 
-  public applyAnimations(gameObject: any, timeline: any): void {
-    if (!timeline) return;
+  private addPivotDebugPoint(elementName: string, x: number, y: number): void {
+    const point = this.scene.add.graphics();
+    point.lineStyle(2, 0xff0000);
+    point.strokeCircle(0, 0, 5);
+    point.moveTo(-10, 0);
+    point.lineTo(10, 0);
+    point.moveTo(0, -10);
+    point.lineTo(0, 10);
+    point.setPosition(x, y);
+    point.setDepth(1000);
+    this.debugPoints.set(elementName, point);
+  }
 
-    if (timeline.scale) {
-      const anim = timeline.scale[0]; // לוקח את האנימציה הראשונה
+  private updatePivotDebugPoint(
+    elementName: string,
+    x: number,
+    y: number
+  ): void {
+    const point = this.debugPoints.get(elementName);
+    if (point) {
+      point.setPosition(x, y);
+    }
+  }
+
+  private createPivotContainer(
+    gameObject: GameObjects.Sprite | GameObjects.Image,
+    assetElement?: AssetElement
+  ): GameObjects.Container {
+    const originalX = gameObject.x;
+    const originalY = gameObject.y;
+    const originalDepth = gameObject.depth;
+
+    const pivotX = assetElement?.pivot_override?.x || 0.5;
+    const pivotY = assetElement?.pivot_override?.y || 0.5;
+
+    const pivotContainer = this.scene.add.container(originalX, originalY);
+    pivotContainer.setDepth(originalDepth);
+    gameObject.setPosition(-pivotX, -pivotY);
+    pivotContainer.add(gameObject);
+
+    return pivotContainer;
+  }
+
+  public applyAnimations(
+    gameObject: GameObjects.Sprite | GameObjects.Image,
+    timelineElement: TimelineElement,
+    assetElement?: AssetElement
+  ): void {
+    if (!timelineElement) return;
+    const timeline = timelineElement.timeline;
+
+    const pivotContainer = this.createPivotContainer(gameObject, assetElement);
+    this.addPivotDebugPoint(
+      timelineElement.elementName,
+      pivotContainer.x,
+      pivotContainer.y
+    );
+
+    if (timeline?.scale) {
+      const anim = timeline.scale[0];
       if (anim) {
         this.scene.tweens.add({
-          targets: gameObject,
+          targets: pivotContainer,
           scaleX: anim.endValue.x,
           scaleY: anim.endValue.y,
           duration: (anim.endTime - anim.startTime) * 1000,
           ease: anim.easeIn || "Linear",
           delay: anim.startTime * 1000,
+          onUpdate: () =>
+            this.updatePivotDebugPoint(
+              timelineElement.elementName,
+              pivotContainer.x,
+              pivotContainer.y
+            ),
         });
       }
     }
 
-    if (timeline.position) {
+    if (timeline?.position) {
       const anim = timeline.position[0];
       if (anim) {
         this.scene.tweens.add({
-          targets: gameObject,
+          targets: pivotContainer,
           x: anim.endValue.x,
           y: anim.endValue.y,
           duration: (anim.endTime - anim.startTime) * 1000,
           ease: anim.easeIn || "Linear",
           delay: anim.startTime * 1000,
+          onUpdate: () =>
+            this.updatePivotDebugPoint(
+              timelineElement.elementName,
+              pivotContainer.x,
+              pivotContainer.y
+            ),
         });
       }
     }
 
-    if (timeline.opacity) {
+    if (timeline?.opacity) {
       const anim = timeline.opacity[0];
       if (anim) {
         this.scene.tweens.add({
@@ -51,54 +121,28 @@ export class AnimationService {
       }
     }
 
-    if (timeline.rotation) {
+    if (timeline?.rotation) {
       const anim = timeline.rotation[0];
       if (anim) {
         this.scene.tweens.add({
-          targets: gameObject,
+          targets: pivotContainer,
           angle: anim.endValue,
           duration: (anim.endTime - anim.startTime) * 1000,
           ease: anim.easeIn || "Linear",
           delay: anim.startTime * 1000,
+          onUpdate: () =>
+            this.updatePivotDebugPoint(
+              timelineElement.elementName,
+              pivotContainer.x,
+              pivotContainer.y
+            ),
         });
       }
     }
+  }
 
-    if (timeline.color) {
-      const anim = timeline.color[0];
-      if (anim) {
-        // קבע את הצבע ההתחלתי
-        const startColor = parseInt(anim.startValue.replace("0x", ""), 16);
-        const endColor = parseInt(anim.endValue.replace("0x", ""), 16);
-
-        gameObject.setTint(startColor);
-
-        // צור אנימציית צבע
-        this.scene.tweens.add({
-          targets: {}, // dummy target
-          tint: { from: 0, to: 1 }, // נשתמש בזה כפרוגרס
-          duration: (anim.endTime - anim.startTime) * 1000,
-          delay: anim.startTime * 1000,
-          ease: anim.easeIn || "Linear",
-          onUpdate: (tween) => {
-            const value = tween.getValue();
-            const r1 = (startColor >> 16) & 0xff;
-            const g1 = (startColor >> 8) & 0xff;
-            const b1 = startColor & 0xff;
-
-            const r2 = (endColor >> 16) & 0xff;
-            const g2 = (endColor >> 8) & 0xff;
-            const b2 = endColor & 0xff;
-
-            const r = Math.floor(r1 + (r2 - r1) * value);
-            const g = Math.floor(g1 + (g2 - g1) * value);
-            const b = Math.floor(b1 + (b1 - b1) * value);
-
-            const currentColor = (r << 16) | (g << 8) | b;
-            gameObject.setTint(currentColor);
-          },
-        });
-      }
-    }
+  public cleanupDebugPoints(): void {
+    this.debugPoints.forEach((point) => point.destroy());
+    this.debugPoints.clear();
   }
 }

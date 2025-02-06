@@ -1,4 +1,4 @@
-export interface Asset {
+export interface AssetElement {
   assetName: string;
   assetUrl: string;
   assetType: string;
@@ -16,6 +16,18 @@ export interface Asset {
   };
 }
 
+export interface AssetDisplayProperties {
+  x: number;
+  y: number;
+  scale: number;
+  alpha: number;
+  rotation?: number;
+  tint?: number;
+  anchor?: { x: number; y: number };
+  pivot?: { x: number; y: number };
+  ratio?: { width: number; height: number };
+}
+
 export interface AssetInfo {
   url: string;
   type: string;
@@ -23,5 +35,8 @@ export interface AssetInfo {
 }
 
 export interface AssetJson {
-  assets: Asset[];
+  assets: AssetElement[];
+}
+export interface AssetsData {
+  assets: AssetElement[];
 }

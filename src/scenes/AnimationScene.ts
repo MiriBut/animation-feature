@@ -264,13 +264,38 @@ export class AnimationScene extends Scene {
   private async onAssetsJson(file: File): Promise<void> {
     try {
       console.log("Starting to load assets JSON");
+
+      // קריאה ופירוש של קובץ ה-JSON
+      const fileContent = await file.text();
+      let assetsJson: AssetJson;
+
+      try {
+        assetsJson = JSON.parse(fileContent) as AssetJson;
+      } catch (parseError) {
+        throw new Error(`Invalid JSON: ${(parseError as Error).message}`);
+      }
+
+      // וידוא שה-JSON תקין ומכיל את המבנה הנכון
+      if (!assetsJson || !assetsJson.assets) {
+        throw new Error("Invalid assets JSON structure");
+      }
+
+      // טעינת האסטים דרך ה-JsonManager
       await this.jsonManager.handleAssetsJson(file);
       console.log("Assets loaded successfully");
 
       this.assetService.debugAssetsState();
+
+      // העברת מידע ה-assets ל-VideoEngine
+      await this.videoEngine.initializeAssetElements(assetsJson);
     } catch (error) {
       console.error("Error loading assets:", error);
-
+      showMessage({
+        isOpen: true,
+        type: "error",
+        title: "Assets JSON Error",
+        messages: [error instanceof Error ? error.message : String(error)],
+      });
       throw error;
     }
   }

@@ -2,7 +2,7 @@ import {
   TimelineElement,
   TimelineAnimation,
 } from "../../types/interfaces/TimelineInterfaces";
-import { Asset } from "../../types/interfaces/AssetInterfaces";
+import { AssetElement } from "../../types/interfaces/AssetInterfaces";
 
 export class Validators {
   static isValidNumberPair(
@@ -86,7 +86,7 @@ export class Validators {
     return validEquations.includes(equation);
   }
 
-  static validateAssetObject(asset: Asset, index: number): string[] {
+  static validateAssetObject(asset: AssetElement, index: number): string[] {
     const errors: string[] = [];
     const prefix = `Asset ${index + 1}:`;
 

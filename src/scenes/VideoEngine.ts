@@ -3,12 +3,18 @@ import { AssetService } from "../core/services/AssetService";
 import { AnimationService } from "../core/services/AnimationService";
 import { CountdownTimer } from "../ui/CountdownTimer/CountdownTimer";
 import { TimelineJson } from "../types/interfaces/TimelineInterfaces";
+import {
+  AssetElement,
+  AssetDisplayProperties,
+  AssetJson,
+} from "../types/interfaces/AssetInterfaces";
 
 export class VideoEngine {
   private scene: Scene;
   private assetService: AssetService;
   private animationService: AnimationService;
   private timelineData: TimelineJson | null = null;
+  private assetsData: AssetJson | null = null;
   private activeSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
   private countdownTimer: CountdownTimer | null = null;
 
@@ -35,7 +41,8 @@ export class VideoEngine {
       await this.countdownTimer.start();
 
       // רק אחרי שהטיימר סיים, נציג את האלמנטים ונפעיל אנימציות
-      await this.initializeElements();
+      await this.initializeTimelineElements();
+
       this.startAnimations();
     } catch (error) {
       console.error("Error loading timeline:", error);
@@ -64,7 +71,7 @@ export class VideoEngine {
     }
   }
 
-  private async initializeElements(): Promise<void> {
+  private async initializeTimelineElements(): Promise<void> {
     if (!this.timelineData) return;
 
     for (const element of this.timelineData["template video json"]) {
@@ -100,19 +107,81 @@ export class VideoEngine {
     }
   }
 
+  public async initializeAssetElements(assets: AssetJson): Promise<void> {
+    // נקה מצב קודם
+    this.cleanup();
+
+    // שמור את הדאטה
+    this.assetsData = assets;
+
+    // טעינת הנכסים
+    for (const asset of assets.assets) {
+      try {
+        // טען את הנכס אם הוא עוד לא נטען
+        if (!this.assetService.isAssetLoaded(asset.assetName)) {
+          await this.assetService.loadAsset(asset.assetName);
+        }
+
+        const initialProperties: AssetDisplayProperties = {
+          x: 0,
+          y: 0,
+          scale: asset.scale_override?.x ?? 1,
+          alpha: 1,
+          anchor: {
+            x: 0.5,
+            y: 0.5,
+          },
+        };
+
+        // הוספת aspect ratio אם קיים
+        if (asset.aspect_ratio_override) {
+          initialProperties.ratio = {
+            width: asset.aspect_ratio_override.width,
+            height: asset.aspect_ratio_override.height,
+          };
+        }
+
+        // הוספת pivot אם קיים
+        if (asset.pivot_override) {
+          initialProperties.pivot = {
+            x: asset.pivot_override.x,
+            y: asset.pivot_override.y,
+          };
+        }
+
+        // הצגת הנכס
+        const sprite = this.assetService.displayAsset(
+          asset.assetName,
+          initialProperties
+        );
+        if (sprite) {
+          this.activeSprites.set(asset.assetName, sprite);
+        }
+      } catch (error) {
+        console.error(`Failed to initialize asset ${asset.assetName}:`, error);
+      }
+    }
+  }
+
   private setupScene(): void {
     this.scene.cameras.main.setBackgroundColor("#ffffff");
     this.scene.scale.setGameSize(1920, 1080);
   }
 
   private startAnimations(): void {
-    if (!this.timelineData) return;
+    if (!this.timelineData || !this.assetsData) return;
 
     this.timelineData["template video json"].forEach((element) => {
       const sprite = this.activeSprites.get(element.elementName);
-      if (sprite && element.timeline) {
-        this.animationService.applyAnimations(sprite, element.timeline);
-      }
+      if (!sprite || !element.timeline) return;
+
+      // מציאת נתוני הנכס המתאימים
+      const assetData = this.assetsData?.assets.find(
+        (asset) => asset.assetName === element.assetName
+      );
+
+      // העברת שני האובייקטים בנפרד לשירות האנימציה
+      this.animationService.applyAnimations(sprite, element, assetData);
     });
   }
 
