@@ -10,19 +10,6 @@ export class AnimationService {
     this.scene = scene;
   }
 
-  private addPivotDebugPoint(elementName: string, x: number, y: number): void {
-    const point = this.scene.add.graphics();
-    point.lineStyle(2, 0xff0000);
-    point.strokeCircle(0, 0, 5);
-    point.moveTo(-10, 0);
-    point.lineTo(10, 0);
-    point.moveTo(0, -10);
-    point.lineTo(0, 10);
-    point.setPosition(x, y);
-    point.setDepth(1000);
-    this.debugPoints.set(elementName, point);
-  }
-
   private updatePivotDebugPoint(
     elementName: string,
     x: number,
@@ -62,11 +49,11 @@ export class AnimationService {
     const timeline = timelineElement.timeline;
 
     const pivotContainer = this.createPivotContainer(gameObject, assetElement);
-    this.addPivotDebugPoint(
-      timelineElement.elementName,
-      pivotContainer.x,
-      pivotContainer.y
-    );
+    // this.addPivotDebugPoint(
+    //   timelineElement.elementName,
+    //   pivotContainer.x,
+    //   pivotContainer.y
+    // );
 
     if (timeline?.scale) {
       const anim = timeline.scale[0];
@@ -141,8 +128,21 @@ export class AnimationService {
     }
   }
 
-  public cleanupDebugPoints(): void {
-    this.debugPoints.forEach((point) => point.destroy());
-    this.debugPoints.clear();
+  private addPivotDebugPoint(elementName: string, x: number, y: number): void {
+    const point = this.scene.add.graphics();
+    point.lineStyle(2, 0xff0000);
+    point.strokeCircle(0, 0, 5);
+    point.moveTo(-10, 0);
+    point.lineTo(10, 0);
+    point.moveTo(0, -10);
+    point.lineTo(0, 10);
+    point.setPosition(x, y);
+    point.setDepth(1000);
+    this.debugPoints.set(elementName, point);
   }
+
+  // public cleanupDebugPoints(): void {
+  //   this.debugPoints.forEach((point) => point.destroy());
+  //   this.debugPoints.clear();
+  // }
 }
