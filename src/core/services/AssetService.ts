@@ -6,7 +6,11 @@ import {
 } from "../../types/interfaces/AssetInterfaces";
 import { Validators } from "../utils/Validators";
 import { Helpers } from "../utils/Helpers";
-import { showMessage } from "../../ui/ErrorModal/MessageModal";
+import {
+  showMessage,
+  createErrorMessage,
+  createSuccessMessage,
+} from "../../ui/ErrorModal/MessageModal";
 
 export class AssetService {
   private scene: Scene;
@@ -25,6 +29,11 @@ export class AssetService {
   }
 
   public getAssetsMap(): Map<string, { url: string; type: string }> {
+    // console.log("00000000000000");
+    // this.assetsMap.forEach((asset, key) => {
+    //   console.log(key, asset);
+    // });
+
     return new Map(this.assetsMap);
   }
 
@@ -61,22 +70,30 @@ export class AssetService {
     return this.loadedAssets.has(assetName);
   }
 
-  public async handleAssetsJson(json: AssetJson): Promise<void> {
+  public async handleAssetsJson(
+    json: AssetJson,
+    missingAssets: string[]
+  ): Promise<void> {
+    const missingAssetsSet = new Set(missingAssets.map((name) => name.trim()));
     try {
       json.assets.forEach((asset: AssetElement) => {
-        this.assetsMap.set(asset.assetName, {
-          url: asset.assetUrl,
-          type: asset.assetType,
-        });
+        const assetName = asset.assetName.trim(); // לוודא שאין רווחים מיותרים
+
+        if (!missingAssetsSet.has(assetName)) {
+          this.assetsMap.set(assetName, {
+            url: asset.assetUrl,
+            type: asset.assetType,
+          });
+        }
       });
 
       const structureErrors = this.validateAssetStructure(json);
       if (structureErrors.length > 0) {
         showMessage({
           isOpen: true,
-          type: "error",
           title: "Asset File Structure Issues",
-          messages: structureErrors,
+          messages: structureErrors.map((error) => createErrorMessage(error)),
+          autoClose: false,
         });
         return;
       }
@@ -85,104 +102,165 @@ export class AssetService {
       if (existenceErrors.length > 0) {
         showMessage({
           isOpen: true,
-          type: "error",
           title: "Asset Files Not Found",
-          messages: existenceErrors,
+          messages: existenceErrors.map((error) => createErrorMessage(error)),
+          autoClose: false,
         });
         return;
       }
 
       await this.loadAssets(json.assets);
-      this.debugAssetsState();
+      // showMessage({
+      //   isOpen: true,
+      //   title: "loading assets completed",
+      //   messages: [
+      //     createSuccessMessage(
+      //       `${json.assets.length} ${
+      //         json.assets.length === 1 ? "loaded asset" : "loaded assets"
+      //       } successfully`
+      //     ),
+      //   ],
+      //   autoClose: true,
+      //   autoCloseTime: 3000,
+      // });
     } catch (error: unknown) {
-      Helpers.handleError(error);
+      const errorMessage =
+        error instanceof Error ? error.message : "unknown loading assets error";
+      showMessage({
+        isOpen: true,
+        title: "loading assets error",
+        messages: [createErrorMessage(errorMessage)],
+        autoClose: false,
+      });
     }
   }
 
-  public async loadAsset(assetName: string): Promise<void> {
-    console.log(`Attempting to load asset: ${assetName}`);
+  public async loadAsset(
+    assetName: string
+  ): Promise<{ success: boolean; error?: string }> {
+    console.log(`++ Attempting to load asset: ${assetName}`);
     this.debugAssetsState();
 
     const assetInfo = this.assetsMap.get(assetName);
     if (!assetInfo) {
-      console.error("Available assets:", Array.from(this.assetsMap.keys()));
-      throw new Error(`Asset ${assetName} not found in assets map`);
+      console.error(`++ ❌ Asset "${assetName}" not found in assets map`);
+      return {
+        success: false,
+        error: `Asset "${assetName}" not found in assets map`,
+      };
     }
 
     if (this.isAssetLoaded(assetName)) {
-      console.log(`Asset ${assetName} is already loaded`);
-      return;
+      console.log(`++ ✅ Asset "${assetName}" is already loaded`);
+      return { success: true }; // לא נכשל, כי הנכס כבר קיים
     }
 
     const fileExtension = assetInfo.url.split(".").pop()?.toLowerCase();
-    console.log(`Asset ${assetName} has extension: ${fileExtension}`);
+    console.log(`++ Asset "${assetName}" has extension: ${fileExtension}`);
 
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<{ success: boolean; error?: string }>((resolve) => {
       if (assetInfo.type === "image") {
         if (fileExtension === "webp") {
+          console.log(`++ Loading WebP asset: ${assetName}`);
           const img = new Image();
           img.onload = () => {
             try {
+              console.log(
+                `++ Successfully loaded WebP image: ${assetName}, processing...`
+              );
+
               const canvas = document.createElement("canvas");
               canvas.width = img.width;
               canvas.height = img.height;
               const ctx = canvas.getContext("2d");
 
               if (!ctx) {
-                reject(new Error("Failed to get canvas context"));
+                console.error(
+                  `++ ❌ Failed to get canvas context for: ${assetName}`
+                );
+                resolve({
+                  success: false,
+                  error: "Failed to get canvas context",
+                });
                 return;
               }
 
               ctx.drawImage(img, 0, 0);
 
               if (this.scene.textures.exists(assetName)) {
-                console.log(`Removing existing texture for: ${assetName}`);
+                console.log(`++ Removing existing texture for: ${assetName}`);
                 this.scene.textures.remove(assetName);
               }
 
               this.scene.textures.addCanvas(assetName, canvas);
               this.loadedAssets.add(assetName);
-              console.log(`Successfully loaded WebP asset: ${assetName}`);
-              resolve();
+              console.log(`++ ✅ Successfully added WebP asset: ${assetName}`);
+              resolve({ success: true });
             } catch (error) {
-              console.error(`Error processing WebP image: ${assetName}`, error);
-              reject(error);
+              console.error(
+                `++ ❌ Error processing WebP image: ${assetName}`,
+                error
+              );
+              resolve({
+                success: false,
+                error:
+                  error instanceof Error
+                    ? `Error processing WebP: ${error.message}`
+                    : `Unknown error: ${JSON.stringify(error)}`,
+              });
             }
           };
 
           img.onerror = (error) => {
-            console.error(`Failed to load WebP image: ${assetName}`, error);
-            reject(new Error(`Failed to load WebP image: ${assetName}`));
+            console.error(
+              `++ ❌ Failed to load WebP image: ${assetName}`,
+              error
+            );
+            resolve({
+              success: false,
+              error: `Failed to load WebP image: ${assetName}`,
+            });
           };
 
           img.src = assetInfo.url;
         } else {
+          console.log(`++ Loading standard image asset: ${assetName}`);
+
           this.scene.load.image(assetName, assetInfo.url);
 
           this.scene.load.once("complete", () => {
+            console.log(`++ 🔍 Checking if texture exists for: ${assetName}`);
             if (this.scene.textures.exists(assetName)) {
               this.loadedAssets.add(assetName);
-              console.log(`Successfully loaded asset: ${assetName}`);
-              resolve();
+              console.log(`++ ✅ Successfully loaded asset: ${assetName}`);
+              resolve({ success: true });
             } else {
-              console.error(`Failed to load texture for asset: ${assetName}`);
-              reject(new Error(`Failed to load asset: ${assetName}`));
+              console.error(`++ ❌ Texture not found after load: ${assetName}`);
+              resolve({
+                success: false,
+                error: `Failed to load texture for asset: ${assetName}`,
+              });
             }
           });
 
           this.scene.load.once("loaderror", (file: any) => {
-            console.error(`Loader error for asset ${assetName}:`, file);
-            reject(new Error(`Failed to load asset: ${assetName}`));
+            console.error(`++ ❌ Loader error for asset ${assetName}:`, file);
+            resolve({
+              success: false,
+              error: `Loader error: Failed to load asset: ${assetName}`,
+            });
           });
 
           this.scene.load.start();
         }
       } else {
-        reject(
-          new Error(
-            `Unsupported asset type: ${assetInfo.type} for ${assetName}`
-          )
+        console.error(
+          `++ ❌ Unsupported asset type: ${assetInfo.type} for ${assetName}`
         );
+        resolve({
+          success: false,
+          error: `Unsupported asset type: ${assetInfo.type}`,
+        });
       }
     });
   }
@@ -333,12 +411,43 @@ export class AssetService {
       assets.map((a) => a.assetName)
     );
 
-    try {
-      await Promise.all(assets.map((asset) => this.loadAsset(asset.assetName)));
-      console.log("All assets loaded successfully");
-    } catch (error) {
-      console.error("Failed to load assets:", error);
-      throw error;
+    const loadPromises = assets.map(async (asset) => {
+      const result = await this.loadAsset(asset.assetName);
+
+      if (result.success) {
+        return { assetName: asset.assetName, success: true };
+      } else {
+        return { assetName: asset.assetName, success: false };
+      }
+    });
+
+    const results = await Promise.all(loadPromises);
+
+    const successfulAssets = results.filter((result) => result.success);
+    const failedAssets = results.filter((result) => !result.success);
+
+    if (successfulAssets.length > 0) {
+      console.log(
+        "Successfully loaded assets:",
+        successfulAssets.map((sa) => sa.assetName)
+      );
+    }
+
+    // showMessage({
+    //   isOpen: true,
+    //   title: "Asset Loading Summary",
+    //   messages: [
+    //     `Successfully loaded ${successfulAssets.length} assets`,
+    //     ...failedAssets.map(
+    //       (fa) => `Asset "${fa.assetName}" could not be loaded`
+    //     ),
+    //   ],
+    //   autoClose: failedAssets.length === 0,
+    // });
+
+    // אם אף אסט לא נטען, זרוק שגיאה
+    if (successfulAssets.length === 0) {
+      throw new Error("No assets could be loaded");
     }
   }
 
@@ -372,9 +481,9 @@ export class AssetService {
 
       if (!exists) {
         const fileExtension = asset.assetUrl.split(".").pop() || "";
-        errors.push(
-          `File not found: ${asset.assetName} (.${fileExtension} file)`
-        );
+        // errors.push(
+        //   `File not found: ${asset.assetName} (.${fileExtension} file)`
+        // );
 
         try {
           const response = await fetch(asset.assetUrl);

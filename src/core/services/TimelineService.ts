@@ -28,12 +28,11 @@ export class TimelineService {
       }
 
       // 2. נרמול האלמנטים
-      const normalizedElements = json["template video json"].map(
-        this.normalizeTimelineElement
+      const normalizedElements = json["template video json"].map((element) =>
+        this.normalizeTimelineElement(element)
       );
 
       // 3. בדיקת תקינות לכל אלמנט
-      
       const elementErrors = normalizedElements.flatMap((element, index) =>
         Validators.validateTimelineElement(element, index)
       );
@@ -52,22 +51,33 @@ export class TimelineService {
       errors.push(error instanceof Error ? error.message : String(error));
     }
 
-    return errors;
+    // סינון שגיאות ריקות והחזרת מערך נקי
+    return errors.filter(Boolean);
   }
 
   private normalizeTimelineElement(element: any): TimelineElement {
     return {
       ...element,
-      assetType: element.assetType as "image" | "video" | "text",
+      elementName: element.elementName || element.assetName,
+      assetType: element.assetType || "image",
       initialState: {
         ...element.initialState,
         position: element.initialState?.position
           ? {
-              x: element.initialState.position.x,
-              y: element.initialState.position.y,
-              z: Number(element.initialState.position.z ?? 0),
+              x: Number(element.initialState.position.x) || 0,
+              y: Number(element.initialState.position.y) || 0,
+              z: Number(element.initialState.position.z) || 0,
             }
           : undefined,
+        scale: element.initialState?.scale
+          ? {
+              x: Number(element.initialState.scale.x) || 1,
+              y: Number(element.initialState.scale.y) || 1,
+            }
+          : undefined,
+        opacity: Number(element.initialState?.opacity) || 1,
+        rotation: Number(element.initialState?.rotation) || 0,
+        color: element.initialState?.color || "0xFFFFFF",
       },
     };
   }
@@ -105,6 +115,18 @@ export class TimelineService {
       const animations = timeline[type];
       if (animations && Array.isArray(animations)) {
         for (let i = 0; i < animations.length; i++) {
+          // בדיקת ערכי זמן תקינים
+          if (
+            animations[i].startTime < 0 ||
+            animations[i].endTime <= animations[i].startTime
+          ) {
+            errors.push(
+              `${prefix}: Invalid time range for ${type} animation: ` +
+                `${animations[i].startTime}-${animations[i].endTime}`
+            );
+          }
+
+          // בדיקת חפיפה עם אנימציות אחרות
           for (let j = i + 1; j < animations.length; j++) {
             if (Helpers.isTimeRangeOverlapping(animations[i], animations[j])) {
               errors.push(
@@ -125,30 +147,18 @@ export class TimelineService {
     elements: TimelineElement[]
   ): Promise<string[]> {
     const errors: string[] = [];
+    // this.assetsMap.forEach((value, key) => {
+    //   console.log(`++++++++Key: ${key}, Value:`, value);
+    // });
 
     for (const element of elements) {
       const assetInfo = this.assetsMap.get(element.assetName);
 
-      if (!assetInfo) {
-        errors.push(
-          `Element ${element.elementName}: Asset "${element.assetName}" not found in assets JSON`
-        );
-        continue;
-      }
-
-      if (element.assetType !== assetInfo.type) {
-        errors.push(
-          `Element ${element.elementName}: Asset type mismatch. ` +
-            `Timeline expects "${element.assetType}" but asset is of type "${assetInfo.type}"`
-        );
-      }
-
-      const exists = await Helpers.checkAssetExists(assetInfo.url);
-      if (!exists) {
-        errors.push(
-          `Element ${element.elementName}: Asset file not found at "${assetInfo.url}"`
-        );
-      }
+      // if (!assetInfo) {
+      //   errors.push(
+      //     `Element ${element.assetName}: Asset "${element.assetName}" not found in assets JSON`
+      //   );
+      // }
     }
 
     return errors;

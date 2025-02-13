@@ -289,12 +289,11 @@ export class AnimationScene extends Scene {
       // העברת מידע ה-assets ל-VideoEngine
       await this.videoEngine.initializeAssetElements(assetsJson);
     } catch (error) {
-      console.error("Error loading assets:", error);
       showMessage({
         isOpen: true,
-        type: "error",
         title: "Assets JSON Error",
         messages: [error instanceof Error ? error.message : String(error)],
+        autoClose: false,
       });
       throw error;
     }
@@ -302,6 +301,21 @@ export class AnimationScene extends Scene {
 
   private async onTimelineJson(file: File): Promise<void> {
     try {
+      console.log(
+        "Available Assets:",
+        Array.from(this.assetService.getAssetsMap().keys())
+      );
+      console.log(
+        "Available Assets Full Details:",
+        Array.from(this.assetService.getAssetsMap().entries()).map(
+          ([key, value]) => ({
+            name: key,
+            type: value.type,
+            url: value.url,
+          })
+        )
+      );
+
       console.log("Starting to load timeline JSON");
       const assetsMap = this.assetService.getAssetsMap();
 
@@ -330,17 +344,34 @@ export class AnimationScene extends Scene {
       console.log("Available assets:", Array.from(assetsMap.keys()));
 
       // بדיקת אסטים חסרים
+
       const missingAssets = Array.from(requiredAssets).filter(
         (asset) => !assetsMap.has(asset)
       );
 
       if (missingAssets.length > 0) {
-        console.error("Missing assets:", missingAssets);
-        throw new Error(`Missing required assets: ${missingAssets.join(", ")}`);
+        showMessage({
+          isOpen: true,
+          title: "חסרים אסטים",
+          messages: [
+            `האסטים הבאים חסרים: ${missingAssets.join(
+              ", "
+            )}. הפרויקט עלול להיפגע`,
+          ],
+        });
+        // לא זורקים שגיאה, רק מתריעים
       }
-
       if (assetsMap.size === 0) {
-        throw new Error("No assets loaded. Please load assets JSON first.");
+        // Instead of throwing an error, you could log a warning
+        console.warn("Asset map is empty. Some assets might be missing.");
+        // Or show a user-friendly message
+        showMessage({
+          isOpen: true,
+          title: "Asset Loading",
+          messages: [
+            "Some assets are missing. The project may not work correctly.",
+          ],
+        });
       }
 
       await this.jsonManager.handleTimelineJson(file);
@@ -355,7 +386,6 @@ export class AnimationScene extends Scene {
       console.error("Error processing timeline JSON:", error);
       showMessage({
         isOpen: true,
-        type: "error",
         title: "Timeline JSON Error",
         messages: [error instanceof Error ? error.message : String(error)],
       });
