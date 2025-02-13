@@ -10,6 +10,10 @@ export interface TimelineElement {
     color?: string;
     rotation?: number;
   };
+  onScreen?: {
+    startTime: number;
+    endTime: number;
+  }[]; // מערך כי יכול להיות יותר מזמן הופעה אחד
   timeline?: {
     scale?: TimelineAnimation[];
     position?: TimelineAnimation[];

@@ -163,6 +163,20 @@ export class Validators {
       errors.push(...timelineErrors);
     }
 
+    if (element.onScreen) {
+      element.onScreen.forEach((screen, idx) => {
+        if (screen.startTime < 0 || screen.endTime <= screen.startTime) {
+          errors.push(
+            `Element ${index + 1} (${
+              element.elementName
+            }): Invalid OnScreen time range at index ${idx}: ${
+              screen.startTime
+            }-${screen.endTime}`
+          );
+        }
+      });
+    }
+
     return errors;
   }
 

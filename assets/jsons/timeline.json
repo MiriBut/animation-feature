@@ -39,6 +39,16 @@
       "elementName": "logoImage",
       "assetType": "image",
       "assetName": "logo_image",
+      "onScreen": [
+        {
+          "startTime": 10,
+          "endTime": 20
+        },
+        {
+          "startTime": 30,
+          "endTime": 40
+        }
+      ],
       "initialState": {
         "position": {
           "x": 50,
@@ -99,6 +109,20 @@
         "opacity": 1
       },
       "timeline": {
+        "position": [
+          {
+            "startTime": 5,
+            "endTime": 10,
+            "startValue": {
+              "z": 1
+            },
+            "endValue": {
+              "z": -1
+            },
+            "easeIn": "Expo.easeIn",
+            "easeOut": "Expo.easeOut"
+          }
+        ],
         "color": [
           {
             "startTime": 2,

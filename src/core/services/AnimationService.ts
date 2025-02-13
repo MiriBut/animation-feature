@@ -46,6 +46,14 @@ export class AnimationService {
     assetElement?: AssetElement
   ): void {
     if (!timelineElement) return;
+
+    // console.log(
+    //   "Full Timeline Element:",
+    //   JSON.stringify(timelineElement, null, 2)
+    // );
+    // console.log("onScreen value type:", typeof timelineElement.onScreen);
+    // console.log("onScreen value:", timelineElement.onScreen);
+
     const timeline = timelineElement.timeline;
 
     const pivotContainer = this.createPivotContainer(gameObject, assetElement);
@@ -76,8 +84,21 @@ export class AnimationService {
     }
 
     if (timeline?.position) {
-      const anim = timeline.position[0];
-      if (anim) {
+      timeline.position.forEach((anim) => {
+        if ("z" in anim.startValue || "z" in anim.endValue) {
+          const startZ = anim.startValue.z ?? gameObject.depth;
+          const endZ = anim.endValue.z ?? gameObject.depth;
+
+          this.scene.tweens.add({
+            targets: pivotContainer,
+            depth: { from: startZ, to: endZ },
+            duration: (anim.endTime - anim.startTime) * 1000,
+            ease: anim.easeIn || "Linear",
+            delay: anim.startTime * 1000,
+          });
+        }
+
+        // Handle regular x,y position animation
         this.scene.tweens.add({
           targets: pivotContainer,
           x: anim.endValue.x,
@@ -92,7 +113,7 @@ export class AnimationService {
               pivotContainer.y
             ),
         });
-      }
+      });
     }
 
     if (timeline?.opacity) {
@@ -125,6 +146,35 @@ export class AnimationService {
             ),
         });
       }
+    }
+    if (timelineElement.onScreen) {
+      console.log("onScreen found for:", timelineElement.elementName);
+      // קודם כל נאפס את האלמנט להיות שקוף
+      gameObject.setAlpha(0);
+
+      timelineElement.onScreen.forEach((screen) => {
+        console.log("Processing screen time range:", screen);
+
+        // אנימציית הופעה
+        this.scene.tweens.add({
+          targets: gameObject,
+          alpha: 1, // לשנות ל-1 במקום {from: 0, to: 1}
+          duration: 100, // משך קצר לאפקט הופעה חלק
+          ease: "Linear",
+          delay: screen.startTime * 1000, // זמן התחלה
+        });
+
+        // אנימציית היעלמות
+        this.scene.tweens.add({
+          targets: gameObject,
+          alpha: 0, // לשנות ל-0 במקום {from: 1, to: 0}
+          duration: 100, // משך קצר לאפקט היעלמות חלק
+          ease: "Linear",
+          delay: screen.endTime * 1000, // זמן סיום ישיר, לא יחסי
+        });
+      });
+    } else {
+      gameObject.setAlpha(1);
     }
   }
 

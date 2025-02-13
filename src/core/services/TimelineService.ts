@@ -60,6 +60,7 @@ export class TimelineService {
       ...element,
       elementName: element.elementName || element.assetName,
       assetType: element.assetType || "image",
+      onScreen: element.onScreen || undefined,
       initialState: {
         ...element.initialState,
         position: element.initialState?.position
