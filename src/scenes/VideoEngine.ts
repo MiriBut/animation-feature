@@ -15,7 +15,10 @@ export class VideoEngine {
   private animationService: AnimationService;
   private timelineData: TimelineJson | null = null;
   private assetsData: AssetJson | null = null;
-  private activeSprites: Map<string, Phaser.GameObjects.Sprite> = new Map();
+  private activeSprites: Map<
+    string,
+    Phaser.GameObjects.Sprite | Phaser.GameObjects.Video
+  > = new Map();
   private countdownTimer: CountdownTimer | null = null;
 
   constructor(scene: Scene, assetService: AssetService) {
@@ -27,23 +30,40 @@ export class VideoEngine {
 
   public async loadTimelineWithDelay(timeline: TimelineJson): Promise<void> {
     try {
+      console.log("++ VideoEngine: Starting loadTimelineWithDelay");
+
       // נקה מצב קודם
       this.cleanup();
 
       // שמור את הדאטה
       this.timelineData = timeline;
 
+      console.log("++ VideoEngine: Loading assets");
       // טען את הנכסים למערכת (בלי להציג אותם)
       await this.loadAssets();
 
+      // הדפסת מצב האסטים
+      const assetsMap = this.assetService.getAssetsMap();
+      console.log("++ Available Assets:", Array.from(assetsMap.keys()));
+      assetsMap.forEach((asset, name) => {
+        console.log(`++ Asset ${name}:`, asset);
+      });
+
+      console.log("++ VideoEngine: Starting countdown timer");
       // הפעל טיימר
       this.countdownTimer = new CountdownTimer(this.scene);
       await this.countdownTimer.start();
 
+      console.log("++ VideoEngine: Initializing timeline elements");
       // רק אחרי שהטיימר סיים, נציג את האלמנטים ונפעיל אנימציות
       await this.initializeTimelineElements();
 
+      console.log("++ VideoEngine: Starting animations");
       this.startAnimations();
+
+      console.log(
+        "++ VideoEngine: loadTimelineWithDelay completed successfully"
+      );
     } catch (error) {
       console.error("Error loading timeline:", error);
       if (this.countdownTimer) {
@@ -52,6 +72,7 @@ export class VideoEngine {
     }
   }
 
+  // בתוך VideoEngine.ts
   private async loadAssets(): Promise<void> {
     if (!this.timelineData) return;
 
@@ -59,12 +80,25 @@ export class VideoEngine {
       .map((element) => element.assetName)
       .filter(Boolean);
 
+    console.log("Assets to load:", assetsToLoad);
+
     try {
-      // רק טוען את הנכסים לזיכרון, בלי להציג אותם
-      await Promise.all(
-        assetsToLoad.map((assetName) => this.assetService.loadAsset(assetName))
+      const loadResults = await Promise.all(
+        assetsToLoad.map(async (assetName) => {
+          const result = await this.assetService.loadAsset(assetName);
+          return { assetName, result };
+        })
       );
-      console.log("Assets loaded successfully");
+
+      loadResults.forEach(({ assetName, result }) => {
+        console.log(`Asset ${assetName} load result:`, result);
+      });
+
+      // בדיקה שכל האסטים נטענו
+      const allLoaded = loadResults.every(({ result }) => result.success);
+      if (!allLoaded) {
+        console.error("Not all assets were loaded successfully");
+      }
     } catch (error) {
       console.error("Failed to load assets:", error);
       throw error;
@@ -94,10 +128,21 @@ export class VideoEngine {
           );
 
           if (sprite) {
-            // Set the depth based on z position
+            // שימוש ב-z מהמצב ההתחלתי
             const zDepth = element.initialState.position?.z ?? 0;
-            sprite.setDepth(zDepth);
 
+            // הדפסת מידע על השכבה
+            console.log(`Element ${element.elementName}:`, {
+              type: element.assetType,
+              zDepth,
+              currentDepth: sprite.depth,
+              visible: sprite.visible,
+              alpha: sprite.alpha,
+              x: sprite.x,
+              y: sprite.y,
+            });
+
+            sprite.setDepth(zDepth);
             this.activeSprites.set(element.elementName, sprite);
           }
         } catch (error) {
@@ -166,6 +211,16 @@ export class VideoEngine {
   private setupScene(): void {
     this.scene.cameras.main.setBackgroundColor("#ffffff");
     this.scene.scale.setGameSize(1920, 1080);
+
+    // הדפסת מידע על המצלמה
+    console.log("Camera position:", {
+      x: this.scene.cameras.main.x,
+      y: this.scene.cameras.main.y,
+      centerX: this.scene.cameras.main.centerX,
+      centerY: this.scene.cameras.main.centerY,
+      scrollX: this.scene.cameras.main.scrollX,
+      scrollY: this.scene.cameras.main.scrollY,
+    });
   }
 
   private startAnimations(): void {
@@ -173,7 +228,15 @@ export class VideoEngine {
 
     this.timelineData["template video json"].forEach((element) => {
       const sprite = this.activeSprites.get(element.elementName);
-      if (!sprite || !element.timeline) return;
+
+      // הוספת בדיקה לסוג האובייקט
+      if (
+        !sprite ||
+        !element.timeline ||
+        (!(sprite instanceof Phaser.GameObjects.Sprite) &&
+          !(sprite instanceof Phaser.GameObjects.Video))
+      )
+        return;
 
       // מציאת נתוני הנכס המתאימים
       const assetData = this.assetsData?.assets.find(
@@ -191,6 +254,17 @@ export class VideoEngine {
     }
     this.scene.tweens.killAll();
     this.assetService.hideAllAssets();
+
+    // הרס כל הספרייטים
+    this.activeSprites.forEach((sprite) => {
+      if (sprite instanceof Phaser.GameObjects.Sprite) {
+        sprite.destroy();
+      } else if (sprite instanceof Phaser.GameObjects.Video) {
+        sprite.stop();
+        sprite.destroy();
+      }
+    });
+
     this.activeSprites.clear();
     this.timelineData = null;
   }

@@ -1,6 +1,23 @@
 {
   "assets": [
     {
+      "assetName": "magic_video",
+      "assetUrl": "assets/images/Magic.mp4",
+      "assetType": "video",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
       "assetName": "background_image",
       "assetUrl": "assets/images/background_image.jpg",
       "assetType": "image",
@@ -47,8 +64,8 @@
         "height": 3
       },
       "pivot_override": {
-        "x": 0.5,
-        "y": 0.5
+        "x": 100,
+        "y": 200
       }
     },
     {

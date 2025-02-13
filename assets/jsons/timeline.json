@@ -1,6 +1,52 @@
 {
   "template video json": [
     {
+      "elementName": "magicVideo",
+      "assetType": "video",
+      "assetName": "magic_video",
+      "initialState": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 1
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "scale": [
+          {
+            "startTime": 0,
+            "endTime": 5,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 1.5,
+              "y": 1
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "opacity": [
+          {
+            "startTime": 4,
+            "endTime": 5,
+            "startValue": 1,
+            "endValue": 1,
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          }
+        ]
+      }
+    },
+
+    {
       "elementName": "backgroundImage",
       "assetType": "image",
       "assetName": "background_image",
@@ -53,7 +99,7 @@
         "position": {
           "x": 50,
           "y": 50,
-          "z": 0
+          "z": 1
         },
         "scale": {
           "x": 1,
@@ -65,8 +111,8 @@
       "timeline": {
         "scale": [
           {
-            "startTime": 0,
-            "endTime": 7,
+            "startTime": 10,
+            "endTime": 20,
             "startValue": {
               "x": 1,
               "y": 1
@@ -81,8 +127,8 @@
         ],
         "rotation": [
           {
-            "startTime": 0,
-            "endTime": 7,
+            "startTime": 10,
+            "endTime": 20,
             "startValue": 0,
             "endValue": 360,
             "easeIn": "Linear",
@@ -99,7 +145,7 @@
         "position": {
           "x": -50,
           "y": 0,
-          "z": 1
+          "z": 5
         },
         "scale": {
           "x": 1,
@@ -114,7 +160,7 @@
             "startTime": 5,
             "endTime": 10,
             "startValue": {
-              "z": 1
+              "z": 5
             },
             "endValue": {
               "z": -1
@@ -143,7 +189,7 @@
         "position": {
           "x": 0,
           "y": -20,
-          "z": 1
+          "z": 3
         },
         "scale": {
           "x": 1,

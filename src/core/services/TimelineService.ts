@@ -148,18 +148,9 @@ export class TimelineService {
     elements: TimelineElement[]
   ): Promise<string[]> {
     const errors: string[] = [];
-    // this.assetsMap.forEach((value, key) => {
-    //   console.log(`++++++++Key: ${key}, Value:`, value);
-    // });
 
     for (const element of elements) {
       const assetInfo = this.assetsMap.get(element.assetName);
-
-      // if (!assetInfo) {
-      //   errors.push(
-      //     `Element ${element.assetName}: Asset "${element.assetName}" not found in assets JSON`
-      //   );
-      // }
     }
 
     return errors;
