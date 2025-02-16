@@ -20,6 +20,7 @@ import {
   AssetInfo,
 } from "../types/interfaces/AssetInterfaces";
 import { AnimationService } from "../core/services/AnimationService";
+import { Console } from "console";
 
 export class JsonManager {
   private scene: Scene;
@@ -85,7 +86,7 @@ export class JsonManager {
     });
   }
 
-  private async validateAssetExistence(assets: AssetElement[]): Promise<{
+  private async ValidateAssetExistence(assets: AssetElement[]): Promise<{
     missingAssets: string[];
     loadedAssets: string[];
     failedAssets: string[];
@@ -126,7 +127,7 @@ export class JsonManager {
       this.validateAssetsJson(json);
 
       const { missingAssets, loadedAssets, failedAssets } =
-        await this.validateAssetExistence(json.assets);
+        await this.ValidateAssetExistence(json.assets);
 
       const messages: any[] = [];
       const hasErrors = missingAssets.length > 0 || failedAssets.length > 0;

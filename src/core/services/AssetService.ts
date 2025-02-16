@@ -167,6 +167,13 @@ export class AssetService {
       return { success: true };
     }
 
+    // אם זה particle, נחשיב אותו כטעון מיד
+    if (assetInfo.type === "particle") {
+      console.log(`++ ✅ Particle asset "${assetName}" marked as loaded`);
+      this.loadedAssets.add(assetName);
+      return { success: true };
+    }
+
     const fileExtension = assetInfo.url.split(".").pop()?.toLowerCase();
     console.log(`Asset "${assetName}" has extension: ${fileExtension}`);
 
