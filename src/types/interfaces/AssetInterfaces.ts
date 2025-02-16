@@ -1,21 +1,29 @@
+// types/interfaces/AssetInterfaces.ts
+
+// Basic shared types
+export type AssetType = "image" | "video" | "particle";
+
+export interface Point2D {
+  x: number;
+  y: number;
+}
+
+export interface Dimensions {
+  width: number;
+  height: number;
+}
+
+// Asset Element Interface
 export interface AssetElement {
   assetName: string;
   assetUrl: string;
-  assetType: string;
-  scale_override?: {
-    x: number;
-    y: number;
-  };
-  aspect_ratio_override?: {
-    width: number;
-    height: number;
-  };
-  pivot_override?: {
-    x: number;
-    y: number;
-  };
+  assetType: AssetType;
+  scale_override?: Point2D;
+  aspect_ratio_override?: Dimensions;
+  pivot_override?: Point2D;
 }
 
+// Display Properties Interface
 export interface AssetDisplayProperties {
   x: number;
   y: number;
@@ -23,20 +31,32 @@ export interface AssetDisplayProperties {
   alpha: number;
   rotation?: number;
   tint?: number;
-  anchor?: { x: number; y: number };
-  pivot?: { x: number; y: number };
-  ratio?: { width: number; height: number };
+  anchor?: Point2D;
+  pivot?: Point2D;
+  ratio?: Dimensions;
 }
 
-export interface AssetInfo {
+// Asset Info Interfaces
+export interface BaseAssetInfo {
   url: string;
-  type: string;
+  type: AssetType;
+}
+
+export interface ImageAssetInfo extends BaseAssetInfo {
+  type: "image";
   sprite?: Phaser.GameObjects.Image;
 }
 
-export interface AssetJson {
-  assets: AssetElement[];
+export interface ParticleAssetInfo extends BaseAssetInfo {
+  type: "particle";
+  textureName: string;
+  sprite?: Phaser.GameObjects.Sprite;
+  emitter?: Phaser.GameObjects.Particles.ParticleEmitter;
 }
-export interface AssetsData {
+
+export type AssetInfo = ImageAssetInfo | ParticleAssetInfo;
+
+// Asset JSON interface (removing duplicate AssetsData)
+export interface AssetJson {
   assets: AssetElement[];
 }

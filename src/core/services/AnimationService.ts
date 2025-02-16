@@ -1,14 +1,15 @@
+import { Scene, GameObjects } from "phaser";
 import { TimelineElement } from "../../types/interfaces/TimelineInterfaces";
 import { AssetElement } from "../../types/interfaces/AssetInterfaces";
-import { Scene, GameObjects, Geom } from "phaser";
+import { ParticleService } from "./ParticleService";
 
 export class AnimationService {
   private scene: Scene;
-  private particles: Map<string, GameObjects.Particles.ParticleEmitter>;
+  private particleService: ParticleService;
 
   constructor(scene: Scene) {
     this.scene = scene;
-    this.particles = new Map();
+    this.particleService = new ParticleService(scene);
   }
 
   public applyAnimations(
@@ -20,365 +21,229 @@ export class AnimationService {
     timelineElement: TimelineElement,
     assetElement?: AssetElement
   ): void {
-    if (!timelineElement) return;
+    if (!timelineElement || !gameObject) return;
 
+    // Handle particle creation if needed
     if (timelineElement.assetType === "particle") {
-      const textureName = timelineElement.particles?.textureName;
-
-      if (!textureName) {
-        console.log(
-          `[setupParticles] Missing textureName in particles for ${timelineElement.elementName}`
-        );
-      }
-      this.scene.load.image("particleTexture", assetElement?.assetUrl);
-
-      const emitterManager = this.setupParticles(timelineElement);
-      gameObject = emitterManager; // עכשיו נוכל להשתמש באותה לוגיקת אנימציה
-      console.log(gameObject + " is the particle?");
+      gameObject = this.particleService.createParticleSystem(
+        timelineElement,
+        assetElement
+      );
+      if (!gameObject) return;
     }
 
-    if (!gameObject) return;
+    // Prepare container and apply animations
+    const container = this.prepareContainer(
+      gameObject,
+      timelineElement,
+      assetElement
+    );
+    this.applyTimelineAnimations(container, gameObject, timelineElement);
+    this.handleVisibility(gameObject, timelineElement);
+  }
 
-    const timeline = timelineElement.timeline;
-    // בדיקת מצב התחלתי לכל האלמנטים
-    console.log(`${timelineElement.elementName} - Initial State:`, {
-      position: { x: gameObject.x, y: gameObject.y },
-      scale: { x: gameObject.scaleX, y: gameObject.scaleY },
-      alpha: gameObject.alpha,
-      rotation: gameObject.angle,
-      pivot: assetElement?.pivot_override || { x: 0.5, y: 0.5 },
-    });
-
+  private prepareContainer(
+    gameObject:
+      | GameObjects.Sprite
+      | GameObjects.Image
+      | GameObjects.Particles.ParticleEmitter,
+    timelineElement: TimelineElement,
+    assetElement?: AssetElement
+  ) {
     const originalX = gameObject.x;
     const originalY = gameObject.y;
     const originalDepth = gameObject.depth;
-
     const pivotX = assetElement?.pivot_override?.x || 0.5;
     const pivotY = assetElement?.pivot_override?.y || 0.5;
 
-    // בדיקת יצירת הקונטיינר
-    const pivotContainer = this.scene.add.container(originalX, originalY);
-    pivotContainer.setDepth(originalDepth);
+    const container = this.scene.add.container(originalX, originalY);
+    container.setDepth(originalDepth);
 
-    gameObject.setPosition(-pivotX, -pivotY);
-    pivotContainer.add(gameObject);
-
-    console.log(`${timelineElement.elementName} - After Container Setup:`, {
-      containerPosition: { x: pivotContainer.x, y: pivotContainer.y },
-      objectPositionInContainer: { x: gameObject.x, y: gameObject.y },
-      pivot: { x: pivotX, y: pivotY },
-    });
-
-    // Scale Animation
-    if (timeline?.scale) {
-      const anim = timeline.scale[0];
-      if (anim) {
-        console.log(`${timelineElement.elementName} - Scale Animation:`, {
-          from: { x: pivotContainer.scaleX, y: pivotContainer.scaleY },
-          to: anim.endValue,
-          duration: anim.endTime - anim.startTime,
-        });
-
-        this.scene.tweens.add({
-          targets: pivotContainer,
-          scaleX: anim.endValue.x,
-          scaleY: anim.endValue.y,
-          duration: (anim.endTime - anim.startTime) * 1000,
-          ease: anim.easeIn || "Linear",
-          delay: anim.startTime * 1000,
-          onComplete: () => {
-            console.log(`${timelineElement.elementName} - Scale Complete:`, {
-              finalScale: {
-                x: pivotContainer.scaleX,
-                y: pivotContainer.scaleY,
-              },
-            });
-          },
-        });
-      }
+    // Only add to container if not a particle system
+    if (timelineElement.assetType !== "particle") {
+      gameObject.setPosition(-pivotX, -pivotY);
+      container.add(gameObject);
     }
 
-    // Position Animation
-    if (timeline?.position) {
-      const anim = timeline.position[0];
-      if (anim) {
-        const screenWidth = this.scene.scale.width;
-        const screenHeight = this.scene.scale.height;
-
-        const tweenConfig: any = {
-          targets: pivotContainer,
-          duration: (anim.endTime - anim.startTime) * 1000,
-          ease: anim.easeIn || "Linear",
-          delay: anim.startTime * 1000,
-        };
-
-        // רק אם יש ערכי x,y חדשים, נוסיף אותם לאנימציה
-        if (anim.endValue.x !== undefined) {
-          tweenConfig.x = (anim.endValue.x / 1920) * screenWidth;
-        }
-        if (anim.endValue.y !== undefined) {
-          tweenConfig.y = (anim.endValue.y / 1080) * screenHeight;
-        }
-
-        // הוספת תמיכה באנימציית z
-        if (anim.endValue.z !== undefined) {
-          const startZ =
-            anim.startValue?.z !== undefined
-              ? Math.round(anim.startValue.z)
-              : pivotContainer.depth;
-          const endZ = Math.round(anim.endValue.z);
-
-          // במקום לעשות אנימציה על אובייקט נפרד, נוסיף את ה-z ישירות ל-container
-          tweenConfig.depth = {
-            from: startZ,
-            to: endZ,
-          };
-        }
-
-        this.scene.tweens.add(tweenConfig);
-      }
-    }
-
-    // Opacity Animation
-    if (timeline?.opacity) {
-      const anim = timeline.opacity[0];
-      if (anim) {
-        console.log(`${timelineElement.elementName} - Opacity Animation:`, {
-          from: gameObject.alpha,
-          to: anim.endValue,
-          duration: anim.endTime - anim.startTime,
-        });
-
-        this.scene.tweens.add({
-          targets: gameObject,
-          alpha: anim.endValue,
-          duration: (anim.endTime - anim.startTime) * 1000,
-          ease: anim.easeIn || "Linear",
-          delay: anim.startTime * 1000,
-          onComplete: () => {
-            console.log(`${timelineElement.elementName} - Opacity Complete:`, {
-              finalAlpha: gameObject.alpha,
-            });
-          },
-        });
-      }
-    }
-
-    // Rotation Animation
-    if (timeline?.rotation) {
-      const anim = timeline.rotation[0];
-      if (anim) {
-        console.log(`${timelineElement.elementName} - Rotation Animation:`, {
-          from: pivotContainer.angle,
-          to: anim.endValue,
-          duration: anim.endTime - anim.startTime,
-        });
-
-        this.scene.tweens.add({
-          targets: pivotContainer,
-          angle: anim.endValue,
-          duration: (anim.endTime - anim.startTime) * 1000,
-          ease: anim.easeIn || "Linear",
-          delay: anim.startTime * 1000,
-          onComplete: () => {
-            console.log(`${timelineElement.elementName} - Rotation Complete:`, {
-              finalAngle: pivotContainer.angle,
-            });
-          },
-        });
-      }
-    }
-
-    // Color Animation
-    if (timeline?.color && "setTint" in gameObject) {
-      const anim = timeline.color[0];
-      if (anim) {
-        const startColor = parseInt(anim.startValue.replace("0x", ""), 16);
-        const endColor = parseInt(anim.endValue.replace("0x", ""), 16);
-
-        (gameObject as GameObjects.Sprite | GameObjects.Image).setTint(
-          startColor
-        );
-
-        this.scene.tweens.add({
-          targets: {},
-          tint: { from: 0, to: 1 },
-          duration: (anim.endTime - anim.startTime) * 1000,
-          delay: anim.startTime * 1000,
-          ease: anim.easeIn || "Linear",
-          onUpdate: (tween) => {
-            const value = tween.getValue();
-            const r1 = (startColor >> 16) & 0xff;
-            const g1 = (startColor >> 8) & 0xff;
-            const b1 = startColor & 0xff;
-
-            const r2 = (endColor >> 16) & 0xff;
-            const g2 = (endColor >> 8) & 0xff;
-            const b2 = endColor & 0xff;
-
-            const r = Math.floor(r1 + (r2 - r1) * value);
-            const g = Math.floor(g1 + (g2 - g1) * value);
-            const b = Math.floor(b1 + (b2 - b1) * value);
-
-            const currentColor = (r << 16) | (g << 8) | b;
-            if ("setTint" in gameObject) {
-              (gameObject as GameObjects.Sprite | GameObjects.Image).setTint(
-                currentColor
-              );
-            }
-          },
-        });
-      }
-    }
-
-    if (timelineElement.onScreen) {
-      console.log("onScreen found for:", timelineElement.elementName);
-      gameObject.setAlpha(0);
-
-      timelineElement.onScreen.forEach((screen) => {
-        console.log("Processing screen time range:", screen);
-
-        this.scene.tweens.add({
-          targets: gameObject,
-          alpha: 1,
-          duration: 100,
-          ease: "Linear",
-          delay: screen.startTime * 1000,
-        });
-
-        this.scene.tweens.add({
-          targets: gameObject,
-          alpha: 0,
-          duration: 100,
-          ease: "Linear",
-          delay: screen.endTime * 1000,
-        });
-      });
-    } else {
-      gameObject.setAlpha(1);
-    }
+    return container;
   }
 
-  private setupParticles(
+  private applyTimelineAnimations(
+    container: Phaser.GameObjects.Container,
+    gameObject:
+      | GameObjects.Sprite
+      | GameObjects.Image
+      | GameObjects.Particles.ParticleEmitter,
     timelineElement: TimelineElement
-  ): GameObjects.Particles.ParticleEmitter | null {
-    if (!timelineElement.particles?.config) {
-      throw new Error("Particle config is missing");
-    }
+  ) {
+    const timeline = timelineElement.timeline;
 
-    const config = timelineElement.particles.config;
-    const emitterConfig: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
-      {
-        frequency: config.frequency,
-        lifespan: config.lifespan,
-        quantity: config.quantity,
-        speed: config.speed,
-        scale: config.scale,
-        alpha: config.alpha,
-        rotate: config.rotate,
-        tint: config.tint
-          ? config.tint.map((color) => parseInt(color.toString(), 16))
-          : undefined,
-        blendMode: config.blendMode,
-        gravityX: config.gravityX,
-        gravityY: config.gravityY,
-      };
-
-    if (config.emitZone) {
-      const line = new Geom.Line(0, 0, 100, 100);
-
-      emitterConfig.emitZone = {
-        type: "edge",
-        source: line,
-        quantity: 1,
-        stepRate: 0,
-        yoyo: false,
-      };
-    }
-
-    try {
-      // texture key must be a string, and createEmitter returns ParticleEmitter
-      const textureName = timelineElement.particles?.textureName;
-      if (!textureName) {
-        console.error(
-          `Missing textureName in particles for ${timelineElement.elementName}`
-        );
-        return null;
-      }
-
-      const emitter = this.scene.add.particles(0, 0, textureName);
-
-      console.log(
-        `[setupParticles] Created Emitter for ${timelineElement.elementName}:`,
-        emitter
+    if (timeline?.scale) this.applyScaleAnimation(container, timeline.scale[0]);
+    if (timeline?.position)
+      this.applyPositionAnimation(container, timeline.position[0]);
+    if (timeline?.opacity)
+      this.applyOpacityAnimation(gameObject, timeline.opacity[0]);
+    if (timeline?.rotation)
+      this.applyRotationAnimation(container, timeline.rotation[0]);
+    if (timeline?.color && "setTint" in gameObject) {
+      this.applyColorAnimation(
+        gameObject as GameObjects.Sprite | GameObjects.Image,
+        timeline.color[0]
       );
-      console.log(
-        `[setupParticles] Emitter Position: x=${emitter.x}, y=${emitter.y}`
-      );
-      console.log(`[setupParticles] Emitter Active:`, emitter.active);
-      // 🔹 בדיקת טקסטורה
-      console.log(`[setupParticles] Checking textureName:`, textureName);
-
-      if (!this.scene.textures.exists(textureName)) {
-        console.error(
-          `[setupParticles] ❌ Texture "${textureName}" is missing!`
-        );
-      }
-
-      // 🔹 בדיקת מיקום ה־Emitter על המסך
-      if (emitter.x === 0 && emitter.y === 0) {
-        console.warn(
-          `[setupParticles] ⚠️ Warning: Emitter is at (0,0) – it might be off-screen.`
-        );
-      }
-
-      // 🔹 בדיקת Alpha
-      console.log(`[setupParticles] Emitter Alpha:`, emitter.alpha);
-
-      // 🔹 נסה להזיז את ה־Emitter למיקום ברור
-      emitter.setPosition(400, 300);
-      console.log(`[setupParticles] 🔄 Moved emitter to x=400, y=300`);
-
-      // 🔹 הפעלת החלקיקים ידנית לבדיקה
-      this.scene.time.delayedCall(1000, () => {
-        console.log(`[Opacity Test] Setting emitter alpha to 1`);
-        emitter.setAlpha(1);
-      });
-
-      this.particles.set(timelineElement.elementName, emitter);
-
-      if (timelineElement.onScreen) {
-        this.handleParticleVisibility(emitter, timelineElement.onScreen);
-      }
-
-      return emitter;
-    } catch (error) {
-      console.error("Error creating particle system:", error);
-      return null;
     }
   }
 
-  private handleParticleVisibility(
-    emitter: GameObjects.Particles.ParticleEmitter,
-    onScreen: { startTime: number; endTime: number }[]
-  ): void {
-    onScreen.forEach((screen) => {
-      this.scene.time.delayedCall(screen.startTime * 1000, () => {
-        emitter.start();
+  private applyScaleAnimation(target: Phaser.GameObjects.Container, anim: any) {
+    if (!anim) return;
+
+    this.scene.tweens.add({
+      targets: target,
+      scaleX: anim.endValue.x,
+      scaleY: anim.endValue.y,
+      duration: (anim.endTime - anim.startTime) * 1000,
+      ease: anim.easeIn || "Linear",
+      delay: anim.startTime * 1000,
+    });
+  }
+
+  private applyPositionAnimation(
+    target: Phaser.GameObjects.Container,
+    anim: any
+  ) {
+    if (!anim) return;
+
+    const screenWidth = this.scene.scale.width;
+    const screenHeight = this.scene.scale.height;
+    const tweenConfig: any = {
+      targets: target,
+      duration: (anim.endTime - anim.startTime) * 1000,
+      ease: anim.easeIn || "Linear",
+      delay: anim.startTime * 1000,
+    };
+
+    if (anim.endValue.x !== undefined) {
+      tweenConfig.x = (anim.endValue.x / 1920) * screenWidth;
+    }
+    if (anim.endValue.y !== undefined) {
+      tweenConfig.y = (anim.endValue.y / 1080) * screenHeight;
+    }
+    if (anim.endValue.z !== undefined) {
+      const startZ =
+        anim.startValue?.z !== undefined
+          ? Math.round(anim.startValue.z)
+          : target.depth;
+      tweenConfig.depth = {
+        from: startZ,
+        to: Math.round(anim.endValue.z),
+      };
+    }
+
+    this.scene.tweens.add(tweenConfig);
+  }
+
+  private applyOpacityAnimation(
+    target:
+      | GameObjects.Sprite
+      | GameObjects.Image
+      | GameObjects.Particles.ParticleEmitter,
+    anim: any
+  ) {
+    if (!anim) return;
+
+    this.scene.tweens.add({
+      targets: target,
+      alpha: anim.endValue,
+      duration: (anim.endTime - anim.startTime) * 1000,
+      ease: anim.easeIn || "Linear",
+      delay: anim.startTime * 1000,
+    });
+  }
+
+  private applyRotationAnimation(
+    target: Phaser.GameObjects.Container,
+    anim: any
+  ) {
+    if (!anim) return;
+
+    this.scene.tweens.add({
+      targets: target,
+      angle: anim.endValue,
+      duration: (anim.endTime - anim.startTime) * 1000,
+      ease: anim.easeIn || "Linear",
+      delay: anim.startTime * 1000,
+    });
+  }
+
+  private applyColorAnimation(
+    target: GameObjects.Sprite | GameObjects.Image,
+    anim: any
+  ) {
+    if (!anim) return;
+
+    const startColor = parseInt(anim.startValue.replace("0x", ""), 16);
+    const endColor = parseInt(anim.endValue.replace("0x", ""), 16);
+
+    target.setTint(startColor);
+
+    this.scene.tweens.add({
+      targets: {},
+      tint: { from: 0, to: 1 },
+      duration: (anim.endTime - anim.startTime) * 1000,
+      delay: anim.startTime * 1000,
+      ease: anim.easeIn || "Linear",
+      onUpdate: (tween) => {
+        const value = tween.getValue();
+        const r1 = (startColor >> 16) & 0xff;
+        const g1 = (startColor >> 8) & 0xff;
+        const b1 = startColor & 0xff;
+
+        const r2 = (endColor >> 16) & 0xff;
+        const g2 = (endColor >> 8) & 0xff;
+        const b2 = endColor & 0xff;
+
+        const r = Math.floor(r1 + (r2 - r1) * value);
+        const g = Math.floor(g1 + (g2 - g1) * value);
+        const b = Math.floor(b1 + (b2 - b1) * value);
+
+        const currentColor = (r << 16) | (g << 8) | b;
+        target.setTint(currentColor);
+      },
+    });
+  }
+
+  private handleVisibility(
+    gameObject:
+      | GameObjects.Sprite
+      | GameObjects.Image
+      | GameObjects.Particles.ParticleEmitter,
+    timelineElement: TimelineElement
+  ) {
+    if (!timelineElement.onScreen) {
+      gameObject.setAlpha(1);
+      return;
+    }
+
+    gameObject.setAlpha(0);
+    timelineElement.onScreen.forEach((screen) => {
+      this.scene.tweens.add({
+        targets: gameObject,
+        alpha: 1,
+        duration: 100,
+        ease: "Linear",
+        delay: screen.startTime * 1000,
       });
-      this.scene.time.delayedCall(screen.endTime * 1000, () => {
-        emitter.stop();
+
+      this.scene.tweens.add({
+        targets: gameObject,
+        alpha: 0,
+        duration: 100,
+        ease: "Linear",
+        delay: screen.endTime * 1000,
       });
     });
   }
 
-  public cleanupParticles(): void {
-    this.particles.forEach((emitter) => {
-      emitter.stop();
-      // Since we can't directly access the parent, we'll remove the emitter
-      // and it will be garbage collected
-      emitter.destroy();
-    });
-    this.particles.clear();
+  public cleanup(): void {
+    this.particleService.cleanup();
   }
 }

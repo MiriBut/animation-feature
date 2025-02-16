@@ -254,9 +254,9 @@ export class Validators {
     if (anim.startTime >= anim.endTime)
       errors.push(`${prefix}: startTime must be less than endTime`);
     if (!this.isValidEaseEquation(anim.easeIn))
-      errors.push(`${prefix}: Invalid easeIn function`);
+      errors.push(`${prefix}: Invalid easeIn function` + "" + anim.easeIn);
     if (!this.isValidEaseEquation(anim.easeOut))
-      errors.push(`${prefix}: Invalid easeOut function`);
+      errors.push(`${prefix}: Invalid easeOut function` + "" + anim.easeIn);
 
     return errors;
   }

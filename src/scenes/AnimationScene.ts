@@ -8,26 +8,12 @@ import { VideoEngine } from "../scenes/VideoEngine";
 import { ExportManager } from "../managers/ExportManager";
 import { AssetService } from "../core/services/AssetService";
 import { showMessage } from "../ui/ErrorModal/MessageModal";
+import { AssetType, AssetElement } from "../types/interfaces/AssetInterfaces";
 
 interface AssetJson {
-  assets: Array<{
-    assetName: string;
-    assetUrl: string;
-    assetType: string;
-    scale_override: {
-      x: number;
-      y: number;
-    };
-    aspect_ratio_override: {
-      width: number;
-      height: number;
-    };
-    pivot_override: {
-      x: number;
-      y: number;
-    };
-  }>;
+  assets: AssetElement[];
 }
+
 interface TimelineJson {
   "template video json": Array<{
     elementName: string;
@@ -270,14 +256,29 @@ export class AnimationScene extends Scene {
       let assetsJson: AssetJson;
 
       try {
-        assetsJson = JSON.parse(fileContent) as AssetJson;
+        const parsedJson = JSON.parse(fileContent);
+
+        // המרת assetType למבנה הנכון
+        if (!parsedJson || !parsedJson.assets) {
+          throw new Error("Invalid assets JSON structure");
+        }
+
+        // נוודא שה-assetType חוקי
+        assetsJson = {
+          assets: parsedJson.assets.map((asset: any) => ({
+            assetName: asset.assetName,
+            assetUrl: asset.assetUrl,
+            assetType: this.normalizeAssetType(asset.assetType), // המרה לטיפוס הנכון
+            scale_override: asset.scale_override ?? { x: 1, y: 1 },
+            aspect_ratio_override: asset.aspect_ratio_override ?? {
+              width: 1,
+              height: 1,
+            },
+            pivot_override: asset.pivot_override ?? { x: 0.5, y: 0.5 },
+          })),
+        };
       } catch (parseError) {
         throw new Error(`Invalid JSON: ${(parseError as Error).message}`);
-      }
-
-      // וידוא שה-JSON תקין ומכיל את המבנה הנכון
-      if (!assetsJson || !assetsJson.assets) {
-        throw new Error("Invalid assets JSON structure");
       }
 
       // טעינת האסטים דרך ה-JsonManager
@@ -297,6 +298,14 @@ export class AnimationScene extends Scene {
       });
       throw error;
     }
+  }
+
+  private normalizeAssetType(type: string): AssetType {
+    const validTypes: AssetType[] = ["image", "video", "particle"];
+    if (validTypes.includes(type as AssetType)) {
+      return type as AssetType;
+    }
+    throw new Error(`Invalid assetType: ${type}`);
   }
 
   private async onTimelineJson(file: File): Promise<void> {
