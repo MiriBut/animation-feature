@@ -3,6 +3,11 @@ import {
   AssetElement,
   AssetJson,
   AssetDisplayProperties,
+  AssetInfo,
+  BaseAssetInfo,
+  ParticleAssetInfo,
+  ImageAssetInfo,
+  VideoAssetInfo,
 } from "../../types/interfaces/AssetInterfaces";
 import { Validators } from "../utils/Validators";
 import { Helpers } from "../utils/Helpers";
@@ -15,75 +20,76 @@ import {
 export class AssetService {
   private scene: Scene;
   private loadedAssets: Set<string> = new Set();
-  private assetsMap: Map<
-    string,
-    {
-      url: string;
-      type: string;
-      sprite?: Phaser.GameObjects.Sprite | Phaser.GameObjects.Video;
-    }
-  > = new Map();
+  private assetsMap: Map<string, AssetInfo> = new Map();
 
   constructor(scene: Scene) {
     this.scene = scene;
   }
 
-  public getAssetsMap(): Map<string, { url: string; type: string }> {
-    // console.log("00000000000000");
-    // this.assetsMap.forEach((asset, key) => {
-    //   console.log(key, asset);
-    // });
-
+  public getAssetsMap(): Map<string, AssetInfo> {
     return new Map(this.assetsMap);
   }
 
-  public getAssetInfo(assetName: string):
-    | {
-        url: string;
-        type: string;
-        sprite?: Phaser.GameObjects.Sprite | Phaser.GameObjects.Video;
-      }
-    | undefined {
+  public getAssetInfo(assetName: string): AssetInfo | undefined {
     return this.assetsMap.get(assetName);
+  }
+
+  public setAssetInfo(assetName: string, assetInfo: AssetInfo): void {
+    this.assetsMap.set(assetName, assetInfo);
+  }
+
+  private getAssetType<T extends AssetInfo>(assetInfo: AssetInfo): T {
+    return assetInfo as T;
   }
 
   public debugAssetSizes(): void {
     console.log("=== Asset Sizes Debug Info ===");
 
     this.assetsMap.forEach((assetInfo, assetName) => {
-      if (assetInfo.sprite) {
-        let sprite: Phaser.GameObjects.Sprite | Phaser.GameObjects.Video =
-          assetInfo.sprite;
+      if (
+        "sprite" in assetInfo &&
+        assetInfo.sprite instanceof Phaser.GameObjects.Sprite
+      ) {
+        const sprite = assetInfo.sprite;
+        const texture = sprite.texture;
+        const sourceImage = texture.getSourceImage();
 
-        if (sprite instanceof Phaser.GameObjects.Sprite) {
-          const texture = sprite.texture;
-          const sourceImage = texture.getSourceImage();
-
-          console.log(`Asset: ${assetName}`);
-          console.log(
-            `- Original Size: ${sourceImage.width}x${sourceImage.height}`
-          );
-          console.log(
-            `- Display Size: ${sprite.displayWidth}x${sprite.displayHeight}`
-          );
-          console.log(`- Scale: ${sprite.scaleX}x${sprite.scaleY}`);
-          console.log(`- Origin: ${sprite.originX}x${sprite.originY}`);
-          console.log("------------------------");
-        }
+        console.log(`Asset: ${assetName}`);
+        console.log(
+          `- Original Size: ${sourceImage.width}x${sourceImage.height}`
+        );
+        console.log(
+          `- Display Size: ${sprite.displayWidth}x${sprite.displayHeight}`
+        );
+        console.log(`- Scale: ${sprite.scaleX}x${sprite.scaleY}`);
+        console.log(`- Origin: ${sprite.originX}x${sprite.originY}`);
+        console.log("------------------------");
       }
     });
   }
 
   public isAssetLoaded(assetName: string): boolean {
     const assetInfo = this.assetsMap.get(assetName);
-    return (
-      assetInfo !== undefined &&
-      this.loadedAssets.has(assetName) &&
-      ((assetInfo.type === "image" &&
-        assetInfo.sprite instanceof Phaser.GameObjects.Sprite) ||
-        (assetInfo.type === "video" &&
-          assetInfo.sprite instanceof Phaser.GameObjects.Video))
-    );
+    if (!assetInfo) return false;
+
+    const isLoaded = this.loadedAssets.has(assetName);
+
+    if (assetInfo.type === "image") {
+      const imageAsset = assetInfo as ImageAssetInfo;
+      return isLoaded && imageAsset.sprite instanceof Phaser.GameObjects.Sprite;
+    }
+
+    if (assetInfo.type === "video") {
+      const videoAsset = assetInfo as VideoAssetInfo;
+      return isLoaded && videoAsset.sprite instanceof Phaser.GameObjects.Video;
+    }
+
+    if (assetInfo.type === "particle") {
+      const particleAsset = assetInfo as ParticleAssetInfo;
+      return isLoaded && !!particleAsset.textureName;
+    }
+
+    return false;
   }
 
   public async handleAssetsJson(
@@ -93,13 +99,30 @@ export class AssetService {
     const missingAssetsSet = new Set(missingAssets.map((name) => name.trim()));
     try {
       json.assets.forEach((asset: AssetElement) => {
-        const assetName = asset.assetName.trim(); // לוודא שאין רווחים מיותרים
+        const assetName = asset.assetName.trim();
 
         if (!missingAssetsSet.has(assetName)) {
-          this.assetsMap.set(assetName, {
-            url: asset.assetUrl,
-            type: asset.assetType,
-          });
+          let newAssetInfo: AssetInfo;
+
+          if (asset.assetType === "particle") {
+            newAssetInfo = {
+              type: "particle",
+              url: asset.assetUrl,
+              textureName: asset.assetName,
+            } as ParticleAssetInfo;
+          } else if (asset.assetType === "video") {
+            newAssetInfo = {
+              type: "video",
+              url: asset.assetUrl,
+            } as VideoAssetInfo;
+          } else {
+            newAssetInfo = {
+              type: "image",
+              url: asset.assetUrl,
+            } as ImageAssetInfo;
+          }
+
+          this.assetsMap.set(assetName, newAssetInfo);
         }
       });
 
@@ -150,6 +173,7 @@ export class AssetService {
       });
     }
   }
+
   public async loadAsset(
     assetName: string
   ): Promise<{ success: boolean; error?: string }> {
@@ -161,17 +185,77 @@ export class AssetService {
       return { success: false, error: `Asset not found` };
     }
 
-    // בדיקה אם האסט כבר טעון
     if (this.isAssetLoaded(assetName)) {
       console.log(`++ ✅ Asset "${assetName}" is already loaded`);
       return { success: true };
     }
 
-    // אם זה particle, נחשיב אותו כטעון מיד
     if (assetInfo.type === "particle") {
-      console.log(`++ ✅ Particle asset "${assetName}" marked as loaded`);
-      this.loadedAssets.add(assetName);
-      return { success: true };
+      return new Promise((resolve) => {
+        console.log(`++ Loading particle texture: ${assetName}`);
+
+        const particleInfo = assetInfo as ParticleAssetInfo;
+        // Use the asset name as the texture key to ensure consistency
+        const textureKey = assetName;
+
+        // First check if the texture already exists in the cache
+        if (this.scene.textures.exists(textureKey)) {
+          console.log(
+            `++ ✅ Particle texture "${textureKey}" already exists in cache`
+          );
+          this.loadedAssets.add(assetName);
+
+          const updatedParticleInfo: ParticleAssetInfo = {
+            ...particleInfo,
+            textureName: textureKey,
+            // Don't create a new sprite if we're just using the cached texture
+          };
+
+          this.assetsMap.set(assetName, updatedParticleInfo);
+          resolve({ success: true });
+          return;
+        }
+
+        // Load the texture if it's not in cache
+        this.scene.load.image(textureKey, assetInfo.url);
+
+        this.scene.load.once("complete", () => {
+          console.log(
+            `++ ✅ Particle texture "${textureKey}" loaded successfully`
+          );
+          this.loadedAssets.add(assetName);
+
+          // Create a temporary sprite to ensure the texture is properly initialized
+          const tempSprite = this.scene.add.sprite(0, 0, textureKey);
+          tempSprite.setVisible(false);
+
+          const updatedParticleInfo: ParticleAssetInfo = {
+            ...particleInfo,
+            textureName: textureKey,
+            sprite: tempSprite,
+          };
+
+          this.assetsMap.set(assetName, updatedParticleInfo);
+
+          // Log available textures for debugging
+          console.log(
+            "Available textures:",
+            Object.keys(this.scene.textures.list)
+          );
+
+          resolve({ success: true });
+        });
+
+        this.scene.load.once("loaderror", () => {
+          console.error(`++ ❌ Failed to load particle texture: ${textureKey}`);
+          resolve({
+            success: false,
+            error: `Failed to load particle texture: ${textureKey}`,
+          });
+        });
+
+        this.scene.load.start();
+      });
     }
 
     const fileExtension = assetInfo.url.split(".").pop()?.toLowerCase();
@@ -293,12 +377,10 @@ export class AssetService {
       }
 
       // סוג אסט לא נתמך
-      console.error(
-        `❌ Unsupported asset type: ${assetInfo.type} for ${assetName}`
-      );
+      console.error(`❌ Unsupported asset type: ${assetInfo} for ${assetName}`);
       resolve({
         success: false,
-        error: `Unsupported asset type: ${assetInfo.type}`,
+        error: `Unsupported asset type: ${assetInfo}`,
       });
     });
   }
@@ -469,7 +551,7 @@ export class AssetService {
 
   public hideAllAssets(): void {
     for (const [assetName, assetInfo] of this.assetsMap.entries()) {
-      if (assetInfo.sprite) {
+      if ("sprite" in assetInfo && assetInfo.sprite) {
         if (assetInfo.sprite instanceof Phaser.GameObjects.Video) {
           assetInfo.sprite.stop();
           assetInfo.sprite.destroy();
@@ -477,10 +559,35 @@ export class AssetService {
           assetInfo.sprite.destroy();
         }
 
-        this.assetsMap.set(assetName, {
-          url: assetInfo.url,
-          type: assetInfo.type,
-        });
+        // Create new asset info based on the original type
+        let newAssetInfo: AssetInfo;
+
+        switch (assetInfo.type) {
+          case "video":
+            newAssetInfo = {
+              type: "video",
+              url: assetInfo.url,
+            } as VideoAssetInfo;
+            break;
+
+          case "particle":
+            newAssetInfo = {
+              type: "particle",
+              url: assetInfo.url,
+              textureName: (assetInfo as ParticleAssetInfo).textureName,
+            } as ParticleAssetInfo;
+            break;
+
+          case "image":
+          default:
+            newAssetInfo = {
+              type: "image",
+              url: assetInfo.url,
+            } as ImageAssetInfo;
+            break;
+        }
+
+        this.assetsMap.set(assetName, newAssetInfo);
       }
     }
   }

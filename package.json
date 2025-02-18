@@ -16,7 +16,7 @@
     "@esotericsoftware/spine-phaser": "^4.2.71",
     "@ffmpeg/util": "^0.12.1",
     "gsap": "^3.12.7",
-    "phaser": "^3.60.0",
+    "phaser": "^3.88.2",
     "vite": "^6.0.11"
   },
   "devDependencies": {

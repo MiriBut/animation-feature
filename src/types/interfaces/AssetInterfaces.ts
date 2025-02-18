@@ -54,7 +54,24 @@ export interface ParticleAssetInfo extends BaseAssetInfo {
   emitter?: Phaser.GameObjects.Particles.ParticleEmitter;
 }
 
-export type AssetInfo = ImageAssetInfo | ParticleAssetInfo;
+export interface ImageAssetInfo extends BaseAssetInfo {
+  type: "image";
+  sprite?: Phaser.GameObjects.Image;
+}
+
+export interface VideoAssetInfo extends BaseAssetInfo {
+  type: "video";
+  sprite?: Phaser.GameObjects.Video;
+}
+
+export interface ParticleAssetInfo extends BaseAssetInfo {
+  type: "particle";
+  textureName: string;
+  sprite?: Phaser.GameObjects.Sprite;
+  emitter?: Phaser.GameObjects.Particles.ParticleEmitter;
+}
+
+export type AssetInfo = ImageAssetInfo | ParticleAssetInfo | VideoAssetInfo;
 
 // Asset JSON interface (removing duplicate AssetsData)
 export interface AssetJson {

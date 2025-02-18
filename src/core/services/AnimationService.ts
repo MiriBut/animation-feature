@@ -2,14 +2,18 @@ import { Scene, GameObjects } from "phaser";
 import { TimelineElement } from "../../types/interfaces/TimelineInterfaces";
 import { AssetElement } from "../../types/interfaces/AssetInterfaces";
 import { ParticleService } from "./ParticleService";
+import { ParticleAnimationService } from "./ParticleAnimationService";
 
 export class AnimationService {
   private scene: Scene;
   private particleService: ParticleService;
+  private particleAnimationService: ParticleAnimationService;
+  add: any;
 
   constructor(scene: Scene) {
     this.scene = scene;
     this.particleService = new ParticleService(scene);
+    this.particleAnimationService = new ParticleAnimationService(scene);
   }
 
   public applyAnimations(
@@ -32,14 +36,41 @@ export class AnimationService {
       if (!gameObject) return;
     }
 
-    // Prepare container and apply animations
+    // Prepare container once
     const container = this.prepareContainer(
       gameObject,
       timelineElement,
       assetElement
     );
-    this.applyTimelineAnimations(container, gameObject, timelineElement);
-    this.handleVisibility(gameObject, timelineElement);
+
+    const pivotX = assetElement?.pivot_override?.x || 0.5;
+    const pivotY = assetElement?.pivot_override?.y || 0.5;
+
+    if (timelineElement.assetType === "particle") {
+      // For particles, update their emission point relative to the container
+      const particleService = new ParticleAnimationService(this.scene);
+      const emitter = gameObject as GameObjects.Particles.ParticleEmitter;
+
+      // Set emitter position relative to container
+      emitter.setPosition(-pivotX, -pivotY);
+      container.add(emitter);
+
+      // Apply particle animations
+      particleService.applyParticleAnimations(
+        emitter,
+        container,
+        timelineElement
+      );
+    } else {
+      const regularObject = gameObject as
+        | GameObjects.Sprite
+        | GameObjects.Image;
+      regularObject.setPosition(-pivotX, -pivotY);
+      container.add(regularObject);
+      this.applyRegularAnimations(container, regularObject, timelineElement);
+    }
+
+    this.applyVisibilityAnimations(gameObject, timelineElement);
   }
 
   private prepareContainer(
@@ -53,27 +84,16 @@ export class AnimationService {
     const originalX = gameObject.x;
     const originalY = gameObject.y;
     const originalDepth = gameObject.depth;
-    const pivotX = assetElement?.pivot_override?.x || 0.5;
-    const pivotY = assetElement?.pivot_override?.y || 0.5;
 
     const container = this.scene.add.container(originalX, originalY);
     container.setDepth(originalDepth);
 
-    // Only add to container if not a particle system
-    if (timelineElement.assetType !== "particle") {
-      gameObject.setPosition(-pivotX, -pivotY);
-      container.add(gameObject);
-    }
-
     return container;
   }
 
-  private applyTimelineAnimations(
+  private applyRegularAnimations(
     container: Phaser.GameObjects.Container,
-    gameObject:
-      | GameObjects.Sprite
-      | GameObjects.Image
-      | GameObjects.Particles.ParticleEmitter,
+    gameObject: GameObjects.Sprite | GameObjects.Image,
     timelineElement: TimelineElement
   ) {
     const timeline = timelineElement.timeline;
@@ -85,11 +105,8 @@ export class AnimationService {
       this.applyOpacityAnimation(gameObject, timeline.opacity[0]);
     if (timeline?.rotation)
       this.applyRotationAnimation(container, timeline.rotation[0]);
-    if (timeline?.color && "setTint" in gameObject) {
-      this.applyColorAnimation(
-        gameObject as GameObjects.Sprite | GameObjects.Image,
-        timeline.color[0]
-      );
+    if (timeline?.color) {
+      this.applyColorAnimation(gameObject, timeline.color[0]);
     }
   }
 
@@ -142,10 +159,7 @@ export class AnimationService {
   }
 
   private applyOpacityAnimation(
-    target:
-      | GameObjects.Sprite
-      | GameObjects.Image
-      | GameObjects.Particles.ParticleEmitter,
+    target: GameObjects.Sprite | GameObjects.Image,
     anim: any
   ) {
     if (!anim) return;
@@ -211,7 +225,7 @@ export class AnimationService {
     });
   }
 
-  private handleVisibility(
+  private applyVisibilityAnimations(
     gameObject:
       | GameObjects.Sprite
       | GameObjects.Image
