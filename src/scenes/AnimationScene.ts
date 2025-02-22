@@ -94,8 +94,8 @@ export class AnimationScene extends Scene {
 
     this.characterManager.loadSpineAsset({
       key: "spineboy",
-      skeletonURL: "assets/skelSpineBoy/spineboy-pro.skel",
-      atlasURL: "assets/skelSpineBoy/spineboy-pma.atlas",
+      skeletonURL: "assets/spines/skelSpineBoy/spineboy-pro.skel",
+      atlasURL: "assets/spines/skelSpineBoy/spineboy-pma.atlas",
       type: "binary",
     });
   }
