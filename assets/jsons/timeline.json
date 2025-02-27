@@ -1,6 +1,58 @@
 {
   "template video json": [
     {
+      "elementName": "characterSpine",
+      "assetType": "spine",
+      "assetName": "character_spine",
+      "initialState": {
+        "position": {
+          "x": 100,
+          "y": 200,
+          "z": 2
+        },
+        "scale": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "opacity": 1,
+        "rotation": 0
+      },
+      "timeline": {
+        "position": [
+          {
+            "startTime": 0,
+            "endTime": 5,
+            "startValue": {
+              "x": 100,
+              "y": 200
+            },
+            "endValue": {
+              "x": 300,
+              "y": 200
+            },
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 2,
+            "endTime": 4,
+            "startValue": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "endValue": {
+              "x": 1,
+              "y": 1
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+    {
       "elementName": "sparklesEffect",
       "assetType": "particle",
       "assetName": "sparkle_particle",

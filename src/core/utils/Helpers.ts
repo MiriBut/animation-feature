@@ -98,7 +98,7 @@ export class Helpers {
     const errorMessage = error instanceof Error ? error.message : String(error);
     showMessage({
       isOpen: true,
-      type: "error",
+      // type: "error",
       title,
       messages: [errorMessage],
     });

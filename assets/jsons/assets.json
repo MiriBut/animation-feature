@@ -1,6 +1,27 @@
 {
   "assets": [
     {
+      "assetName": "character_spine",
+      "assetUrl": {
+        "atlasUrl": "assets/spines/skelSpineBoy/spineboy-pma.atlas",
+        "skeletonUrl": "assets/spines/skelSpineBoy/spineboy-pro.skel",
+        "skeletonType": "binary"
+      },
+      "assetType": "spine",
+      "scale_override": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "aspect_ratio_override": {
+        "width": 1,
+        "height": 1
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
       "assetName": "sparkle_particle",
       "assetUrl": "assets/images/sparkle.png",
       "assetType": "particle",

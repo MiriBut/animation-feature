@@ -1,62 +1,63 @@
-// types/interfaces/AssetInterfaces.ts
+// src/types/interfaces/AssetInterfaces.ts
+import { SpineGameObject } from "@esotericsoftware/spine-phaser";
 
-// Basic shared types
-export type AssetType = "image" | "video" | "particle";
+export type AssetType = "image" | "video" | "particle" | "spine";
 
-export interface Point2D {
-  x: number;
-  y: number;
-}
-
-export interface Dimensions {
-  width: number;
-  height: number;
-}
-
-// Asset Element Interface
 export interface AssetElement {
   assetName: string;
-  assetUrl: string;
+  assetUrl:
+    | string
+    | {
+        atlasUrl: string;
+        skeletonUrl: string;
+        skeletonType?: "binary" | "json";
+      };
   assetType: AssetType;
-  scale_override?: Point2D;
-  aspect_ratio_override?: Dimensions;
-  pivot_override?: Point2D;
+  scale_override?: { x: number; y: number };
+  aspect_ratio_override?: { width: number; height: number };
+  pivot_override?: { x: number; y: number };
 }
 
-// Display Properties Interface
+export interface AssetJson {
+  assets: AssetElement[];
+}
+
 export interface AssetDisplayProperties {
-  x: number;
-  y: number;
-  scale: number;
-  alpha: number;
+  x?: number;
+  y?: number;
+  scale?: number;
+  alpha?: number;
   rotation?: number;
   tint?: number;
-  anchor?: Point2D;
-  pivot?: Point2D;
-  ratio?: Dimensions;
+  anchor?: { x: number; y: number };
+  pivot?: { x: number; y: number };
+  ratio?: { width: number; height: number };
 }
 
-// Asset Info Interfaces
 export interface BaseAssetInfo {
-  url: string;
   type: AssetType;
+  url: string;
+  sprite?: SpineGameObject | Phaser.GameObjects.GameObject;
+}
+export interface SpineState {
+  setAnimation: (
+    trackIndex: number,
+    animationName: string,
+    loop: boolean
+  ) => void;
+}
+
+export interface SpineAssetInfo extends BaseAssetInfo {
+  type: "spine";
+  atlasUrl: string;
+  skeletonUrl: string;
+  skeletonType: "binary" | "json";
+  sprite?: SpineGameObject | Phaser.GameObjects.GameObject;
 }
 
 export interface ImageAssetInfo extends BaseAssetInfo {
   type: "image";
-  sprite?: Phaser.GameObjects.Image;
-}
-
-export interface ParticleAssetInfo extends BaseAssetInfo {
-  type: "particle";
-  textureName: string;
   sprite?: Phaser.GameObjects.Sprite;
-  emitter?: Phaser.GameObjects.Particles.ParticleEmitter;
-}
-
-export interface ImageAssetInfo extends BaseAssetInfo {
-  type: "image";
-  sprite?: Phaser.GameObjects.Image;
 }
 
 export interface VideoAssetInfo extends BaseAssetInfo {
@@ -66,14 +67,13 @@ export interface VideoAssetInfo extends BaseAssetInfo {
 
 export interface ParticleAssetInfo extends BaseAssetInfo {
   type: "particle";
-  textureName: string;
+  textureName?: string;
   sprite?: Phaser.GameObjects.Sprite;
-  emitter?: Phaser.GameObjects.Particles.ParticleEmitter;
 }
 
-export type AssetInfo = ImageAssetInfo | ParticleAssetInfo | VideoAssetInfo;
-
-// Asset JSON interface (removing duplicate AssetsData)
-export interface AssetJson {
-  assets: AssetElement[];
-}
+export type AssetInfo =
+  | BaseAssetInfo
+  | ParticleAssetInfo
+  | ImageAssetInfo
+  | VideoAssetInfo
+  | SpineAssetInfo;

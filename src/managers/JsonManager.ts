@@ -19,8 +19,9 @@ import {
   AssetDisplayProperties,
   AssetInfo,
 } from "../types/interfaces/AssetInterfaces";
-import { AnimationService } from "../core/services/AnimationService";
-import { Console } from "console";
+import { SpineGameObject } from "@esotericsoftware/spine-phaser";
+// Also import the constructor/class itself
+import * as Spine from "@esotericsoftware/spine-phaser";
 
 export class JsonManager {
   private scene: Scene;
@@ -28,12 +29,26 @@ export class JsonManager {
   private timelineService: TimelineService | null = null;
   private currentTimelineJson: TimelineJson | null = null;
   private messageModal: MessageModal | null = null;
-  private animationService: AnimationService;
+  private animationService: any; // זמני עד שתגדיר AnimationService
 
   constructor(scene: Scene, assetService: AssetService) {
     this.scene = scene;
     this.assetService = assetService;
-    this.animationService = new AnimationService(scene);
+    // זמנית: במקום AnimationService, נשתמש ב-Phaser tweens כמקום חלופי
+    this.animationService = {
+      applyAnimations: (sprite: any, element: TimelineElement) => {
+        console.log(`Placeholder: Applying animations to ${element.assetName}`);
+        // לדוגמה: שימוש ב-Phaser tweens אם אין AnimationService
+        if (element.timeline?.position) {
+          this.scene.tweens.add({
+            targets: sprite,
+            x: element.timeline.position[0]?.value?.x || sprite.x,
+            y: element.timeline.position[0]?.value?.y || sprite.y,
+            duration: element.timeline.position[0]?.duration || 1000,
+          });
+        }
+      },
+    };
   }
 
   private validateAssetsJson(json: AssetJson): void {
@@ -97,15 +112,22 @@ export class JsonManager {
 
     for (const asset of assets) {
       try {
-        const response = await fetch(asset.assetUrl);
+        let urlToFetch: string;
+        if (asset.assetType === "spine" && typeof asset.assetUrl !== "string") {
+          urlToFetch = (asset.assetUrl as { skeletonUrl: string }).skeletonUrl;
+        } else {
+          urlToFetch = asset.assetUrl as string;
+        }
+
+        const response = await fetch(urlToFetch);
         if (response.status === 200) {
-          loadedAssets.push(`${asset.assetName} (${asset.assetUrl})`);
+          loadedAssets.push(`${asset.assetName} (${urlToFetch})`);
         } else {
           missingAssets.push(asset.assetName);
         }
       } catch (error) {
         failedAssets.push(
-          `${asset.assetName} (${asset.assetUrl}) - ${
+          `${asset.assetName} (${JSON.stringify(asset.assetUrl)}) - ${
             error instanceof Error ? error.message : "Unknown error"
           }`
         );
@@ -132,22 +154,18 @@ export class JsonManager {
       const messages: any[] = [];
       const hasErrors = missingAssets.length > 0 || failedAssets.length > 0;
 
-      // הודעת אזהרה כללית
       if (hasErrors) {
         messages.push(
           createErrorMessage("Warning: Some assets may be missing or invalid:")
         );
       }
 
-      // נכסים חסרים
       if (missingAssets.length > 0) {
-        // messages.push(createInfoMessage("Missing assets: " + missingAssets));
         missingAssets.forEach((asset) =>
           messages.push(createErrorMessage(asset))
         );
       }
 
-      // נכסים שנכשלו
       if (failedAssets.length > 0) {
         messages.push(createInfoMessage("Failed to verify assets:"));
         failedAssets.forEach((asset) =>
@@ -155,22 +173,14 @@ export class JsonManager {
         );
       }
 
-      // סיכום נכסים
       messages.push(
         createInfoMessage(`Total assets loaded: ${loadedAssets.length}`),
         createInfoMessage(`Types: ${this.getAssetTypesSummary(json)}`)
       );
 
-      // נכסים טעונים
-      // messages.push(createInfoMessage("Loaded assets:"));
-      console.log("Debug - loadedAssets:", loadedAssets);
-      console.log("Debug - JSON:", json);
-
       if (loadedAssets.length > 0) {
         loadedAssets.forEach((asset) => {
-          console.log("Debug - Processing asset:", asset);
           const assetDetails = this.getAssetDetails(json, asset);
-          console.log("Debug - Asset details:", assetDetails);
           messages.push(createSuccessMessage(assetDetails));
         });
       } else {
@@ -185,11 +195,7 @@ export class JsonManager {
         autoCloseTime: hasErrors ? 8000 : 5000,
       });
 
-      //if (!hasErrors) {
-
-      missingAssets.forEach((asset) => console.log("+ missing asset:" + asset));
-      await this.assetService.handleAssetsJson(json, missingAssets);
-      // }
+      await this.assetService.handleAssetsJson(file);
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -214,21 +220,22 @@ export class JsonManager {
 
       this.resetTimelineState();
 
-      // Initialize TimelineService with current assets map
       this.timelineService = new TimelineService(
-        this.assetService.getAssetsMap()
+        this.assetService.getAssetsMap(),
+        this.assetService
       );
+      console.log("TimelineService initialized");
 
       const json = await this.parseTimelineJson(file);
       if (!json) {
         throw new Error("Failed to parse timeline JSON");
       }
+      console.log("Timeline JSON parsed successfully:", json);
 
-      // Validate timeline JSON structure
       const validationErrors = await this.timelineService.validateTimelineJson(
         json
       );
-
+      console.log("Validation completed, errors:", validationErrors);
       if (validationErrors.length > 0) {
         showMessage({
           isOpen: true,
@@ -239,30 +246,20 @@ export class JsonManager {
         return;
       }
 
+      console.log("Starting asset validation and loading");
+      const assetValidationResults =
+        await this.timelineService.validateAndLoadAssets(
+          json["template video json"]
+        );
+      console.log("Asset validation results:", assetValidationResults);
+
       this.currentTimelineJson = json;
+      console.log("Displaying timeline assets");
       this.displayTimelineAssets(json["template video json"]);
 
-      showMessage({
-        isOpen: true,
-        title: `Timeline Loaded - ${file.name}`,
-        messages: this.generateTimelineSummary(json).map((summary) => {
-          if (
-            summary.startsWith("Total timeline elements:") ||
-            summary.startsWith("Unique assets used:")
-          ) {
-            return createInfoMessage(summary);
-          }
-          if (summary.includes("- NOT LOADED")) {
-            return createErrorMessage(summary);
-          }
-          if (/^\d+\./.test(summary)) {
-            return createSuccessMessage(summary);
-          }
-          return createInfoMessage(summary);
-        }),
-        autoClose: true,
-        autoCloseTime: 5000,
-      });
+      console.log("Calling displayLoadResults");
+      this.timelineService.displayLoadResults(assetValidationResults);
+      console.log("handleTimelineJson completed");
     } catch (error) {
       console.error("Error in handleTimelineJson:", error);
       const errorMessage =
@@ -289,34 +286,171 @@ export class JsonManager {
   }
 
   private displayTimelineAssets(timelineElements: TimelineElement[]): void {
-    this.assetService.hideAllAssets();
+    // שמירת רשימת האלמנטים הפעילים בתוך ה-timeline
+    const activeAssets = new Set<string>();
 
+    // עדכון אובייקטים קיימים או יצירת חדשים לפי הצורך
     timelineElements.forEach((element) => {
       if (element.assetName && element.initialState) {
+        activeAssets.add(element.assetName);
         const {
           position = { x: 0, y: 0 },
           scale = { x: 1, y: 1 },
           opacity = 1,
           rotation = 0,
           color = "0xFFFFFF",
+          animation,
         } = element.initialState;
 
-        try {
-          const sprite = this.assetService.displayAsset(element.assetName, {
-            x: position.x,
-            y: position.y,
-            scale: scale.x,
-            alpha: opacity,
-            rotation,
-            tint: parseInt(color),
-          });
+        // בדיקה אם האובייקט כבר קיים
+        const assetInfo = this.assetService.getAssetInfo(element.assetName);
+        let sprite;
 
-          if (sprite && element.timeline) {
-            console.log(`Applying animations for asset: ${element.assetName}`);
-            this.animationService.applyAnimations(sprite, element);
+        if (assetInfo && "sprite" in assetInfo && assetInfo.sprite) {
+          // אם האובייקט קיים, רק נעדכן את המאפיינים שלו
+          sprite = assetInfo.sprite;
+          console.log(`Updating existing asset: ${element.assetName}`, sprite);
+
+          // טיפול באובייקטים מסוגים שונים
+          if (
+            sprite instanceof Phaser.GameObjects.Sprite ||
+            sprite instanceof Phaser.GameObjects.Video
+          ) {
+            sprite.setPosition(position.x, position.y);
+            sprite.setScale(scale.x, scale.y);
+            sprite.setAlpha(opacity);
+            sprite.setRotation(rotation);
+            sprite.setTint(parseInt(color.replace("0x", ""), 16));
+            sprite.setVisible(true);
+          } else if (sprite instanceof SpineGameObject) {
+            sprite.setPosition(position.x, position.y);
+            sprite.setScale(scale.x, scale.y);
+            sprite.setAlpha(opacity);
+            sprite.setRotation(rotation);
+            sprite.setVisible(true);
+
+            // הפעלת אנימציה אם יש
+            if (animation && (sprite.state || sprite.animationState)) {
+              try {
+                // בדיקה שה-skeleton קיים ותקין
+                if (sprite.skeleton && sprite.skeleton.data) {
+                  const animationNames = sprite.skeleton.data.animations.map(
+                    (a) => a.name
+                  );
+                  console.log(
+                    `Available animations for ${element.assetName}:`,
+                    animationNames
+                  );
+
+                  if (animationNames.includes(animation)) {
+                    if (sprite.animationState) {
+                      sprite.animationState.setAnimation(0, animation, true);
+                    } else if (sprite.state) {
+                      sprite.state.setAnimation(0, animation, true);
+                    }
+                    console.log(
+                      `Applied animation '${animation}' to ${element.assetName}`
+                    );
+                  } else if (animationNames.length > 0) {
+                    const firstAnim = animationNames[0];
+                    if (sprite.animationState) {
+                      sprite.animationState.setAnimation(0, firstAnim, true);
+                    } else if (sprite.state) {
+                      sprite.state.setAnimation(0, firstAnim, true);
+                    }
+                    console.log(
+                      `Animation '${animation}' not found, using '${firstAnim}' instead`
+                    );
+                  }
+                } else {
+                  console.warn(
+                    `Spine object for ${element.assetName} has no skeleton data`
+                  );
+                }
+              } catch (animError) {
+                console.error(
+                  `Error applying animation to ${element.assetName}:`,
+                  animError
+                );
+              }
+            }
           }
-        } catch (error) {
-          console.error(`Error displaying asset ${element.assetName}:`, error);
+        } else {
+          // אם האובייקט לא קיים או לא תקף, נצטרך ליצור אותו מחדש
+          console.log(`Creating new asset: ${element.assetName}`);
+          try {
+            sprite = this.assetService.displayAsset(element.assetName, {
+              x: position.x,
+              y: position.y,
+              scale: scale.x,
+              alpha: opacity,
+              rotation,
+              tint: parseInt(color.replace("0x", ""), 16),
+            });
+
+            // אם יצרנו spine ויש אנימציה, ננסה להפעיל אותה
+            if (
+              element.assetType === "spine" &&
+              sprite instanceof SpineGameObject &&
+              animation
+            ) {
+              try {
+                if (sprite.skeleton && sprite.skeleton.data) {
+                  const animationNames = sprite.skeleton.data.animations.map(
+                    (a) => a.name
+                  );
+                  const animToUse = animationNames.includes(animation)
+                    ? animation
+                    : animationNames.length > 0
+                    ? animationNames[0]
+                    : null;
+
+                  if (animToUse) {
+                    if (sprite.animationState) {
+                      sprite.animationState.setAnimation(0, animToUse, true);
+                    } else if (sprite.state) {
+                      sprite.state.setAnimation(0, animToUse, true);
+                    }
+                  }
+                }
+              } catch (animError) {
+                console.error(
+                  `Error applying initial animation to new spine ${element.assetName}:`,
+                  animError
+                );
+              }
+            }
+          } catch (error) {
+            console.error(
+              `Failed to create asset ${element.assetName}:`,
+              error
+            );
+          }
+        }
+
+        // הפעלת אנימציות נוספות אם יש
+        if (sprite && element.timeline) {
+          console.log(`Applying animations for asset: ${element.assetName}`);
+          this.animationService.applyAnimations(sprite, element);
+        }
+      }
+    });
+
+    // הסתרת אובייקטים שלא נמצאים ב-timeline הנוכחי
+    this.assetService.getAssetsMap().forEach((assetInfo, assetName) => {
+      if (
+        !activeAssets.has(assetName) &&
+        "sprite" in assetInfo &&
+        assetInfo.sprite
+      ) {
+        const sprite = assetInfo.sprite;
+        if (
+          sprite instanceof Phaser.GameObjects.Sprite ||
+          sprite instanceof Phaser.GameObjects.Video ||
+          sprite instanceof SpineGameObject
+        ) {
+          console.log(`Hiding inactive asset: ${assetName}`);
+          sprite.setVisible(false);
         }
       }
     });
@@ -330,16 +464,13 @@ export class JsonManager {
     const summary: string[] = [];
     const assetTypes = new Map<string, number>();
 
-    // בדיקת נכסים חסרים
     if (missingAssets.length > 0) {
       summary.push("Missing assets:");
       missingAssets.forEach((asset) => summary.push(`- ${asset}`));
     }
 
-    // סה"כ נכסים טעונים
     summary.push(`Total assets loaded: ${loadedAssets.length}`);
 
-    // סוגי נכסים
     const processedAssets = [...loadedAssets.map((a) => a.split(" (")[0])];
     processedAssets.forEach((assetName) => {
       const asset = json.assets.find((a) => a.assetName === assetName);
@@ -355,7 +486,6 @@ export class JsonManager {
 
     summary.push(`Types: ${typeSummary}`);
 
-    // נכסים טעונים
     summary.push("Loaded assets:");
     if (loadedAssets.length > 0) {
       processedAssets.forEach((assetName) => {
@@ -398,7 +528,6 @@ export class JsonManager {
     const summary: string[] = [];
     const elements = json["template video json"];
 
-    // בדיקה שה-timelineService קיים
     if (!this.timelineService) {
       console.error("Timeline service is not initialized");
       return [
@@ -407,16 +536,10 @@ export class JsonManager {
       ];
     }
 
-    // קבלת מפת האסטים מה-AssetService ישירות
     const assetsMap = this.assetService.getAssetsMap();
-
-    // הדפסת המפה של האסטים
     console.log("Assets Map:", Array.from(assetsMap.entries()));
-
-    // הדפסת כל האלמנטים מהטיימליין
     console.log("Timeline Elements:", elements);
 
-    // בדיקת התאמה בין האלמנטים לאסטים
     const validElements: TimelineElement[] = [];
     const invalidElements: TimelineElement[] = [];
 
@@ -443,7 +566,6 @@ export class JsonManager {
     summary.push(`Unique assets used: ${uniqueValidAssets.size}`);
 
     if (validElements.length > 0) {
-      // summary.push("\nValid Timeline elements:");
       validElements.forEach((element, index) => {
         summary.push(
           `${index + 1}. ${element.assetName} (${element.assetType})`
@@ -452,7 +574,6 @@ export class JsonManager {
     }
 
     if (invalidElements.length > 0) {
-      // summary.push("\nInvalid Timeline elements:");
       invalidElements.forEach((element, index) => {
         summary.push(
           `${index + 1}. ${element.assetName} (${

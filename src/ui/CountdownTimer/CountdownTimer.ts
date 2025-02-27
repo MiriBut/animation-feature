@@ -116,6 +116,10 @@ export class CountdownTimer {
   }
 
   start(): Promise<void> {
+    console.log(
+      `[${new Date().toISOString()}] CountdownTimer: Starting countdown`
+    );
+
     // Simple fade in animation
     this.scene.tweens.add({
       targets: [this.outerCircle, this.progressArc],

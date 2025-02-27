@@ -1,12 +1,14 @@
 export interface TimelineElement {
+  assetUrl: string;
   elementName: string;
-  assetType: "image" | "video" | "text" | "particle";
+  assetType: "image" | "video" | "text" | "particle" | "spine";
   assetName: string;
   particles?: {
     textureName: string; // שם הטקסטורה לפרטיקל
     config: ParticleConfig;
   };
   initialState?: {
+    animation: string;
     position?: { x: number; y: number; z?: number };
     scale?: { x: number; y: number };
     opacity?: number;
@@ -75,6 +77,8 @@ interface ParticleConfig {
 }
 
 export interface TimelineAnimation {
+  value: any;
+  duration: number;
   startTime: number;
   endTime: number;
   startValue: any;

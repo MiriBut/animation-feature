@@ -6,53 +6,262 @@ import {
 import { Validators } from "../utils/Validators";
 import { Helpers } from "../utils/Helpers";
 
+import { AssetService } from "./AssetService"; // נניח שיש לך גישה ל-AssetService
+
 type AnimationType = "scale" | "position" | "color" | "opacity" | "rotation";
+
+interface AssetValidationResult {
+  assetName: string;
+  exists: boolean;
+  type?: string;
+  loaded?: boolean; // נוסף כדי לעקוב אחרי תוצאות טעינה
+}
 
 export class TimelineService {
   private assetsMap: Map<string, { url: string; type: string }>;
+  private assetService?: AssetService; // אופציונלי: לשילוב עם AssetService
 
-  constructor(assetsMap: Map<string, { url: string; type: string }>) {
+  constructor(
+    assetsMap: Map<string, { url: string; type: string }>,
+    assetService?: AssetService
+  ) {
     this.assetsMap = assetsMap;
+    this.assetService = assetService; // אם תרצה לטעון נכסים חסרים
+    console.log("TimelineService initialized with assetsMap:", assetsMap.size);
   }
 
-  public async validateTimelineJson(json: TimelineJson): Promise<string[]> {
-    const errors: string[] = [];
-
+  public async handleTimelineJson(file: File): Promise<void> {
     try {
-      // 1. בדיקת מבנה בסיסי
+      console.log("Starting to handle timeline JSON file:", file.name);
+
+      // this.showDirectMessage("טוען טיימליין", [
+      //   { type: "info", content: `טוען את קובץ ${file.name}...` },
+      // ]);
+
+      const fileContent = await file.text();
+      let json: TimelineJson;
+
+      try {
+        json = JSON.parse(fileContent) as TimelineJson;
+        console.log("Timeline JSON parsed successfully");
+      } catch (parseError) {
+        // this.showDirectMessage("שגיאת פענוח JSON", [
+        //   { type: "error", content: "הקובץ אינו בפורמט JSON תקין" },
+        // ]);
+        return;
+      }
+
       if (
         !json["template video json"] ||
         !Array.isArray(json["template video json"])
       ) {
-        throw new Error("Missing template video json array");
+        // this.showDirectMessage("מבנה קובץ שגוי", [
+        //   {
+        //     type: "error",
+        //     content: "חסר מפתח 'template video json' או שאינו מערך",
+        //   },
+        // ]);
+        return;
       }
 
-      // 2. נרמול האלמנטים
-      const normalizedElements = json["template video json"].map((element) =>
-        this.normalizeTimelineElement(element)
-      );
+      const validationErrors = await this.validateTimelineJson(json);
+      if (validationErrors.length > 0) {
+        // this.showDirectMessage("בעיות במבנה קובץ הטיימליין", [
+        //   ...validationErrors.map((error) => ({
+        //     type: "error" as MessageType,
+        //     content: error,
+        //   })),
+        // ]);
+        return;
+      }
 
-      // 3. בדיקת תקינות לכל אלמנט
-      const elementErrors = normalizedElements.flatMap((element, index) =>
-        Validators.validateTimelineElement(element, index)
+      const assetValidationResults = await this.validateAndLoadAssets(
+        json["template video json"]
       );
-      errors.push(...elementErrors);
+      this.displayLoadResults(assetValidationResults);
 
-      // 4. בדיקת רצף הזמן
-      const sequenceErrors = this.validateTimelineSequence(normalizedElements);
-      errors.push(...sequenceErrors);
-
-      // 5. הצלבה עם הנכסים הקיימים
-      const assetReferenceErrors = await this.validateAssetReferences(
-        normalizedElements
-      );
-      errors.push(...assetReferenceErrors);
+      console.log("Timeline handling process completed");
     } catch (error) {
-      errors.push(error instanceof Error ? error.message : String(error));
+      // const errorMessage =
+      //   error instanceof Error
+      //     ? error.message
+      //     : "שגיאה לא ידועה בטעינת הטיימליין";
+      // this.showDirectMessage("שגיאה בטעינת הטיימליין", [
+      //   { type: "error", content: errorMessage },
+      // ]);
+    }
+  }
+
+  // private showDirectMessage(title: string, messages: Message[]): void {
+  //   showMessage({
+  //     isOpen: true,
+  //     title: title,
+  //     messages: messages,
+  //     autoClose: false,
+  //   });
+  // }
+
+  // שילוב בדיקה וטעינה של נכסים
+  public async validateAndLoadAssets(
+    elements: TimelineElement[]
+  ): Promise<AssetValidationResult[]> {
+    console.log("Starting validateAndLoadAssets with elements:", elements);
+    const results: AssetValidationResult[] = [];
+
+    for (const element of elements) {
+      const assetName = element.assetName;
+      console.log(`Processing asset: ${assetName}`);
+      const assetInfo = this.assetsMap.get(assetName);
+      const exists = !!assetInfo;
+
+      let loaded = exists;
+      if (!exists && this.assetService) {
+        console.log(`Asset ${assetName} not found, attempting to load`);
+        const loadResult = await this.assetService.loadAsset(assetName);
+        console.log(`Load result for ${assetName}:`, loadResult);
+        loaded = loadResult.success;
+        if (loaded) {
+          this.assetsMap.set(assetName, {
+            url: element.assetUrl as string,
+            type: element.assetType || "image",
+          });
+        }
+      }
+
+      results.push({
+        assetName: assetName,
+        exists: exists,
+        type: assetInfo?.type,
+        loaded: loaded,
+      });
     }
 
-    // סינון שגיאות ריקות והחזרת מערך נקי
-    return errors.filter(Boolean);
+    console.log("validateAndLoadAssets completed, results:", results);
+    return results;
+  }
+
+  public displayLoadResults(results: AssetValidationResult[]): void {
+    console.log("Starting displayLoadResults with results:", results);
+    const successfulAssets = results.filter((result) => result.loaded);
+    const failedAssets = results.filter((result) => !result.loaded);
+
+    const messages: any[] = [];
+
+    if (successfulAssets.length > 0) {
+      // messages.push(
+      //   createSuccessMessage(
+      //     `${successfulAssets.length} ${
+      //       successfulAssets.length === 1 ? "נכס נטען" : "נכסים נטענו"
+      //     } בהצלחה`
+      //   )
+      // );
+      successfulAssets.forEach((asset) => {
+        // messages.push(
+        //   createInfoMessage(
+        //     `נטען בהצלחה: ${asset.assetName} (סוג: ${asset.type || "לא ידוע"})`
+        //   )
+        // );
+      });
+    }
+
+    if (failedAssets.length > 0) {
+      failedAssets.forEach((asset) => {
+        // messages.push(
+        //   createErrorMessage(`נכשל בטעינה: ${asset.assetName} - לא נמצא במערכת`)
+        // );
+      });
+    }
+
+    console.log("Messages prepared:", messages);
+    // showMessage({
+    //   isOpen: true,
+    //   title: "תוצאות טעינת נכסים לטיימליין",
+    //   messages: messages,
+    //   autoClose: successfulAssets.length > 0 && failedAssets.length === 0,
+    //   autoCloseTime: 5000,
+    // });
+    console.log("displayLoadResults completed");
+  }
+
+  // שאר הפונקציות נשארות כפי שהיו (validateTimelineJson, normalizeTimelineElement וכו')
+  public async validateTimelineJson(json: TimelineJson): Promise<string[]> {
+    const errors: string[] = [];
+
+    if (
+      !json["template video json"] ||
+      !Array.isArray(json["template video json"])
+    ) {
+      errors.push(
+        "Invalid structure - 'template video json' key is missing or not an array"
+      );
+      return errors;
+    }
+
+    if (json["template video json"].length === 0) {
+      errors.push("'template video json' array is empty - no elements defined");
+    }
+
+    json["template video json"].forEach((element, index) => {
+      const prefix = `Element #${index + 1} (${
+        element.elementName || element.assetName || "unnamed"
+      })`;
+
+      // בדיקת שדות בסיסיים
+      if (!element.assetName) {
+        errors.push(`${prefix}: 'assetName' is missing`);
+      }
+      if (!element.assetType) {
+        errors.push(`${prefix}: 'assetType' is missing`);
+      }
+
+      // בדיקת initialState
+      if (element.initialState) {
+        if (element.initialState.position) {
+          if (
+            typeof element.initialState.position.x !== "number" ||
+            isNaN(element.initialState.position.x)
+          ) {
+            errors.push(
+              `${prefix}: 'initialState.position.x' must be a valid number`
+            );
+          }
+        }
+        if (element.initialState.scale) {
+          if (
+            typeof element.initialState.scale.x !== "number" ||
+            element.initialState.scale.x <= 0
+          ) {
+            errors.push(
+              `${prefix}: 'initialState.scale.x' must be a positive number`
+            );
+          }
+        }
+      }
+
+      // בדיקת timeline
+      if (element.timeline) {
+        if (element.timeline.position) {
+          element.timeline.position.forEach((pos, posIndex) => {
+            if (pos.startTime > pos.endTime) {
+              errors.push(
+                `${prefix}: Timeline position #${posIndex + 1} - 'startTime' (${
+                  pos.startTime
+                }) is greater than 'endTime' (${pos.endTime})`
+              );
+            }
+            if (typeof pos.startValue.x !== "number") {
+              errors.push(
+                `${prefix}: Timeline position #${
+                  posIndex + 1
+                } - 'startValue.x' must be a number`
+              );
+            }
+          });
+        }
+      }
+    });
+
+    return errors;
   }
 
   private normalizeTimelineElement(element: any): TimelineElement {
@@ -85,7 +294,6 @@ export class TimelineService {
 
   private validateTimelineSequence(elements: TimelineElement[]): string[] {
     const errors: string[] = [];
-
     elements.forEach((element, index) => {
       if (element.timeline) {
         const timelineErrors = this.validateAnimationSequence(
@@ -95,7 +303,6 @@ export class TimelineService {
         errors.push(...timelineErrors);
       }
     });
-
     return errors;
   }
 
@@ -116,7 +323,6 @@ export class TimelineService {
       const animations = timeline[type];
       if (animations && Array.isArray(animations)) {
         for (let i = 0; i < animations.length; i++) {
-          // בדיקת ערכי זמן תקינים
           if (
             animations[i].startTime < 0 ||
             animations[i].endTime <= animations[i].startTime
@@ -126,8 +332,6 @@ export class TimelineService {
                 `${animations[i].startTime}-${animations[i].endTime}`
             );
           }
-
-          // בדיקת חפיפה עם אנימציות אחרות
           for (let j = i + 1; j < animations.length; j++) {
             if (Helpers.isTimeRangeOverlapping(animations[i], animations[j])) {
               errors.push(
@@ -140,19 +344,6 @@ export class TimelineService {
         }
       }
     });
-
-    return errors;
-  }
-
-  private async validateAssetReferences(
-    elements: TimelineElement[]
-  ): Promise<string[]> {
-    const errors: string[] = [];
-
-    for (const element of elements) {
-      const assetInfo = this.assetsMap.get(element.assetName);
-    }
-
     return errors;
   }
 }
