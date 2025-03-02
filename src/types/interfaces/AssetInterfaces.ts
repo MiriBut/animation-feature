@@ -35,9 +35,11 @@ export interface AssetDisplayProperties {
 }
 
 export interface BaseAssetInfo {
+  container?: Phaser.GameObjects.Container;
   type: AssetType;
   url: string;
   sprite?: SpineGameObject | Phaser.GameObjects.GameObject;
+  pivot_override?: { x: number; y: number };
 }
 export interface SpineState {
   setAnimation: (

@@ -286,6 +286,11 @@ export class JsonManager {
   }
 
   private displayTimelineAssets(timelineElements: TimelineElement[]): void {
+    console.log("helooo");
+    console.log(
+      "(container) Starting displayTimelineAssets with elements:",
+      timelineElements.map((e) => e.assetName)
+    );
     // שמירת רשימת האלמנטים הפעילים בתוך ה-timeline
     const activeAssets = new Set<string>();
 
@@ -311,22 +316,46 @@ export class JsonManager {
           sprite = assetInfo.sprite;
           console.log(`Updating existing asset: ${element.assetName}`, sprite);
 
+          const hasContainer = assetInfo.container !== undefined;
+          console.log(
+            `Asset ${element.assetName} has container:`,
+            hasContainer
+          );
+
           // טיפול באובייקטים מסוגים שונים
           if (
             sprite instanceof Phaser.GameObjects.Sprite ||
             sprite instanceof Phaser.GameObjects.Video
           ) {
-            sprite.setPosition(position.x, position.y);
-            sprite.setScale(scale.x, scale.y);
-            sprite.setAlpha(opacity);
-            sprite.setRotation(rotation);
-            sprite.setTint(parseInt(color.replace("0x", ""), 16));
+            if (hasContainer) {
+              // אם יש קונטיינר, עדכן אותו במקום את הספרייט ישירות
+              assetInfo.container?.setPosition(position.x, position.y);
+              assetInfo.container?.setScale(scale.x, scale.y);
+              assetInfo.container?.setAlpha(opacity);
+              assetInfo.container?.setRotation(rotation);
+              // הספרייט כבר בתוך הקונטיינר, אז לא צריך לעדכן את המיקום שלו
+              sprite.setTint(parseInt(color.replace("0x", ""), 16));
+            } else {
+              sprite.setPosition(position.x, position.y);
+              sprite.setScale(scale.x, scale.y);
+              sprite.setAlpha(opacity);
+              sprite.setRotation(rotation);
+              sprite.setTint(parseInt(color.replace("0x", ""), 16));
+            }
             sprite.setVisible(true);
           } else if (sprite instanceof SpineGameObject) {
-            sprite.setPosition(position.x, position.y);
-            sprite.setScale(scale.x, scale.y);
-            sprite.setAlpha(opacity);
-            sprite.setRotation(rotation);
+            // טיפול דומה גם עבור spine
+            if (hasContainer) {
+              assetInfo.container?.setPosition(position.x, position.y);
+              assetInfo.container?.setScale(scale.x, scale.y);
+              assetInfo.container?.setAlpha(opacity);
+              assetInfo.container?.setRotation(rotation);
+            } else {
+              sprite.setPosition(position.x, position.y);
+              sprite.setScale(scale.x, scale.y);
+              sprite.setAlpha(opacity);
+              sprite.setRotation(rotation);
+            }
             sprite.setVisible(true);
 
             // הפעלת אנימציה אם יש
@@ -346,7 +375,8 @@ export class JsonManager {
                     if (sprite.animationState) {
                       sprite.animationState.setAnimation(0, animation, true);
                     } else if (sprite.state) {
-                      sprite.state.setAnimation(0, animation, true);
+                      // Type assertion to tell TypeScript that state is a Spine AnimationState
+                      (sprite.state as any).setAnimation(0, animation, true);
                     }
                     console.log(
                       `Applied animation '${animation}' to ${element.assetName}`
@@ -356,7 +386,8 @@ export class JsonManager {
                     if (sprite.animationState) {
                       sprite.animationState.setAnimation(0, firstAnim, true);
                     } else if (sprite.state) {
-                      sprite.state.setAnimation(0, firstAnim, true);
+                      // Type assertion to tell TypeScript that state is a Spine AnimationState
+                      (sprite.state as any).setAnimation(0, firstAnim, true);
                     }
                     console.log(
                       `Animation '${animation}' not found, using '${firstAnim}' instead`
@@ -409,7 +440,8 @@ export class JsonManager {
                     if (sprite.animationState) {
                       sprite.animationState.setAnimation(0, animToUse, true);
                     } else if (sprite.state) {
-                      sprite.state.setAnimation(0, animToUse, true);
+                      // Type assertion to tell TypeScript that state is a Spine AnimationState
+                      (sprite.state as any).setAnimation(0, animToUse, true);
                     }
                   }
                 }

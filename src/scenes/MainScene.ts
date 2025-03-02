@@ -257,7 +257,7 @@ export class MainScene extends Scene {
 
   private async handleAssetsJson(file: File): Promise<void> {
     try {
-      console.log("Starting to load assets JSON");
+      console.log("Starting to load assets JSON2");
       await this.assetService.handleAssetsJson(file);
     } catch (error) {
       console.error("Error loading assets JSON:", error);
@@ -318,7 +318,7 @@ export class MainScene extends Scene {
 
   destroy(): void {
     this.ui?.destroy();
-    this.videoService.cleanup();
+    // this.videoService.cleanup();
     // this.characterManager.destroy();
     this.audioManager.destroy();
     this.exportManager.destroy();

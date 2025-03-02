@@ -1,36 +1,35 @@
-// src/types/spine.d.ts
-declare module "@esotericsoftware/spine-phaser" {
-  import { Skeleton, AnimationState } from "@esotericsoftware/spine-core";
+// // src/types/spine.d.ts
+// declare module "@esotericsoftware/spine-phaser" {
+//   import { Skeleton, AnimationState } from "@esotericsoftware/spine-core";
 
-  export class SpineGameObject extends Phaser.GameObjects.GameObject {
-    animationState: AnimationState;
-    setRotation(rotation: number) {
-      throw new Error("Method not implemented.");
-    }
-    setPosition(x: number, y: number) {
-      throw new Error("Method not implemented.");
-    }
-    skeleton: Skeleton;
-    state: AnimationState;
+//   // הרחבת ה-SpineGameObject הקיים במקום הגדרה מחדש
+//   interface SpineGameObject {
+//     animationState: AnimationState;
+//     skeleton: Skeleton;
 
-    setAnimation(trackIndex: number, animationName: string, loop: boolean): any;
-    addAnimation(
-      trackIndex: number,
-      animationName: string,
-      loop: boolean,
-      delay: number
-    ): any;
+//     // מתודות של AnimationState ישירות על האובייקט (אם את רוצה תמיכה ישירה)
+//     setAnimation(
+//       trackIndex: number,
+//       animationName: string,
+//       loop: boolean
+//     ): void;
+//     addAnimation(
+//       trackIndex: number,
+//       animationName: string,
+//       loop: boolean,
+//       delay?: number
+//     ): void;
 
-    // משתנים פנימיים של spine-phaser
-    scaleX: number;
-    scaleY: number;
+//     // מתודות נוספות של Phaser GameObject
+//     setOrigin(x?: number, y?: number): this;
+//     setAlpha(value?: number): this;
+//     setVisible(value: boolean): this;
+//     setScale(x: number, y?: number): this;
+//     setPosition(x: number, y: number): this;
+//     setRotation(rotation: number): this;
 
-    // הוסף את המתודות שאתה משתמש בהן
-
-    destroy(fromScene?: boolean): void;
-    setOrigin(x?: number, y?: number): this;
-    setAlpha(value?: number): this;
-    setVisible(value: boolean): this;
-    setScale(x: number, y?: number): this;
-  }
-}
+//     // מאפיינים נוספים
+//     scaleX: number;
+//     scaleY: number;
+//   }
+// }

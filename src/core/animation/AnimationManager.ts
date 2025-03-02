@@ -22,7 +22,7 @@ export class AnimationManager {
 
   constructor(private scene: Scene) {
     this.registry = AnimationRegistry.getInstance();
-    console.log(`[${new Date().toISOString()}] AnimationManager: Initialized`);
+    //console.log(`[${new Date().toISOString()}] AnimationManager: Initialized`);
   }
 
   // מתחיל אנימציה חדשה על אובייקט
@@ -32,11 +32,11 @@ export class AnimationManager {
     config: AnimationConfig
   ): Promise<void> {
     const objectId = this.getObjectId(target);
-    console.log(
-      `[${new Date().toISOString()}] AnimationManager: Starting animation ${type} for ${objectId}, delay: ${
-        config.delay || 0
-      }ms, duration: ${config.duration || 0}ms`
-    );
+    // console.log(
+    //   `[${new Date().toISOString()}] AnimationManager: Starting animation ${type} for ${objectId}, delay: ${
+    //     config.delay || 0
+    //   }ms, duration: ${config.duration || 0}ms`
+    // );
 
     // בדיקה אם יש כבר אנימציה מאותו סוג שרצה על האובייקט
     const objectAnimations = this.activeAnimations.get(objectId) || new Map();

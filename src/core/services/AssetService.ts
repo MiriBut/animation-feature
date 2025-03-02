@@ -18,46 +18,77 @@ import {
 import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist/SpineGameObject";
 
 export class AssetService {
+  getAssetElement(assetName: string) {
+    throw new Error("Method not implemented.");
+  }
   private scene: Scene;
   private loadedAssets: Set<string> = new Set();
   private assetsMap: Map<string, AssetInfo> = new Map();
   private successMessages: string[] = [];
   private spineCharacter: SpineGameObject | null = null;
   private assetsLoaded: boolean = false;
-  private lastFailedSpines = new Map<string, number>(); // מפתח: שם הנכס, ערך: זמן כישלון אחרון
+  private lastFailedSpines = new Map<string, number>();
 
   constructor(scene: Scene) {
     this.scene = scene;
+    console.log("-- AssetService: Constructor initialized with scene:", scene);
   }
 
   // === Asset Management Methods ===
   public getAssetsMap(): Map<string, AssetInfo> {
-    // Info Messages
-    // - Returns a copy of the assets map for external use
+    console.log(
+      "-- AssetService: getAssetsMap called, returning assetsMap with size:",
+      this.assetsMap.size
+    );
     return new Map(this.assetsMap);
   }
 
   public getAssetInfo(assetName: string): AssetInfo | undefined {
-    // Info Messages
-    // - Retrieves asset info by name from the assets map
-    return this.assetsMap.get(assetName);
+    console.log(`-- AssetService: getAssetInfo called for ${assetName}`);
+    const assetInfo = this.assetsMap.get(assetName);
+    console.log(
+      `-- AssetService: getAssetInfo result for ${assetName}:`,
+      assetInfo
+    );
+    return assetInfo;
   }
 
   public setAssetInfo(assetName: string, assetInfo: AssetInfo): void {
+    console.log(
+      `-- AssetService: setAssetInfo called for ${assetName} with info:`,
+      assetInfo
+    );
     this.assetsMap.set(assetName, assetInfo);
     this.successMessages.push(
       `setAssetInfo [Updates asset info in the map for ${assetName}]`
     );
+    console.log(
+      `-- AssetService: setAssetInfo updated assetsMap for ${assetName}, new size:`,
+      this.assetsMap.size
+    );
   }
+
   // === Asset Loading Methods ===
   public async handleAssetsJson(file: File): Promise<void> {
+    console.log(
+      "-- AssetService: handleAssetsJson started with file:",
+      file.name
+    );
     try {
       const fileContent = await file.text();
+      console.log(
+        "-- AssetService: handleAssetsJson file content length:",
+        fileContent.length
+      );
       const json = JSON.parse(fileContent) as AssetJson;
+      console.log("-- AssetService: handleAssetsJson parsed JSON:", json);
 
-      // בדיקת מבנה
       const structureErrors = this.validateAssetStructure(json);
       if (structureErrors.length > 0) {
+        console.log(
+          "-- AssetService: handleAssetsJson validation errors:",
+          structureErrors
+        );
         showMessage({
           isOpen: true,
           title: "Asset File Validation Errors",
@@ -67,28 +98,36 @@ export class AssetService {
         return;
       }
 
-      // בדיקת קיום נכסים
       const existenceErrors = await this.checkAssetsExistence(json.assets);
       if (existenceErrors.length > 0) {
+        console.log(
+          "-- AssetService: handleAssetsJson existence errors:",
+          existenceErrors
+        );
         showMessage({
           isOpen: true,
           title: `Asset Accessibility Issues (${existenceErrors.length})`,
           messages: existenceErrors.map((error) => createErrorMessage(error)),
           autoClose: false,
         });
-        return; // מפסיק כאן אם יש שגיאות, אלא אם תרצי להמשיך לטעון נכסים תקינים
+        return;
       }
 
-      // המשך טעינה...
+      console.log("-- AssetService: handleAssetsJson registering assets...");
       await this.registerAssets(json.assets);
+      console.log("-- AssetService: handleAssetsJson loading assets...");
       const loadResults = await this.loadAssets(json.assets);
-      console.log("Scene created, loading SpineBoy...");
+      console.log(
+        "-- AssetService: handleAssetsJson load results:",
+        loadResults
+      );
       this.displayLoadResults(loadResults);
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Unknown error during asset processing";
+      console.log("-- AssetService: handleAssetsJson error:", errorMessage);
       showMessage({
         isOpen: true,
         title: "Asset Processing Error",
@@ -99,11 +138,15 @@ export class AssetService {
   }
 
   private async registerAssets(assets: AssetElement[]): Promise<void> {
+    console.log(
+      "-- AssetService: registerAssets started with assets count:",
+      assets.length
+    );
     assets.forEach((asset) => {
       const assetName = asset.assetName.trim();
       let newAssetInfo: AssetInfo;
 
-      console.log(`Processing asset: ${assetName}`, asset);
+      console.log(`-- AssetService: Processing asset: ${assetName}`, asset);
 
       switch (asset.assetType) {
         case "spine":
@@ -112,14 +155,20 @@ export class AssetService {
             skeletonUrl: string;
             skeletonType?: "binary" | "json";
           };
-          console.log("Spine URL object:", spineUrl);
+          console.log(
+            `-- AssetService: Spine URL object for ${assetName}:`,
+            spineUrl
+          );
           newAssetInfo = {
             type: "spine",
             atlasUrl: spineUrl.atlasUrl,
             skeletonUrl: spineUrl.skeletonUrl,
             skeletonType: spineUrl.skeletonType || "json",
           } as SpineAssetInfo;
-          console.log(`Registering spine asset ${assetName}:`, newAssetInfo);
+          console.log(
+            `-- AssetService: Registering spine asset ${assetName}:`,
+            newAssetInfo
+          );
           break;
         case "video":
           newAssetInfo = {
@@ -142,12 +191,24 @@ export class AssetService {
           } as ImageAssetInfo;
           break;
       }
+      if (asset.pivot_override) {
+        console.log(
+          `-- AssetService: Setting pivot_override for ${assetName}:`,
+          asset.pivot_override
+        );
+        newAssetInfo.pivot_override = asset.pivot_override;
+      }
+
       this.assetsMap.set(assetName, newAssetInfo);
       console.log(
-        `Saved to assetsMap: ${assetName}`,
+        `-- AssetService: Saved to assetsMap: ${assetName}`,
         this.assetsMap.get(assetName)
       );
     });
+    console.log(
+      "-- AssetService: registerAssets completed, assetsMap size:",
+      this.assetsMap.size
+    );
   }
 
   // === Display Methods ===
@@ -155,31 +216,44 @@ export class AssetService {
   public displayAsset(
     assetName: string,
     properties: AssetDisplayProperties
-  ): Phaser.GameObjects.Video | SpineGameObject | Phaser.GameObjects.Sprite {
+  ):
+    | Phaser.GameObjects.Video
+    | SpineGameObject
+    | Phaser.GameObjects.Sprite
+    | Phaser.GameObjects.Container {
+    console.log(
+      `-- AssetService: displayAsset called for ${assetName} with properties:`,
+      properties
+    );
     const assetInfo = this.assetsMap.get(assetName);
     if (!assetInfo) {
+      console.log(`-- AssetService: Asset ${assetName} not found in assetsMap`);
       throw new Error(`Asset ${assetName} not found`);
     }
+    console.log(`-- AssetService: Asset info for ${assetName}:`, assetInfo);
 
-    // אם זה spine ונכשל בעבר, ננסה לטעון אותו מחדש אם עבר מספיק זמן
     if (assetInfo.type === "spine" && this.lastFailedSpines.has(assetName)) {
       const lastFailedTime = this.lastFailedSpines.get(assetName) || 0;
       const now = Date.now();
-
-      // ננסה לטעון מחדש כל 5 שניות
+      console.log(
+        `-- AssetService: Checking last failed time for spine ${assetName}: ${
+          now - lastFailedTime
+        }ms since last failure`
+      );
       if (now - lastFailedTime > 5000) {
         console.log(
-          `Attempting to reload spine asset ${assetName} after previous failure`
+          `-- AssetService: Attempting to reload spine asset ${assetName} after previous failure`
         );
-        // שימוש ב-then במקום async/await
         this.loadSpineAsset(assetName, assetInfo as SpineAssetInfo).then(
           (result) => {
             if (result.success) {
-              console.log(`Successfully reloaded spine asset ${assetName}`);
+              console.log(
+                `-- AssetService: Successfully reloaded spine asset ${assetName}`
+              );
               this.lastFailedSpines.delete(assetName);
             } else {
               console.log(
-                `Failed to reload spine asset ${assetName}: ${result.error}`
+                `-- AssetService: Failed to reload spine asset ${assetName}: ${result.error}`
               );
               this.lastFailedSpines.set(assetName, now);
             }
@@ -188,31 +262,50 @@ export class AssetService {
       }
     }
 
+    console.log(
+      `-- AssetService: Cleaning up existing sprite for ${assetName}`
+    );
     this.cleanupExistingSprite(assetInfo);
+    console.log(`-- AssetService: Creating sprite for ${assetName}`);
     const sprite = this.createSprite(assetName, assetInfo, properties);
-    this.applyBasicProperties(sprite, properties);
-    if (sprite instanceof Phaser.GameObjects.Sprite) {
-      this.applyAdvancedProperties(sprite, properties);
+    console.log(`-- AssetService: Applying basic properties for ${assetName}`);
+    const result = this.applyBasicProperties(sprite, properties, assetName);
+
+    if (result instanceof Phaser.GameObjects.Sprite) {
+      console.log(
+        `-- AssetService: Applying advanced properties for ${assetName}`
+      );
+      this.applyAdvancedProperties(result, properties);
     }
 
-    // אם ניסינו ליצור spine אבל קיבלנו sprite רגיל, נשמור את זה ברשימת כישלונות
-    if (assetInfo.type === "spine" && !(sprite instanceof SpineGameObject)) {
+    if (assetInfo.type === "spine" && !(result instanceof SpineGameObject)) {
+      console.log(`-- AssetService: Marking spine ${assetName} as failed`);
       this.lastFailedSpines.set(assetName, Date.now());
     }
 
     this.successMessages.push(
       `displayAsset [Displayed ${assetName} (${assetInfo.type}) on scene]`
     );
-    return sprite;
+    console.log(
+      `-- AssetService: displayAsset completed for ${assetName}, result type:`,
+      result.constructor.name
+    );
+    return result;
   }
 
   private cleanupExistingSprite(assetInfo: AssetInfo): void {
+    console.log(
+      `-- AssetService: cleanupExistingSprite called with assetInfo:`,
+      assetInfo
+    );
     if ("sprite" in assetInfo && assetInfo.sprite) {
+      console.log(`-- AssetService: Destroying existing sprite for asset`);
       if (assetInfo.sprite instanceof Phaser.GameObjects.Video) {
         assetInfo.sprite.stop();
       }
       assetInfo.sprite.destroy();
     }
+    console.log(`-- AssetService: cleanupExistingSprite completed`);
   }
 
   private createSprite(
@@ -220,23 +313,32 @@ export class AssetService {
     assetInfo: AssetInfo,
     properties: AssetDisplayProperties
   ): Phaser.GameObjects.Video | SpineGameObject | Phaser.GameObjects.Sprite {
-    const centerX = this.scene.cameras.main.centerX + (properties.x ?? 0);
-    const centerY = this.scene.cameras.main.centerY + (properties.y ?? 0);
+    const x = properties.x ?? 0;
+    const y = properties.y ?? 0;
+    console.log(
+      `-- AssetService: createSprite called for ${assetName} at (${x}, ${y}) with assetInfo:`,
+      assetInfo
+    );
 
     if (assetInfo.type === "video") {
-      const video = this.scene.add.video(centerX, centerY, assetName);
+      console.log(`-- AssetService: Creating video sprite for ${assetName}`);
+      const video = this.scene.add.video(x, y, assetName);
+      video.name = assetName;
       video.play(true);
+      console.log(
+        `-- AssetService: Video sprite created for ${assetName} at (${video.x}, ${video.y})`
+      );
       return video;
     }
     if (assetInfo.type === "spine") {
+      console.log(`-- AssetService: Creating spine sprite for ${assetName}`);
       try {
         const atlasKey = `${assetName}_atlas`;
         const skeletonKey = assetName;
 
-        // בדיקת קיום המפתחות במטמון
         if (this.scene.cache.custom && this.scene.cache.custom.spine) {
           console.log(
-            `Checking cache: atlas=${this.scene.cache.custom.spine.has(
+            `-- AssetService: Checking cache for ${assetName}: atlas=${this.scene.cache.custom.spine.has(
               atlasKey
             )}, skeleton=${
               this.scene.cache.json.has(skeletonKey) ||
@@ -244,38 +346,40 @@ export class AssetService {
             }`
           );
         } else {
-          console.log("Spine cache not available");
+          console.log(
+            `-- AssetService: Spine cache not available for ${assetName}`
+          );
         }
 
-        // קריאה לspine
-        const spine1 = this.scene.add.spine(
-          centerX,
-          centerY,
-          assetName,
-          atlasKey
-        );
-
-        console.log(
-          `Creating spine for ${assetName} with atlas ${assetName}Atlas`
-        );
         const spine = this.scene.add.spine(
-          centerX,
-          centerY,
+          x,
+          y,
           assetName,
           `${assetName}_atlas`
         );
-
-        console.log("Spine object created:", spine);
-        console.log("Has skeleton?", !!spine.skeleton);
+        spine.name = assetName;
+        console.log(
+          `-- AssetService: Creating spine for ${assetName} with atlas ${assetName}Atlas`
+        );
+        console.log(
+          `-- AssetService: Spine object created for ${assetName}:`,
+          spine
+        );
+        console.log(
+          `-- AssetService: Has skeleton for ${assetName}?`,
+          !!spine.skeleton
+        );
 
         if (spine.skeleton) {
-          console.log("Has skeleton.data?", !!spine.skeleton.data);
+          console.log(
+            `-- AssetService: Has skeleton.data for ${assetName}?`,
+            !!spine.skeleton.data
+          );
         }
 
-        // בדיקה בטוחה אם יש אנימציות זמינות
         if (spine?.skeleton?.data?.animations?.length > 0) {
           console.log(
-            "Animations available:",
+            `-- AssetService: Animations available for ${assetName}:`,
             spine.skeleton.data.animations.map((a) => a.name)
           );
           spine.animationState.setAnimation(
@@ -283,82 +387,55 @@ export class AssetService {
             spine.skeleton.data.animations[2].name,
             true
           );
+          console.log(
+            `-- AssetService: Set animation for ${assetName} to ${spine.skeleton.data.animations[2].name}`
+          );
         } else {
-          console.error("No animations found or animations array is empty");
+          console.error(
+            `-- AssetService: No animations found or animations array is empty for ${assetName}`
+          );
         }
 
+        console.log(
+          `-- AssetService: Spine sprite created for ${assetName} at (${spine.x}, ${spine.y})`
+        );
         return spine;
       } catch (error) {
-        console.error(`Error creating spine object for ${assetName}:`, error);
-        // במקרה של שגיאה, ניתן להחזיר sprite ריק או לזרוק את השגיאה הלאה
+        console.error(
+          `-- AssetService: Error creating spine object for ${assetName}:`,
+          error
+        );
         try {
-          return this.scene.add.sprite(centerX, centerY, "error_placeholder");
+          const placeholder = this.scene.add.sprite(x, y, "error_placeholder");
+          placeholder.name = assetName;
+          console.log(
+            `-- AssetService: Placeholder sprite created for ${assetName} at (${placeholder.x}, ${placeholder.y})`
+          );
+          return placeholder;
         } catch (e) {
-          console.error("Could not create error placeholder sprite:", e);
-          // במקרה קיצוני, החזר אובייקט ספרייט ריק
-          return this.scene.add.sprite(centerX, centerY, "");
+          console.error(
+            `-- AssetService: Could not create error placeholder sprite for ${assetName}:`,
+            e
+          );
+          const emptySprite = this.scene.add.sprite(x, y, "");
+          emptySprite.name = assetName;
+          console.log(
+            `-- AssetService: Empty sprite created for ${assetName} at (${emptySprite.x}, ${emptySprite.y})`
+          );
+          return emptySprite;
         }
       }
     }
 
-    // במקרה של נכס רגיל מסוג תמונה
-    return this.scene.add.sprite(centerX, centerY, assetName);
-  }
-
-  public async createTestSpine(
-    x: number,
-    y: number
-  ): Promise<SpineGameObject | null> {
-    console.log("Creating test spine directly");
-    try {
-      // טען תמיד את הקבצים מחדש
-      this.scene.load.spineAtlas(
-        "spineboyAtlas",
-        "assets/spines/skelSpineBoy/spineboy-pma.atlas"
-      );
-      this.scene.load.spineBinary(
-        "spineboy",
-        "assets/spines/skelSpineBoy/spineboy-pro.skel"
-      );
-
-      // המתן לסיום הטעינה
-      await new Promise<void>((resolve, reject) => {
-        this.scene.load.once("complete", () => {
-          console.log("Spine files loaded successfully");
-          resolve();
-        });
-        this.scene.load.once("loaderror", (file: { url: any }) => {
-          console.error("Failed to load spine files:", file);
-          reject(new Error(`Failed to load: ${file.url}`));
-        });
-        this.scene.load.start();
-      });
-
-      // בדוק אם יש שגיאות במטמון
-      console.log("Creating spine object now");
-
-      // יצירת אובייקט ה-Spine
-      const spineObj = this.scene.add.spine(x, y, "spineboy", "spineboyAtlas");
-      spineObj.setScale(0.5);
-      console.log("Test spine created successfully:", spineObj);
-
-      if (spineObj.skeleton?.data?.animations?.length > 0) {
-        console.log(
-          "Available animations:",
-          spineObj.skeleton.data.animations.map((a) => a.name)
-        );
-        const firstAnimation = spineObj.skeleton.data.animations[0].name;
-        console.log("Setting animation to:", firstAnimation);
-        spineObj.animationState.setAnimation(0, firstAnimation, true);
-      } else {
-        console.warn("No animations found in spine object");
-      }
-
-      return spineObj;
-    } catch (error) {
-      console.error("Error in createTestSpine:", error);
-      return null;
-    }
+    console.log(
+      `-- AssetService: Creating image/particle sprite for ${assetName}`
+    );
+    const sprite = this.scene.add.sprite(x, y, assetName);
+    sprite.name = assetName;
+    console.log(
+      `-- AssetService: Sprite created for ${assetName} at (${sprite.x}, ${sprite.y})`
+    );
+    return sprite;
   }
 
   private applyBasicProperties(
@@ -366,60 +443,107 @@ export class AssetService {
       | Phaser.GameObjects.Video
       | SpineGameObject
       | Phaser.GameObjects.Sprite,
-    properties: AssetDisplayProperties
-  ): void {
-    const anchorX = properties.anchor?.x ?? 0.5;
-    const anchorY = properties.anchor?.y ?? 0.5;
+    properties: AssetDisplayProperties,
+    assetName: string
+  ): Phaser.GameObjects.Sprite | Phaser.GameObjects.Video | SpineGameObject {
+    console.log(
+      `miriAssetService: applyBasicProperties called for ${assetName} with properties:`,
+      properties
+    );
+    const assetInfo = this.assetsMap.get(assetName);
+    console.log(`miriAssetService: Asset info for ${assetName}:`, assetInfo);
 
-    if (
-      sprite instanceof Phaser.GameObjects.Sprite ||
-      sprite instanceof Phaser.GameObjects.Video
-    ) {
-      sprite.setOrigin(anchorX, anchorY);
-      sprite.setAlpha(properties.alpha ?? 1);
-      sprite.setVisible(true);
-      if (properties.scale !== undefined) {
-        sprite.setScale(properties.scale);
-      }
-    } else if (sprite instanceof SpineGameObject) {
-      sprite.setOrigin(anchorX, anchorY);
-      sprite.setAlpha(properties.alpha ?? 1);
-      sprite.setVisible(true);
-      if (properties.scale !== undefined) {
-        sprite.setScale(properties.scale);
-      }
+    sprite.setOrigin(0.5, 0.5);
+    sprite.setPosition(properties.x ?? 0, properties.y ?? 0);
+    sprite.setAlpha(properties.alpha ?? 1);
+    sprite.setVisible(true);
+
+    if (properties.scale !== undefined) {
+      sprite.setScale(properties.scale);
+      console.log(
+        `miriAssetService: Set scale for ${assetName} to ${properties.scale}`
+      );
     }
+    if (properties.rotation !== undefined) {
+      sprite.setRotation(properties.rotation);
+      console.log(
+        `miriAssetService: Set rotation for ${assetName} to ${properties.rotation}`
+      );
+    }
+    if (
+      properties.tint !== undefined &&
+      sprite instanceof Phaser.GameObjects.Sprite
+    ) {
+      sprite.setTint(properties.tint);
+      console.log(
+        `miriAssetService: Set tint for ${assetName} to ${properties.tint}`
+      );
+    }
+
+    // הוספה לסצנה עם בדיקה מפורטת
+    this.scene.add.existing(sprite);
+    sprite.setPosition(properties.x ?? 0, properties.y ?? 0); // חיזוק המיקום
+    console.log(
+      `miriAssetService: Added sprite for ${assetName} to scene at (${
+        properties.x ?? 0
+      }, ${properties.y ?? 0})`
+    );
+    console.log(
+      `miriAssetService: Sprite position after add: (${sprite.x}, ${sprite.y}), visible: ${sprite.visible}`
+    );
+    console.log(
+      `miriAssetService: Sprite displayList:`,
+      sprite.displayList ? "Exists" : "Null"
+    );
+
+    console.log(
+      `miriAssetService: applyBasicProperties completed for ${assetName}, returning type:`,
+      sprite.constructor.name
+    );
+    return sprite;
   }
 
   private applyAdvancedProperties(
     sprite: Phaser.GameObjects.Sprite,
     properties: AssetDisplayProperties
   ): void {
-    // Info Messages
-    // - Applies advanced properties like ratio, rotation, and tint to sprites
+    console.log(
+      `-- AssetService: applyAdvancedProperties called for sprite with properties:`,
+      properties
+    );
     if (properties.ratio) {
       this.applyAspectRatio(sprite, properties);
     }
 
     if (properties.rotation !== undefined) {
       sprite.setRotation(properties.rotation);
+      console.log(
+        `-- AssetService: Set rotation for sprite to ${properties.rotation}`
+      );
     }
 
     if (properties.tint !== undefined) {
       sprite.setTint(properties.tint);
+      console.log(`-- AssetService: Set tint for sprite to ${properties.tint}`);
     }
 
     if (properties.pivot) {
       sprite.setOrigin(properties.pivot.x, properties.pivot.y);
+      console.log(
+        `-- AssetService: Set pivot for sprite to (${properties.pivot.x}, ${properties.pivot.y})`
+      );
     }
+    console.log(`-- AssetService: applyAdvancedProperties completed`);
   }
 
   private applyAspectRatio(
     sprite: Phaser.GameObjects.Sprite,
     properties: AssetDisplayProperties
   ): void {
-    // Info Messages
-    // - Adjusts sprite scale to maintain target aspect ratio
+    console.log(
+      `-- AssetService: applyAspectRatio called for sprite with properties:`,
+      properties
+    );
     if (!properties.ratio) return;
 
     const texture = sprite.texture;
@@ -430,31 +554,41 @@ export class AssetService {
 
     if (targetRatio > currentRatio) {
       sprite.setScale(scale, scale * (currentRatio / targetRatio));
+      console.log(
+        `-- AssetService: Adjusted scale for aspect ratio (target > current): (${scale}, ${
+          scale * (currentRatio / targetRatio)
+        })`
+      );
     } else {
       sprite.setScale(scale * (targetRatio / currentRatio), scale);
+      console.log(
+        `-- AssetService: Adjusted scale for aspect ratio (target <= current): (${
+          scale * (targetRatio / currentRatio)
+        }, ${scale})`
+      );
     }
+    console.log(`-- AssetService: applyAspectRatio completed`);
   }
 
   // === Cleanup Methods ===
   public hideAllAssets(): void {
-    // Info Messages
-    // - Hides and cleans up all assets in the map
+    console.log("-- AssetService: hideAllAssets called");
     for (const [assetName, assetInfo] of this.assetsMap.entries()) {
+      console.log(`-- AssetService: Hiding asset ${assetName}`);
       this.cleanupExistingSprite(assetInfo);
       this.resetAssetInfo(assetName, assetInfo);
     }
+    console.log("-- AssetService: hideAllAssets completed");
   }
 
   private resetAssetInfo(assetName: string, assetInfo: AssetInfo): void {
-    // Info Messages
-    // - Resets asset info to remove sprite reference
+    console.log(`-- AssetService: resetAssetInfo called for ${assetName}`);
     let newAssetInfo: AssetInfo;
 
     switch (assetInfo.type) {
       case "video":
         newAssetInfo = { type: "video", url: assetInfo.url } as VideoAssetInfo;
         break;
-
       case "particle":
         newAssetInfo = {
           type: "particle",
@@ -462,7 +596,6 @@ export class AssetService {
           textureName: (assetInfo as ParticleAssetInfo).textureName,
         } as ParticleAssetInfo;
         break;
-
       case "image":
       default:
         newAssetInfo = { type: "image", url: assetInfo.url } as ImageAssetInfo;
@@ -470,79 +603,66 @@ export class AssetService {
     }
 
     this.assetsMap.set(assetName, newAssetInfo);
+    console.log(
+      `-- AssetService: resetAssetInfo updated ${assetName} with new info:`,
+      newAssetInfo
+    );
   }
 
   // === Asset Loading Methods ===
   async loadAsset(
     assetName: string
   ): Promise<{ success: boolean; error?: string }> {
+    console.log(`-- AssetService: loadAsset called for ${assetName}`);
     const assetInfo = this.getAssetsMap().get(assetName);
     if (!assetInfo) {
-      console.error(`Asset ${assetName} not found in assetsMap`);
+      console.log(`-- AssetService: Asset ${assetName} not found in assetsMap`);
       return { success: false, error: `Asset ${assetName} not found` };
     }
     console.log(
-      `Starting to load asset: ${assetName} (type: ${assetInfo.type})`
+      `-- AssetService: Starting to load asset: ${assetName} (type: ${assetInfo.type})`
     );
 
     if (this.isAssetLoaded(assetName)) {
-      console.log(`Asset ${assetName} already loaded`);
+      console.log(`-- AssetService: Asset ${assetName} already loaded`);
       return { success: true };
     }
 
     switch (assetInfo.type) {
       case "video":
-        console.log(`Loading video with URL: ${assetInfo.url}`);
+        console.log(
+          `-- AssetService: Loading video with URL: ${assetInfo.url}`
+        );
         return this.loadVideoAsset(assetName, assetInfo as VideoAssetInfo);
       case "spine":
         const spineInfo = assetInfo as SpineAssetInfo;
         console.log(
-          `Loading spine with atlas: ${spineInfo.atlasUrl}, skeleton: ${spineInfo.skeletonUrl}`
+          `-- AssetService: Loading spine with atlas: ${spineInfo.atlasUrl}, skeleton: ${spineInfo.skeletonUrl}`
         );
         if (!spineInfo.atlasUrl || !spineInfo.skeletonUrl) {
           console.error(
-            `Spine asset ${assetName} missing atlasUrl or skeletonUrl`
+            `-- AssetService: Spine asset ${assetName} missing atlasUrl or skeletonUrl`
           );
           return { success: false, error: `Missing Spine URLs` };
         }
         return this.loadSpineAsset(assetName, spineInfo);
       case "particle":
-        console.log(`Loading particle with URL: ${assetInfo.url}`);
+        console.log(
+          `-- AssetService: Loading particle with URL: ${assetInfo.url}`
+        );
         return this.loadParticleAsset(
           assetName,
           assetInfo as ParticleAssetInfo
         );
       case "image":
-        console.log(`Loading image with URL: ${assetInfo.url}`);
-        return this.loadImageAsset(assetName, assetInfo as ImageAssetInfo);
-      default:
-        console.error(`Unsupported asset type for ${assetName}: `);
-        return {
-          success: false,
-          error: `Unsupported asset type: ${assetInfo}`,
-        };
-    }
-  }
-
-  private async loadAssetByType(
-    assetName: string,
-    assetInfo: AssetInfo
-  ): Promise<{ success: boolean; error?: string }> {
-    // Info Messages
-    // - Routes asset loading to specific type handlers
-    switch (assetInfo.type) {
-      case "particle":
-        return this.loadParticleAsset(
-          assetName,
-          assetInfo as ParticleAssetInfo
+        console.log(
+          `-- AssetService: Loading image with URL: ${assetInfo.url}`
         );
-      case "image":
         return this.loadImageAsset(assetName, assetInfo as ImageAssetInfo);
-      case "video":
-        return this.loadVideoAsset(assetName, assetInfo as VideoAssetInfo);
-      case "spine":
-        return this.loadSpineAsset(assetName, assetInfo as SpineAssetInfo);
       default:
+        console.error(
+          `-- AssetService: Unsupported asset type for ${assetName}: `
+        );
         return {
           success: false,
           error: `Unsupported asset type: ${assetInfo}`,
@@ -554,9 +674,13 @@ export class AssetService {
     assetName: string,
     assetInfo: ParticleAssetInfo
   ): Promise<{ success: boolean; error?: string }> {
+    console.log(`-- AssetService: loadParticleAsset called for ${assetName}`);
     return new Promise((resolve) => {
       const textureKey = assetName;
       if (this.scene.textures.exists(textureKey)) {
+        console.log(
+          `-- AssetService: Texture ${textureKey} already exists for ${assetName}`
+        );
         this.loadedAssets.add(assetName);
         this.assetsMap.set(assetName, {
           ...assetInfo,
@@ -565,12 +689,21 @@ export class AssetService {
         this.successMessages.push(
           `loadParticleAsset [Loaded particle ${assetName} successfully]`
         );
+        console.log(
+          `-- AssetService: Particle ${assetName} loaded successfully from existing texture`
+        );
         resolve({ success: true });
         return;
       }
 
+      console.log(
+        `-- AssetService: Loading particle texture for ${assetName} from URL: ${assetInfo.url}`
+      );
       this.scene.load.image(textureKey, assetInfo.url);
       this.scene.load.once("complete", () => {
+        console.log(
+          `-- AssetService: Particle texture ${textureKey} loaded into cache for ${assetName}`
+        );
         this.loadedAssets.add(assetName);
         const tempSprite = this.scene.add.sprite(0, 0, textureKey);
         tempSprite.setVisible(false);
@@ -582,10 +715,16 @@ export class AssetService {
         this.successMessages.push(
           `loadParticleAsset [Loaded particle ${assetName} successfully]`
         );
+        console.log(
+          `-- AssetService: Particle ${assetName} loaded and sprite created at (0, 0)`
+        );
         resolve({ success: true });
       });
 
       this.scene.load.once("loaderror", () => {
+        console.log(
+          `-- AssetService: Failed to load particle texture ${textureKey} for ${assetName}`
+        );
         resolve({
           success: false,
           error: `Failed to load particle texture: ${textureKey}`,
@@ -600,14 +739,20 @@ export class AssetService {
     assetName: string,
     assetInfo: ImageAssetInfo
   ): Promise<{ success: boolean; error?: string }> {
+    console.log(`-- AssetService: loadImageAsset called for ${assetName}`);
     return new Promise((resolve) => {
       const img = new Image();
 
       img.onload = () => {
-        // upload to Phaser
+        console.log(
+          `-- AssetService: Image ${assetName} loaded successfully from URL: ${assetInfo.url}`
+        );
         this.scene.load.image(assetName, assetInfo.url);
         this.scene.load.once("complete", () => {
           if (!this.scene.textures.exists(assetName)) {
+            console.log(
+              `-- AssetService: Texture for ${assetName} not added to cache despite load completion`
+            );
             resolve({
               success: false,
               error: `Texture for '${assetName}' was not added to Phaser cache despite load completion`,
@@ -621,10 +766,16 @@ export class AssetService {
           this.successMessages.push(
             `loadImageAsset [Loaded image ${assetName} successfully]`
           );
+          console.log(
+            `-- AssetService: Image ${assetName} loaded and sprite created at (0, 0)`
+          );
           resolve({ success: true });
         });
 
         this.scene.load.once("loaderror", (file: Phaser.Loader.File) => {
+          console.log(
+            `-- AssetService: Failed to load image ${assetName} into Phaser: ${file.url}`
+          );
           resolve({
             success: false,
             error: `Failed to load image '${assetName}' into Phaser - ${file.url}`,
@@ -636,20 +787,25 @@ export class AssetService {
 
       img.onerror = () => {
         console.error(
-          `Image failed to load for '${assetName}' at URL '${assetInfo.url}'`
+          `-- AssetService: Image failed to load for ${assetName} at URL: ${assetInfo.url}`
         );
-        this.scene.load.off("complete"); // ניקוי האזנה כדי למנוע תגובה כפולה
+        this.scene.load.off("complete");
         resolve({
           success: false,
           error: `Invalid or inaccessible image URL for '${assetName}': '${assetInfo.url}'`,
         });
       };
 
-      // Initial check of URL integrity before loading
       try {
         new URL(assetInfo.url, window.location.origin);
+        console.log(
+          `-- AssetService: URL for ${assetName} is valid: ${assetInfo.url}`
+        );
       } catch (e) {
         const errorMsg = e instanceof Error ? e.message : String(e);
+        console.log(
+          `-- AssetService: Malformed URL for ${assetName}: ${assetInfo.url} - ${errorMsg}`
+        );
         resolve({
           success: false,
           error: `Malformed URL for '${assetName}': '${assetInfo.url}' - ${errorMsg}`,
@@ -661,71 +817,21 @@ export class AssetService {
     });
   }
 
-  // add to ssetService
-  public diagnoseSpineAsset(assetName: string): void {
-    const assetInfo = this.assetsMap.get(assetName);
-    if (!assetInfo) {
-      console.error(`Asset ${assetName} not found in assetsMap`);
-      return;
-    }
-
-    if (assetInfo.type !== "spine") {
-      console.error(
-        `Asset ${assetName} is not a Spine asset (type: ${assetInfo.type})`
-      );
-      return;
-    }
-
-    const spineInfo = assetInfo as SpineAssetInfo;
-
-    console.log("=== Spine Asset Diagnosis ===");
-    console.log(`Asset name: ${assetName}`);
-    console.log(`Atlas URL: ${spineInfo.atlasUrl}`);
-    console.log(`Skeleton URL: ${spineInfo.skeletonUrl}`);
-    console.log(`Skeleton type: ${spineInfo.skeletonType}`);
-
-    if ("sprite" in spineInfo && spineInfo.sprite) {
-      console.log("Sprite exists:", !!spineInfo.sprite);
-
-      if (spineInfo.sprite instanceof SpineGameObject) {
-        console.log("Is SpineGameObject: YES");
-        console.log("Has skeleton:", !!spineInfo.sprite.skeleton);
-        console.log("Has state:", !!spineInfo.sprite.state);
-
-        if (spineInfo.sprite.skeleton && spineInfo.sprite.skeleton.data) {
-          const animations = spineInfo.sprite.skeleton.data.animations;
-          console.log(`Available animations (${animations.length}):`);
-          animations.forEach((anim, idx) => {
-            console.log(
-              `  ${idx + 1}. ${anim.name} (duration: ${anim.duration}s)`
-            );
-          });
-        } else {
-          console.error("Skeleton or skeleton.data is null");
-        }
-      } else {
-        console.error("Is SpineGameObject: NO");
-        console.log("Actual type:", spineInfo.sprite.constructor.name);
-      }
-    } else {
-      console.error("Sprite does not exist");
-    }
-  }
-
   private async loadSpineAsset(
     assetName: string,
     assetInfo: SpineAssetInfo
   ): Promise<{ success: boolean; error?: string }> {
+    console.log(`-- AssetService: loadSpineAsset called for ${assetName}`);
     return new Promise((resolve) => {
       console.log(
-        `Loading Spine asset: ${assetName} (${assetInfo.skeletonType} format)`
+        `-- AssetService: Loading Spine asset: ${assetName} (${assetInfo.skeletonType} format)`
       );
       console.log(
-        `Atlas URL: ${assetInfo.atlasUrl}, Skeleton URL: ${assetInfo.skeletonUrl}`
+        `-- AssetService: Atlas URL: ${assetInfo.atlasUrl}, Skeleton URL: ${assetInfo.skeletonUrl}`
       );
 
       if (!assetInfo.atlasUrl || !assetInfo.skeletonUrl) {
-        console.error(`Missing URLs for ${assetName}`);
+        console.error(`-- AssetService: Missing URLs for ${assetName}`);
         resolve({ success: false, error: `Missing Spine URLs` });
         return;
       }
@@ -743,50 +849,21 @@ export class AssetService {
       this.scene.load.image(`${atlasKey}_texture`, textureName);
 
       this.scene.load.once("complete", () => {
-        console.log(`Spine asset ${assetName} files loaded into cache`);
+        console.log(
+          `-- AssetService: Spine asset ${assetName} files loaded into cache`
+        );
         try {
-          const spineObject = this.loadedAssets.add(assetName);
-
-          // const spineObject = this.scene.add.spine(
-          //   this.scene.scale.width / 2,
-          //   this.scene.scale.height / 2,
-          //   skeletonKey,
-          //   atlasKey
-          // );
-          //spineObject.setScale(0.5);
-          //spineObject.setVisible(true);
-          console.log("Spine object created:", spineObject);
-          //console.log("Has state?", !!spineObject.state);
-          //console.log("Has animationState?", !!spineObject.animationState);
-
-          // if (spineObject.skeleton) {
-          //  const animations = spineObject.skeleton.data.animations;
-          //  console.log(
-          //   "Animations:",
-          //    animations.map((a) => a.name)
-          // );
-          // if (animations.length > 0) {
-          // if (spineObject.animationState) {
-          //   console.log("Using animationState");
-          //   spineObject.animationState.setAnimation(
-          //     0,
-          //     animations[0].name,
-          //     true
-          //   );
-          //} else {
-          //  console.warn("No state or animationState found in spineObject");
-          //}
-          //  }
-          // } else {
-          //  console.warn("No skeleton found in spineObject");
-          //}
-
           this.loadedAssets.add(assetName);
           this.assetsMap.set(assetName, { ...assetInfo, sprite: undefined });
-          console.log(`Spine asset ${assetName} loaded successfully`);
+          console.log(
+            `-- AssetService: Spine asset ${assetName} loaded successfully`
+          );
           resolve({ success: true });
         } catch (error) {
-          console.error(`Error creating spine object for ${assetName}:`, error);
+          console.error(
+            `-- AssetService: Error creating spine object for ${assetName}:`,
+            error
+          );
           resolve({
             success: false,
             error: `Failed to create Spine object: `,
@@ -795,7 +872,9 @@ export class AssetService {
       });
 
       this.scene.load.once("loaderror", (file: Phaser.Loader.File) => {
-        console.error(`Error loading spine asset ${assetName}: ${file.url}`);
+        console.error(
+          `-- AssetService: Error loading spine asset ${assetName}: ${file.url}`
+        );
         resolve({
           success: false,
           error: `Failed to load Spine asset ${assetName}: ${file.url}`,
@@ -810,11 +889,13 @@ export class AssetService {
     assetName: string,
     assetInfo: VideoAssetInfo
   ): Promise<{ success: boolean; error?: string }> {
-    // Info Messages
-    // - Loads a video asset into the scene
+    console.log(`-- AssetService: loadVideoAsset called for ${assetName}`);
     const fileExtension = assetInfo.url.split(".").pop()?.toLowerCase();
 
     if (!["mp4", "webm"].includes(fileExtension || "")) {
+      console.log(
+        `-- AssetService: Unsupported video format for ${assetName}: ${fileExtension}`
+      );
       return {
         success: false,
         error: `Unsupported video format: ${fileExtension}`,
@@ -822,24 +903,37 @@ export class AssetService {
     }
 
     return new Promise((resolve) => {
+      console.log(
+        `-- AssetService: Fetching video URL for ${assetName}: ${assetInfo.url}`
+      );
       fetch(assetInfo.url)
         .then((response) => {
           if (!response.ok) {
+            console.log(
+              `-- AssetService: HTTP error fetching video ${assetName}: ${response.status}`
+            );
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
           this.scene.load.video(assetName, assetInfo.url);
           this.scene.load.once("complete", () => {
+            console.log(
+              `-- AssetService: Video ${assetName} loaded into cache`
+            );
             this.loadedAssets.add(assetName);
             const video = this.scene.add.video(0, 0, assetName);
             video.setVisible(false);
             this.assetsMap.set(assetName, { ...assetInfo, sprite: video });
-            // Success Messages
-            // - loadVideoAsset [Loaded video ${assetName} successfully]
+            console.log(
+              `-- AssetService: Video sprite created for ${assetName} at (0, 0)`
+            );
             resolve({ success: true });
           });
 
           this.scene.load.once("loaderror", () => {
+            console.log(
+              `-- AssetService: Failed to load video ${assetName} into Phaser`
+            );
             resolve({
               success: false,
               error: `Failed to load video: ${assetName}`,
@@ -849,6 +943,10 @@ export class AssetService {
           this.scene.load.start();
         })
         .catch((error) => {
+          console.log(
+            `-- AssetService: Failed to fetch video ${assetName}:`,
+            error
+          );
           resolve({
             success: false,
             error: `Failed to fetch video: ${assetName}`,
@@ -864,8 +962,17 @@ export class AssetService {
       error?: string;
     }[]
   > {
+    console.log(
+      "-- AssetService: loadAssets started with assets count:",
+      assets.length
+    );
     const loadPromises = assets.map(async (asset) => {
+      console.log(`-- AssetService: Loading asset ${asset.assetName}`);
       const result = await this.loadAsset(asset.assetName);
+      console.log(
+        `-- AssetService: Load result for ${asset.assetName}:`,
+        result
+      );
       return {
         assetName: asset.assetName,
         success: result.success,
@@ -877,12 +984,18 @@ export class AssetService {
     const successfulAssets = results.filter((result) => result.success);
     const failedAssets = results.filter((result) => !result.success);
 
+    console.log(
+      "-- AssetService: Load results - Successful:",
+      successfulAssets.length,
+      "Failed:",
+      failedAssets.length
+    );
     for (const result of results) {
       if (result.success) {
         const assetInfo = this.assetsMap.get(result.assetName);
         if (!assetInfo) {
           console.error(
-            `Asset ${result.assetName} not found in assetsMap after loading`
+            `-- AssetService: Asset ${result.assetName} not found in assetsMap after loading`
           );
           result.success = false;
           result.error = "Asset info missing after loading";
@@ -896,14 +1009,14 @@ export class AssetService {
               !!assetInfo.sprite &&
               assetInfo.sprite instanceof Phaser.GameObjects.Video;
             console.log(
-              `Video ${result.assetName} reported as successful. Does video object exist? ${assetExists}`
+              `-- AssetService: Video ${result.assetName} reported as successful. Does video object exist? ${assetExists}`
             );
             break;
           case "image":
           case "particle":
             assetExists = this.scene.textures.exists(result.assetName);
             console.log(
-              `Asset ${result.assetName} (type: ${assetInfo.type}) reported as successful. Does texture exist? ${assetExists}`
+              `-- AssetService: Asset ${result.assetName} (type: ${assetInfo.type}) reported as successful. Does texture exist? ${assetExists}`
             );
             break;
           case "spine":
@@ -913,20 +1026,19 @@ export class AssetService {
               ("state" in assetInfo.sprite ||
                 "animationState" in assetInfo.sprite);
             console.log(
-              `Spine ${result.assetName} reported as successful. Does spine object exist? ${assetExists}`
+              `-- AssetService: Spine ${result.assetName} reported as successful. Does spine object exist? ${assetExists}`
             );
             break;
           default:
             console.warn(
-              `Unknown asset type for ${result.assetName}: ${assetInfo}`
+              `-- AssetService: Unknown asset type for ${result.assetName}: ${assetInfo}`
             );
             assetExists = true;
         }
 
-        // i dont want the spine to have its sprotes on screen before timeline os loaded
         if (!assetExists && assetInfo.type != "spine") {
           console.error(
-            `Asset ${result.assetName} reported success but asset verification failed!`
+            `-- AssetService: Asset ${result.assetName} reported success but asset verification failed!`
           );
           result.success = false;
           result.error = "Asset verification failed after loading";
@@ -936,160 +1048,321 @@ export class AssetService {
 
     if (failedAssets.length > 0) {
       console.error(
-        "Failed to load assets:",
+        "-- AssetService: Failed to load assets:",
         failedAssets.map((fa) => `${fa.assetName}: ${fa.error}`)
       );
     }
 
     if (successfulAssets.length === 0) {
+      console.log("-- AssetService: No assets could be loaded");
       throw new Error("No assets could be loaded");
     }
 
+    console.log("-- AssetService: loadAssets completed with results:", results);
     return results;
   }
 
-  public async loadSpineBoyDirectlyWithFiles(): Promise<void> {
-    try {
-      const key = `spineboy-${Date.now()}`;
-
-      const skelFile = new File([], "spineboy-pro.skel");
-      const atlasFile = new File([], "spineboy-pma.atlas");
-      const pngFiles = [new File([], "spineboy-pma.png")];
-
-      console.log("Files prepared:", {
-        skel: skelFile.name,
-        atlas: atlasFile.name,
-        pngs: pngFiles.map((f) => f.name),
-      });
-
-      const basePath = "assets/skelSpineBoy/";
-      const skelURL = `${basePath}spineboy-pro.skel`;
-      const atlasURL = `${basePath}spineboy-pma.atlas`;
-      const pngMap = new Map(
-        pngFiles.map((file) => {
-          const url = `${basePath}${file.name}`;
-          console.log(`Mapping ${file.name} to ${url}`);
-          return [file.name, url];
-        })
-      );
-
-      const prevX = this.scene.scale.width / 2;
-      const prevY = this.scene.scale.height / 2;
-
-      if (this.spineCharacter) {
-        this.spineCharacter.destroy();
-        this.spineCharacter = null;
-      }
-
-      if (skelFile.name.endsWith(".json")) {
-        this.scene.load.spineJson(key, skelURL);
-      } else {
-        this.scene.load.spineBinary(key, skelURL);
-      }
-      this.scene.load.spineAtlas(`${key}Atlas`, atlasURL, true);
-
-      for (const [filename, url] of pngMap) {
-        console.log(`Loading texture: ${key}Atlas!${filename} from ${url}`);
-        this.scene.load.image(`${key}Atlas!${filename}`, url);
-      }
-
-      await new Promise<void>((resolve, reject) => {
-        this.scene.load.once("complete", () => {
-          console.log("All assets loaded successfully");
-          this.assetsLoaded = true;
-          resolve();
-        });
-
-        this.scene.load.once("loaderror", (file: any) => {
-          console.error("Error loading asset:", file);
-          reject(new Error(`Failed to load asset: ${file.key}`));
-        });
-
-        this.scene.load.start();
-      });
-
-      if (this.assetsLoaded) {
-        console.log("Creating spine character...");
-        this.spineCharacter = this.scene.add.spine(prevX, prevY, key, "walk");
-
-        if (this.spineCharacter) {
-          console.log("Spine character created:", this.spineCharacter);
-          if (this.spineCharacter && this.spineCharacter.state) {
-            this.spineCharacter.animationState.setAnimation(
-              0,
-              "animation",
-              false
-            );
-          }
-          console.log(
-            "Available animations:",
-            this.spineCharacter.skeleton.data.animations
-          );
-
-          const spineInfo: SpineAssetInfo = {
-            type: "spine",
-            atlasUrl: atlasURL,
-            skeletonUrl: skelURL,
-            skeletonType: "binary",
-            url: "",
-            sprite: this.spineCharacter,
-          };
-          this.assetsMap.set(key, spineInfo);
-        } else {
-          console.error("Failed to create spine character!");
-        }
-      }
-    } catch (error) {
-      console.error("Error loading SpineBoy:", error);
-      throw error;
+  public isAssetLoaded(assetName: string): boolean {
+    console.log(`-- AssetService: isAssetLoaded called for ${assetName}`);
+    const assetInfo = this.assetsMap.get(assetName);
+    if (!assetInfo) {
+      console.log(`-- AssetService: Asset ${assetName} not found in assetsMap`);
+      return false;
     }
+
+    const isLoaded = this.loadedAssets.has(assetName);
+    console.log(
+      `-- AssetService: Asset ${assetName} loaded in loadedAssets? ${isLoaded}`
+    );
+
+    if (assetInfo.type === "image") {
+      const exists =
+        isLoaded &&
+        (assetInfo as ImageAssetInfo).sprite instanceof
+          Phaser.GameObjects.Sprite;
+      console.log(
+        `-- AssetService: Image ${assetName} exists as sprite? ${exists}`
+      );
+      return exists;
+    }
+    if (assetInfo.type === "video") {
+      const exists =
+        isLoaded &&
+        (assetInfo as VideoAssetInfo).sprite instanceof
+          Phaser.GameObjects.Video;
+      console.log(
+        `-- AssetService: Video ${assetName} exists as video? ${exists}`
+      );
+      return exists;
+    }
+    if (assetInfo.type === "particle") {
+      const exists = isLoaded && !!(assetInfo as ParticleAssetInfo).textureName;
+      console.log(
+        `-- AssetService: Particle ${assetName} has textureName? ${exists}`
+      );
+      return exists;
+    }
+
+    if (assetInfo.type === "spine") {
+      const exists =
+        isLoaded &&
+        "sprite" in assetInfo &&
+        assetInfo.sprite instanceof Phaser.GameObjects.GameObject;
+      console.log(
+        `-- AssetService: Spine ${assetName} exists as game object? ${exists}`
+      );
+      return exists;
+    }
+    console.log(`-- AssetService: Default check for ${assetName}: ${isLoaded}`);
+    return false;
   }
 
-  public async testSpineLoad(): Promise<void> {
-    console.log("Testing Spine load...");
-    this.scene.load.spineAtlas(
-      "spineboyAtlas",
-      "assets/skelSpineBoy/spineboy-pma.atlas"
-    );
-    this.scene.load.spineBinary(
-      "spineboy",
-      "assets/skelSpineBoy/spineboy-pro.skel"
-    );
+  private validateAssetStructure(json: AssetJson): string[] {
+    console.log("-- AssetService: validateAssetStructure started");
+    const errors: string[] = [];
 
-    await new Promise((resolve, reject) => {
-      this.scene.load.once("complete", () => {
-        console.log("Spine files loaded!");
-        const spineObj = this.scene.add.spine(400, 300, "spineboy", "walk");
-        console.log("Spine object:", spineObj);
-        resolve(true);
-      });
-      this.scene.load.once("loaderror", (file: { url: any }) => {
-        console.error("Load failed:", file);
-        reject(new Error(`Failed to load: ${file.url}`));
-      });
-      this.scene.load.start();
+    if (!json.assets || !Array.isArray(json.assets)) {
+      console.log(
+        "-- AssetService: Invalid JSON structure - 'assets' key is missing or not an array"
+      );
+      errors.push(
+        "Invalid JSON structure - 'assets' key is missing or not an array"
+      );
+      return errors;
+    }
+
+    console.log(
+      "-- AssetService: Validating assets structure, count:",
+      json.assets.length
+    );
+    json.assets.forEach((asset, index) => {
+      const assetPrefix = `Asset #${index + 1} (${
+        asset.assetName || "unnamed"
+      })`;
+      console.log(`-- AssetService: Validating ${assetPrefix}`);
+
+      if (
+        !asset.assetName ||
+        typeof asset.assetName !== "string" ||
+        asset.assetName.trim() === ""
+      ) {
+        console.log(
+          `-- AssetService: ${assetPrefix} - 'assetName' validation failed`
+        );
+        errors.push(
+          `${assetPrefix}: 'assetName' is missing, not a string, or empty`
+        );
+      }
+
+      const validTypes = ["image", "video", "particle", "spine"];
+      if (!asset.assetType || !validTypes.includes(asset.assetType)) {
+        console.log(
+          `-- AssetService: ${assetPrefix} - 'assetType' validation failed`
+        );
+        errors.push(
+          `${assetPrefix}: 'assetType' is missing or invalid, must be one of ${validTypes.join(
+            ", "
+          )}`
+        );
+      }
+
+      if (!asset.assetUrl) {
+        console.log(`-- AssetService: ${assetPrefix} - 'assetUrl' is missing`);
+        errors.push(`${assetPrefix}: 'assetUrl' is missing`);
+      } else if (asset.assetType === "spine") {
+        if (typeof asset.assetUrl !== "object" || asset.assetUrl === null) {
+          console.log(
+            `-- AssetService: ${assetPrefix} - Spine 'assetUrl' must be an object`
+          );
+          errors.push(
+            `${assetPrefix}: For spine assets, 'assetUrl' must be an object with skeletonUrl and atlasUrl properties`
+          );
+        } else {
+          const spineUrl = asset.assetUrl as any;
+
+          if (!spineUrl.skeletonUrl) {
+            console.log(
+              `-- AssetService: ${assetPrefix} - Missing 'skeletonUrl'`
+            );
+            errors.push(
+              `${assetPrefix}: Missing 'skeletonUrl' for spine asset`
+            );
+          } else if (typeof spineUrl.skeletonUrl !== "string") {
+            console.log(
+              `-- AssetService: ${assetPrefix} - 'skeletonUrl' must be a string`
+            );
+            errors.push(`${assetPrefix}: 'skeletonUrl' must be a string`);
+          } else {
+            const validSkeletonExts = [".json", ".skel"];
+            const hasValidSkeletonExt = validSkeletonExts.some((ext) =>
+              spineUrl.skeletonUrl.toLowerCase().endsWith(ext)
+            );
+            if (!hasValidSkeletonExt) {
+              console.log(
+                `-- AssetService: ${assetPrefix} - Invalid 'skeletonUrl' extension`
+              );
+              errors.push(
+                `${assetPrefix}: 'skeletonUrl' must end with .json or .skel: '${spineUrl.skeletonUrl}'`
+              );
+            }
+          }
+
+          if (!spineUrl.atlasUrl) {
+            console.log(`-- AssetService: ${assetPrefix} - Missing 'atlasUrl'`);
+            errors.push(`${assetPrefix}: Missing 'atlasUrl' for spine asset`);
+          } else if (typeof spineUrl.atlasUrl !== "string") {
+            console.log(
+              `-- AssetService: ${assetPrefix} - 'atlasUrl' must be a string`
+            );
+            errors.push(`${assetPrefix}: 'atlasUrl' must be a string`);
+          } else if (!spineUrl.atlasUrl.toLowerCase().endsWith(".atlas")) {
+            console.log(
+              `-- AssetService: ${assetPrefix} - Invalid 'atlasUrl' extension`
+            );
+            errors.push(
+              `${assetPrefix}: 'atlasUrl' must end with .atlas: '${spineUrl.atlasUrl}'`
+            );
+          }
+        }
+      } else {
+        if (typeof asset.assetUrl !== "string") {
+          console.log(
+            `-- AssetService: ${assetPrefix} - 'assetUrl' must be a string`
+          );
+          errors.push(
+            `${assetPrefix}: 'assetUrl' must be a string, got ${typeof asset.assetUrl}`
+          );
+        } else {
+          const url = asset.assetUrl.trim();
+          if (!url) {
+            console.log(
+              `-- AssetService: ${assetPrefix} - 'assetUrl' is empty`
+            );
+            errors.push(`${assetPrefix}: 'assetUrl' is empty`);
+          } else {
+            const urlRegex = /^[a-zA-Z0-9\/._-]*$/;
+            if (!urlRegex.test(url)) {
+              console.log(
+                `-- AssetService: ${assetPrefix} - 'assetUrl' contains invalid characters`
+              );
+              errors.push(
+                `${assetPrefix}: 'assetUrl' contains invalid characters: '${url}'`
+              );
+            }
+
+            const validExtensions = [
+              "png",
+              "jpg",
+              "jpeg",
+              "webp",
+              "mp4",
+              "webm",
+            ];
+            const hasValidExtension = validExtensions.some((ext) =>
+              url.toLowerCase().endsWith(`.${ext}`)
+            );
+            if (!hasValidExtension) {
+              console.log(
+                `-- AssetService: ${assetPrefix} - Invalid 'assetUrl' extension`
+              );
+              errors.push(
+                `${assetPrefix}: 'assetUrl' does not end with a supported file extension: '${url}'`
+              );
+            }
+          }
+        }
+      }
     });
+
+    console.log(
+      "-- AssetService: validateAssetStructure completed with errors:",
+      errors
+    );
+    return errors;
+  }
+
+  private async checkAssetsExistence(
+    assets: AssetElement[]
+  ): Promise<string[]> {
+    console.log(
+      "-- AssetService: checkAssetsExistence started with assets count:",
+      assets.length
+    );
+    const errors: string[] = [];
+
+    for (const asset of assets) {
+      const assetPrefix = `Asset '${asset.assetName}'`;
+      let urlToCheck = asset.assetUrl as string;
+
+      if (typeof urlToCheck !== "string" || !urlToCheck.trim()) {
+        console.log(
+          `-- AssetService: ${assetPrefix} - Skipping due to invalid or empty URL`
+        );
+        continue;
+      }
+
+      try {
+        console.log(
+          `-- AssetService: ${assetPrefix}: Checking existence of URL '${urlToCheck}'`
+        );
+        const response = await fetch(urlToCheck, { method: "HEAD" });
+
+        if (!response.ok) {
+          console.log(
+            `-- AssetService: ${assetPrefix} - URL inaccessible, status: ${response.status}`
+          );
+          errors.push(
+            `${assetPrefix}: URL '${urlToCheck}' is inaccessible (HTTP Status: ${response.status} - ${response.statusText})`
+          );
+        } else {
+          console.log(
+            `-- AssetService: ${assetPrefix} - URL '${urlToCheck}' exists and is accessible`
+          );
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.log(
+          `-- AssetService: ${assetPrefix} - Failed to check URL '${urlToCheck}': ${errorMsg}`
+        );
+        if (errorMsg.includes("Failed to fetch")) {
+          errors.push(
+            `${assetPrefix}: URL '${urlToCheck}' is invalid or unreachable - possible malformed URL or network issue`
+          );
+        } else {
+          errors.push(
+            `${assetPrefix}: Failed to check URL '${urlToCheck}' - ${errorMsg}`
+          );
+        }
+      }
+    }
+
+    console.log(
+      "-- AssetService: checkAssetsExistence completed with errors:",
+      errors
+    );
+    return errors;
   }
 
   private displayLoadResults(
-    results: {
-      assetName: string;
-      success: boolean;
-      error?: string;
-    }[]
+    results: { assetName: string; success: boolean; error?: string }[]
   ): void {
+    console.log(
+      "-- AssetService: displayLoadResults called with results:",
+      results
+    );
     const successfulAssets = results.filter((result) => result.success);
     const failedAssets = results.filter((result) => !result.success);
     const messages: any[] = [];
 
-    // Title with summary
+    console.log(
+      `-- AssetService: Load summary - Successful: ${successfulAssets.length}, Failed: ${failedAssets.length}`
+    );
     messages.push(
       createInfoMessage(
         `Asset Loading Summary: ${successfulAssets.length} succeeded, ${failedAssets.length} failed`
       )
     );
 
-    // success
     if (successfulAssets.length > 0) {
       messages.push(createSuccessMessage("Successfully Loaded Assets:"));
       successfulAssets.forEach((asset, index) => {
@@ -1101,7 +1374,6 @@ export class AssetService {
       });
     }
 
-    // failers
     if (failedAssets.length > 0) {
       messages.push(createErrorMessage("Failed to Load Assets:"));
       failedAssets.forEach((asset, index) => {
@@ -1122,347 +1394,9 @@ export class AssetService {
         messages.length > 1
           ? messages
           : [createInfoMessage("No assets processed.")],
-      autoClose: failedAssets.length === 0, // סגירה אוטומטית רק אם אין כשלונות
+      autoClose: failedAssets.length === 0,
       autoCloseTime: 7000,
     });
-  }
-
-  public isAssetLoaded(assetName: string): boolean {
-    const assetInfo = this.assetsMap.get(assetName);
-    if (!assetInfo) return false;
-
-    const isLoaded = this.loadedAssets.has(assetName);
-
-    if (assetInfo.type === "image") {
-      return (
-        isLoaded &&
-        (assetInfo as ImageAssetInfo).sprite instanceof
-          Phaser.GameObjects.Sprite
-      );
-    }
-    if (assetInfo.type === "video") {
-      return (
-        isLoaded &&
-        (assetInfo as VideoAssetInfo).sprite instanceof Phaser.GameObjects.Video
-      );
-    }
-    if (assetInfo.type === "particle") {
-      return isLoaded && !!(assetInfo as ParticleAssetInfo).textureName;
-    }
-
-    if (assetInfo.type === "spine") {
-      return (
-        isLoaded &&
-        "sprite" in assetInfo &&
-        assetInfo.sprite instanceof Phaser.GameObjects.GameObject
-      );
-    }
-    return false;
-  }
-
-  // === Validation Methods ===
-  private validateAssetStructure(json: AssetJson): string[] {
-    const errors: string[] = [];
-
-    if (!json.assets || !Array.isArray(json.assets)) {
-      errors.push(
-        "Invalid JSON structure - 'assets' key is missing or not an array"
-      );
-      return errors;
-    }
-
-    json.assets.forEach((asset, index) => {
-      const assetPrefix = `Asset #${index + 1} (${
-        asset.assetName || "unnamed"
-      })`;
-
-      // בדיקת assetName
-      if (
-        !asset.assetName ||
-        typeof asset.assetName !== "string" ||
-        asset.assetName.trim() === ""
-      ) {
-        errors.push(
-          `${assetPrefix}: 'assetName' is missing, not a string, or empty`
-        );
-      }
-
-      // cheking assetType
-      const validTypes = ["image", "video", "particle", "spine"];
-      if (!asset.assetType || !validTypes.includes(asset.assetType)) {
-        errors.push(
-          `${assetPrefix}: 'assetType' is missing or invalid, must be one of ${validTypes.join(
-            ", "
-          )}`
-        );
-      }
-
-      // cheking assetUrl
-      if (!asset.assetUrl) {
-        errors.push(`${assetPrefix}: 'assetUrl' is missing`);
-      } else if (asset.assetType === "spine") {
-        // cheking spine
-        if (typeof asset.assetUrl !== "object" || asset.assetUrl === null) {
-          errors.push(
-            `${assetPrefix}: For spine assets, 'assetUrl' must be an object with skeletonUrl and atlasUrl properties`
-          );
-        } else {
-          const spineUrl = asset.assetUrl as any;
-
-          if (!spineUrl.skeletonUrl) {
-            errors.push(
-              `${assetPrefix}: Missing 'skeletonUrl' for spine asset`
-            );
-          } else if (typeof spineUrl.skeletonUrl !== "string") {
-            errors.push(`${assetPrefix}: 'skeletonUrl' must be a string`);
-          } else {
-            // cheking skeleton ending
-            const validSkeletonExts = [".json", ".skel"];
-            const hasValidSkeletonExt = validSkeletonExts.some((ext) =>
-              spineUrl.skeletonUrl.toLowerCase().endsWith(ext)
-            );
-            if (!hasValidSkeletonExt) {
-              errors.push(
-                `${assetPrefix}: 'skeletonUrl' must end with .json or .skel: '${spineUrl.skeletonUrl}'`
-              );
-            }
-          }
-
-          if (!spineUrl.atlasUrl) {
-            errors.push(`${assetPrefix}: Missing 'atlasUrl' for spine asset`);
-          } else if (typeof spineUrl.atlasUrl !== "string") {
-            errors.push(`${assetPrefix}: 'atlasUrl' must be a string`);
-          } else if (!spineUrl.atlasUrl.toLowerCase().endsWith(".atlas")) {
-            errors.push(
-              `${assetPrefix}: 'atlasUrl' must end with .atlas: '${spineUrl.atlasUrl}'`
-            );
-          }
-        }
-      } else {
-        // cheking regular files (not spine)
-        if (typeof asset.assetUrl !== "string") {
-          errors.push(
-            `${assetPrefix}: 'assetUrl' must be a string, got ${typeof asset.assetUrl}`
-          );
-        } else {
-          const url = asset.assetUrl.trim();
-          if (!url) {
-            errors.push(`${assetPrefix}: 'assetUrl' is empty`);
-          } else {
-            // cheking basic URL
-            const urlRegex = /^[a-zA-Z0-9\/._-]*$/; // תווים חוקיים בלבד (ללא תווים מיוחדים)
-            if (!urlRegex.test(url)) {
-              errors.push(
-                `${assetPrefix}: 'assetUrl' contains invalid characters: '${url}'`
-              );
-            }
-
-            // cheking file ending
-            const validExtensions = [
-              "png",
-              "jpg",
-              "jpeg",
-              "webp",
-              "mp4",
-              "webm",
-            ];
-            const hasValidExtension = validExtensions.some((ext) =>
-              url.toLowerCase().endsWith(`.${ext}`)
-            );
-            if (!hasValidExtension) {
-              errors.push(
-                `${assetPrefix}: 'assetUrl' does not end with a supported file extension: '${url}'`
-              );
-            }
-          }
-        }
-      }
-    });
-
-    return errors;
-  }
-
-  private async checkAssetsExistence(
-    assets: AssetElement[]
-  ): Promise<string[]> {
-    const errors: string[] = [];
-
-    for (const asset of assets) {
-      const assetPrefix = `Asset '${asset.assetName}'`;
-      let urlToCheck = asset.assetUrl as string;
-
-      // Skip if an error has already been found in the structure
-
-      if (typeof urlToCheck !== "string" || !urlToCheck.trim()) {
-        // Skip if an error has already been found in the structure validateAssetStructure
-        continue;
-      }
-
-      try {
-        console.log(
-          `${assetPrefix}: Checking existence of URL '${urlToCheck}'`
-        );
-        const response = await fetch(urlToCheck, { method: "HEAD" });
-
-        if (!response.ok) {
-          errors.push(
-            `${assetPrefix}: URL '${urlToCheck}' is inaccessible (HTTP Status: ${response.status} - ${response.statusText})`
-          );
-        }
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        if (errorMsg.includes("Failed to fetch")) {
-          errors.push(
-            `${assetPrefix}: URL '${urlToCheck}' is invalid or unreachable - possible malformed URL or network issue`
-          );
-        } else {
-          errors.push(
-            `${assetPrefix}: Failed to check URL '${urlToCheck}' - ${errorMsg}`
-          );
-        }
-      }
-    }
-
-    return errors;
-  }
-
-  private async checkSingleAssetUrl(
-    assetPrefix: string,
-    url: string,
-    errors: string[]
-  ): Promise<void> {
-    try {
-      console.log(`${assetPrefix}: Checking URL '${url}'`);
-      const response = await fetch(url, { method: "HEAD" });
-
-      if (!response.ok) {
-        errors.push(
-          `${assetPrefix}: URL '${url}' is inaccessible (HTTP Status: ${response.status} - ${response.statusText})`
-        );
-        return;
-      }
-
-      // cheking file size  (if available)
-      const contentLength = response.headers.get("Content-Length");
-      if (contentLength && parseInt(contentLength) === 0) {
-        errors.push(
-          `${assetPrefix}: URL '${url}' points to an empty file (size: 0 bytes)`
-        );
-      }
-
-      //checking kind of file (Content-Type)
-      const contentType = response.headers.get("Content-Type");
-      if (!contentType) {
-        errors.push(`${assetPrefix}: URL '${url}' has no Content-Type header`);
-      } else if (
-        (url.endsWith(".png") && !contentType.includes("image/png")) ||
-        (url.endsWith(".jpg") && !contentType.includes("image/jpeg")) ||
-        (url.endsWith(".mp4") && !contentType.includes("video/mp4"))
-      ) {
-        errors.push(
-          `${assetPrefix}: URL '${url}' has mismatched Content-Type '${contentType}'`
-        );
-      }
-    } catch (error) {
-      errors.push(
-        `${assetPrefix}: Failed to check URL '${url}' - ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-    }
-  }
-
-  // === Debug Methods ===
-  public debugAssetSizes(): void {
-    // Info Messages
-    // - Logs size information for all sprite-based assets
-    console.log("=== Asset Sizes Debug Info ===");
-    this.assetsMap.forEach((assetInfo, assetName) => {
-      if (
-        "sprite" in assetInfo &&
-        assetInfo.sprite instanceof Phaser.GameObjects.Sprite
-      ) {
-        const sprite = assetInfo.sprite;
-        const texture = sprite.texture;
-        const sourceImage = texture.getSourceImage();
-        console.log(`Asset: ${assetName}`, {
-          originalSize: `${sourceImage.width}x${sourceImage.height}`,
-          displaySize: `${sprite.displayWidth}x${sprite.displayHeight}`,
-          scale: `${sprite.scaleX}x${sprite.scaleY}`,
-          origin: `${sprite.originX}x${sprite.originY}`,
-        });
-      }
-    });
-  }
-
-  public debugAssetsState(): void {
-    const assetsMap = this.getAssetsMap();
-    const messages: any[] = []; // Ensure this line exists and isn’t modified
-
-    messages.push(createInfoMessage("Success Messages"));
-
-    assetsMap.forEach((asset, name) => {
-      const isLoaded = this.isAssetLoaded(name);
-      if (isLoaded) {
-        let scaleX = 1,
-          scaleY = 1,
-          aspectRatio = "N/A",
-          pivotX = 0.5,
-          pivotY = 0.5;
-        if ("sprite" in asset && asset.sprite) {
-          const sprite = asset.sprite;
-          if (
-            sprite instanceof Phaser.GameObjects.Sprite ||
-            sprite instanceof Phaser.GameObjects.Video
-          ) {
-            scaleX = sprite.scaleX || 1;
-            scaleY = sprite.scaleY || 1;
-            pivotX = sprite.originX || 0.5;
-            pivotY = sprite.originY || 0.5;
-          } else if ("skeleton" in sprite && "state" in sprite) {
-            // This is a spine object
-            scaleX =
-              "scaleX" in sprite
-                ? (sprite as any).scaleX
-                : "scale" in sprite
-                ? (sprite as any).scale
-                : 1;
-            scaleY =
-              "scaleY" in sprite
-                ? (sprite as any).scaleY
-                : "scale" in sprite
-                ? (sprite as any).scale
-                : 1;
-            pivotX = 0.5;
-            pivotY = 0.5;
-          }
-          if (sprite instanceof Phaser.GameObjects.Sprite && sprite.texture) {
-            const sourceImage = sprite.texture.getSourceImage();
-            aspectRatio = `${sourceImage.width}x${sourceImage.height}`;
-          } else if (
-            sprite instanceof Phaser.GameObjects.Video &&
-            sprite.video
-          ) {
-            aspectRatio =
-              `${sprite.video.videoWidth}x${sprite.video.videoHeight}` ||
-              "16x9";
-          }
-        }
-        const assetDetails = `${name} (${asset.type}) [scale: ${scaleX}x${scaleY}, aspect ratio: ${aspectRatio}, pivot: (${pivotX},${pivotY})]`;
-        console.log("messages before push:", messages); // Debug
-        messages.push(createSuccessMessage(assetDetails)); // This should be safe
-      }
-    });
-
-    showMessage({
-      isOpen: true,
-      title: "Assets Loaded - assets.json",
-      messages:
-        messages.length > 1
-          ? messages
-          : [createInfoMessage("No assets loaded.")],
-      autoClose: messages.length > 1,
-      autoCloseTime: 5000,
-    });
+    console.log("-- AssetService: displayLoadResults completed");
   }
 }
