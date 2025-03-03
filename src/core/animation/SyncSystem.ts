@@ -16,7 +16,6 @@ export class SyncSystem {
   constructor(scene: Scene) {
     this.animationManager = new AnimationManager(scene);
     this.sequenceSystem = new SequenceSystem(scene);
-    console.log(`[${new Date().toISOString()}] SyncSystem: Initialized`);
   }
 
   /**
@@ -24,17 +23,15 @@ export class SyncSystem {
    */
   async playSync(groups: SyncGroup[]): Promise<void> {
     console.log(
-      `[${new Date().toISOString()}] SyncSystem: Starting animation playback for ${
-        groups.length
-      } groups`
+      `SyncSystem: Starting animation playback for ${groups.length} groups`
     );
 
     // לוג מידע על כל אובייקט וכמות האנימציות שלו
     groups.forEach((group) => {
       console.log(
-        `[${new Date().toISOString()}] SyncSystem: Group for ${
-          group.target.name || "unnamed object"
-        } has ${group.sequence.length} animations`
+        `SyncSystem: Group for ${group.target.name || "unnamed object"} has ${
+          group.sequence.length
+        } animations`
       );
     });
 
@@ -42,7 +39,7 @@ export class SyncSystem {
     const startTime = Date.now();
     const promises = groups.map((group) => {
       console.log(
-        `[${new Date().toISOString()}] SyncSystem: Starting sequence for ${
+        `SyncSystem: Starting sequence for ${
           group.target.name || "unnamed object"
         }`
       );
@@ -53,11 +50,6 @@ export class SyncSystem {
     await Promise.all(promises);
 
     const endTime = Date.now();
-    console.log(
-      `[${new Date().toISOString()}] SyncSystem: All animations completed after ${
-        endTime - startTime
-      }ms`
-    );
   }
 
   /**
@@ -68,19 +60,8 @@ export class SyncSystem {
     type: AnimationPropertyType,
     config: AnimationConfig
   ): Promise<void> {
-    console.log(
-      `[${new Date().toISOString()}] SyncSystem: Animating ${type} on ${
-        targets.length
-      } objects simultaneously`
-    );
-
     const startTime = Date.now();
     const promises = targets.map((target) => {
-      console.log(
-        `[${new Date().toISOString()}] SyncSystem: Starting ${type} animation for ${
-          target.name || "unnamed object"
-        }`
-      );
       return this.animationManager.animate(target, type, config);
     });
 
@@ -88,7 +69,7 @@ export class SyncSystem {
 
     const endTime = Date.now();
     console.log(
-      `[${new Date().toISOString()}] SyncSystem: Multiple ${type} animations completed after ${
+      `SyncSystem: Multiple ${type} animations completed after ${
         endTime - startTime
       }ms`
     );
@@ -98,18 +79,7 @@ export class SyncSystem {
    * עוצר את כל האנימציות בקבוצה
    */
   stopAll(targets: Phaser.GameObjects.GameObject[]): void {
-    console.log(
-      `[${new Date().toISOString()}] SyncSystem: Stopping all animations for ${
-        targets.length
-      } objects`
-    );
-
     targets.forEach((target) => {
-      console.log(
-        `[${new Date().toISOString()}] SyncSystem: Stopping animations for ${
-          target.name || "unnamed object"
-        }`
-      );
       this.animationManager.stopAnimations(target);
     });
   }
@@ -118,18 +88,7 @@ export class SyncSystem {
    * משהה את כל האנימציות בקבוצה
    */
   pauseAll(targets: Phaser.GameObjects.GameObject[]): void {
-    console.log(
-      `[${new Date().toISOString()}] SyncSystem: Pausing all animations for ${
-        targets.length
-      } objects`
-    );
-
     targets.forEach((target) => {
-      console.log(
-        `[${new Date().toISOString()}] SyncSystem: Pausing animations for ${
-          target.name || "unnamed object"
-        }`
-      );
       this.animationManager.pauseAnimations(target);
     });
   }
@@ -138,18 +97,7 @@ export class SyncSystem {
    * ממשיך את כל האנימציות שהושהו בקבוצה
    */
   resumeAll(targets: Phaser.GameObjects.GameObject[]): void {
-    console.log(
-      `[${new Date().toISOString()}] SyncSystem: Resuming all animations for ${
-        targets.length
-      } objects`
-    );
-
     targets.forEach((target) => {
-      console.log(
-        `[${new Date().toISOString()}] SyncSystem: Resuming animations for ${
-          target.name || "unnamed object"
-        }`
-      );
       this.animationManager.resumeAnimations(target);
     });
   }
@@ -158,18 +106,12 @@ export class SyncSystem {
    * מאפס את כל האנימציות בקבוצה
    */
   resetAll(targets: Phaser.GameObjects.GameObject[]): void {
-    console.log(
-      `[${new Date().toISOString()}] SyncSystem: Resetting all animations for ${
-        targets.length
-      } objects`
-    );
-
     targets.forEach((target) => {
-      console.log(
-        `[${new Date().toISOString()}] SyncSystem: Resetting animations for ${
-          target.name || "unnamed object"
-        }`
-      );
+      // console.log(
+      //   `[${new Date().toISOString()}] SyncSystem: Resetting animations for ${
+      //     target.name || "unnamed object"
+      //   }`
+      // );
       this.animationManager.resetAnimations(target);
     });
   }

@@ -6,8 +6,9 @@
       "assetName": "character_spine",
       "initialState": {
         "position": {
-          "x": 100,
-          "y": 200,
+          "x": 960,
+          "y": 540,
+
           "z": 2
         },
         "scale": {
@@ -23,8 +24,8 @@
             "startTime": 0,
             "endTime": 5,
             "startValue": {
-              "x": 100,
-              "y": 200
+              "x": 960,
+              "y": 540
             },
             "endValue": {
               "x": 300,
@@ -103,8 +104,8 @@
       },
       "initialState": {
         "position": {
-          "x": 500,
-          "y": 0,
+          "x": 960,
+          "y": 540,
           "z": 5
         },
         "scale": {
@@ -119,8 +120,8 @@
             "startTime": 0,
             "endTime": 10,
             "startValue": {
-              "x": 500,
-              "y": 0
+              "x": 960,
+              "y": 540
             },
             "endValue": {
               "x": -500,
@@ -148,8 +149,8 @@
       "assetName": "magic_video",
       "initialState": {
         "position": {
-          "x": 0,
-          "y": 0,
+          "x": 960,
+          "y": 540,
           "z": 1
         },
         "scale": {
@@ -194,8 +195,8 @@
       "assetName": "background_image",
       "initialState": {
         "position": {
-          "x": 0,
-          "y": 0,
+          "x": 960,
+          "y": 540,
           "z": 0
         },
         "scale": {
@@ -239,8 +240,8 @@
       ],
       "initialState": {
         "position": {
-          "x": 50,
-          "y": 50,
+          "x": 960,
+          "y": 540,
           "z": 1
         },
         "scale": {
@@ -285,8 +286,8 @@
       "assetName": "character_image",
       "initialState": {
         "position": {
-          "x": -50,
-          "y": 0,
+          "x": 960,
+          "y": 540,
           "z": 5
         },
         "scale": {
@@ -329,8 +330,8 @@
       "assetName": "icon_image",
       "initialState": {
         "position": {
-          "x": 0,
-          "y": -20,
+          "x": 1000,
+          "y": 540,
           "z": 3
         },
         "scale": {
@@ -381,8 +382,8 @@
       "assetName": "Banner_image",
       "initialState": {
         "position": {
-          "x": 200,
-          "y": 100,
+          "x": 960,
+          "y": 540,
           "z": -1
         },
         "scale": {
@@ -398,8 +399,8 @@
             "startTime": 10,
             "endTime": 20,
             "startValue": {
-              "x": 200,
-              "y": 100
+              "x": 960,
+              "y": 540
             },
             "endValue": {
               "x": 50,

@@ -37,9 +37,7 @@ export class SequenceSystem {
       const startTimeMs = item.config.delay || 0;
       const durationMs = item.config.duration || 0;
       console.log(
-        `[${new Date().toISOString()}] SequenceSystem: Animation ${
-          item.type
-        } scheduled to start at ${startTimeMs}ms, duration: ${durationMs}ms`
+        `SequenceSystem: Animation ${item.type} scheduled to start at ${startTimeMs}ms, duration: ${durationMs}ms`
       );
     });
 
@@ -71,12 +69,6 @@ export class SequenceSystem {
 
     // המתן שכל האנימציות יסתיימו
     await Promise.all(promises);
-
-    console.log(
-      `[${new Date().toISOString()}] SequenceSystem: All animations in sequence completed for ${
-        target.name || "unnamed object"
-      }`
-    );
   }
 
   /**

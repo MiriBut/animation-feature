@@ -44,7 +44,7 @@ export class AnimationManager {
     // אם יש אנימציה קיימת מאותו סוג, עצור אותה
     if (objectAnimations.has(type)) {
       console.log(
-        `[${new Date().toISOString()}] AnimationManager: Stopping previous ${type} animation for ${objectId}`
+        `AnimationManager: Stopping previous ${type} animation for ${objectId}`
       );
       const previousAnimation = objectAnimations.get(type);
       if (previousAnimation) {
@@ -66,7 +66,7 @@ export class AnimationManager {
 
       const actualStartTime = Date.now();
       console.log(
-        `[${new Date().toISOString()}] AnimationManager: Animation ${type} for ${objectId} actual start at ${actualStartTime}`
+        `AnimationManager: Animation ${type} for ${objectId} actual start at ${actualStartTime}`
       );
 
       // הפעלת האנימציה
@@ -74,7 +74,7 @@ export class AnimationManager {
 
       // אחרי שהאנימציה הסתיימה
       console.log(
-        `[${new Date().toISOString()}] AnimationManager: Animation ${type} for ${objectId} completed after ${
+        `AnimationManager: Animation ${type} for ${objectId} completed after ${
           Date.now() - actualStartTime
         }ms`
       );
@@ -86,7 +86,7 @@ export class AnimationManager {
       }
     } catch (error) {
       console.error(
-        `[${new Date().toISOString()}] Animation error for object ${objectId}, type ${type}:`,
+        `Animation error for object ${objectId}, type ${type}:`,
         error
       );
       this.activeAnimations.get(objectId)?.delete(type);
@@ -100,16 +100,14 @@ export class AnimationManager {
   // עוצר את כל האנימציות על אובייקט
   stopAnimations(target: Phaser.GameObjects.GameObject): void {
     const objectId = this.getObjectId(target);
-    console.log(
-      `[${new Date().toISOString()}] AnimationManager: Stopping all animations for ${objectId}`
-    );
+    console.log(`AnimationManager: Stopping all animations for ${objectId}`);
 
     const objectAnimations = this.activeAnimations.get(objectId);
     if (objectAnimations) {
       // עצור את כל האנימציות
       objectAnimations.forEach((animation, type) => {
         console.log(
-          `[${new Date().toISOString()}] AnimationManager: Stopping ${type} animation for ${objectId}`
+          `AnimationManager: Stopping ${type} animation for ${objectId}`
         );
         animation.stop();
       });
@@ -123,16 +121,14 @@ export class AnimationManager {
   // משהה את כל האנימציות על אובייקט
   pauseAnimations(target: Phaser.GameObjects.GameObject): void {
     const objectId = this.getObjectId(target);
-    console.log(
-      `[${new Date().toISOString()}] AnimationManager: Pausing all animations for ${objectId}`
-    );
+    console.log(`AnimationManager: Pausing all animations for ${objectId}`);
 
     const objectAnimations = this.activeAnimations.get(objectId);
     if (objectAnimations) {
       // השהה את כל האנימציות
       objectAnimations.forEach((animation, type) => {
         console.log(
-          `[${new Date().toISOString()}] AnimationManager: Pausing ${type} animation for ${objectId}`
+          `AnimationManager: Pausing ${type} animation for ${objectId}`
         );
         animation.pause();
       });
@@ -142,16 +138,14 @@ export class AnimationManager {
   // ממשיך אנימציות שהושהו
   resumeAnimations(target: Phaser.GameObjects.GameObject): void {
     const objectId = this.getObjectId(target);
-    console.log(
-      `[${new Date().toISOString()}] AnimationManager: Resuming all animations for ${objectId}`
-    );
+    console.log(`AnimationManager: Resuming all animations for ${objectId}`);
 
     const objectAnimations = this.activeAnimations.get(objectId);
     if (objectAnimations) {
       // המשך את כל האנימציות
       objectAnimations.forEach((animation, type) => {
         console.log(
-          `[${new Date().toISOString()}] AnimationManager: Resuming ${type} animation for ${objectId}`
+          `AnimationManager: Resuming ${type} animation for ${objectId}`
         );
         animation.resume();
       });
@@ -161,16 +155,14 @@ export class AnimationManager {
   // מאפס את כל האנימציות לאובייקט
   resetAnimations(target: Phaser.GameObjects.GameObject): void {
     const objectId = this.getObjectId(target);
-    console.log(
-      `[${new Date().toISOString()}] AnimationManager: Resetting all animations for ${objectId}`
-    );
+    console.log(`AnimationManager: Resetting all animations for ${objectId}`);
 
     const objectAnimations = this.activeAnimations.get(objectId);
     if (objectAnimations) {
       // אפס את כל האנימציות
       objectAnimations.forEach((animation, type) => {
         console.log(
-          `[${new Date().toISOString()}] AnimationManager: Resetting ${type} animation for ${objectId}`
+          `AnimationManager: Resetting ${type} animation for ${objectId}`
         );
         animation.reset();
       });
@@ -232,9 +224,7 @@ export class AnimationManager {
     queue.push(item);
     this.animationQueue.set(objectId, queue);
     console.log(
-      `[${new Date().toISOString()}] AnimationManager: Added ${
-        item.type
-      } animation to queue for ${objectId}`
+      `AnimationManager: Added ${item.type} animation to queue for ${objectId}`
     );
   }
 
@@ -247,9 +237,7 @@ export class AnimationManager {
 
     if (nextAnimation) {
       console.log(
-        `[${new Date().toISOString()}] AnimationManager: Playing next queued animation ${
-          nextAnimation.type
-        } for ${objectId}`
+        `AnimationManager: Playing next queued animation ${nextAnimation.type} for ${objectId}`
       );
       const target = this.findObjectById(objectId);
       if (target) {
