@@ -1,3 +1,4 @@
+import { AssetService } from "@/core/services/AssetService";
 import {
   MAX_AUDIO_FILE_SIZE,
   SUPPORTED_AUDIO_FORMATS,
@@ -6,23 +7,28 @@ import {
 
 export class SceneUI {
   private container: HTMLDivElement;
+  private assetService: AssetService;
+  private currentWidth: number;
+  private currentHeight: number;
 
   constructor(
     private onResolutionChange: (width: number, height: number) => void,
     private onBackgroundChange: (file: File) => void,
     private onMusicChange: (file: File) => void,
-    // private onCharacterChange: (
-    //   skelFile: File,
-    //   atlasFile: File,
-    //   pngFiles: File[]
-    // ) => void,
     private onRecordingStart: () => Promise<void>,
     private onRecordingStop: () => Promise<void>,
     private onAssetsJson: (file: File) => void,
-    private onTimelineJson: (file: File) => void
+    private onTimelineJson: (file: File) => void,
+    assetService: AssetService
   ) {
     console.log("scene ui starts");
     this.container = this.createContainer();
+    this.assetService = assetService;
+
+    // שמירת המידות ההתחלתיות של הסצנה
+    this.currentWidth = assetService["scene"].scale.width; // גישה ישירה לscene
+    this.currentHeight = assetService["scene"].scale.height;
+
     this.createControls();
   }
 
@@ -107,8 +113,17 @@ export class SceneUI {
 
     resolutionSelect.onchange = (e) => {
       const target = e.target as HTMLSelectElement;
-      const [width, height] = target.value.split(",").map(Number);
-      this.onResolutionChange(width, height);
+      const [newWidth, newHeight] = target.value.split(",").map(Number);
+
+      const oldWidth = this.currentWidth;
+      const oldHeight = this.currentHeight;
+
+      this.onResolutionChange(newWidth, newHeight);
+
+      this.currentWidth = newWidth;
+      this.currentHeight = newHeight;
+
+      //this.assetService.handleResize(oldWidth, oldHeight, newWidth, newHeight);
     };
 
     const bgButton = document.createElement("button");

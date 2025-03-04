@@ -79,7 +79,8 @@ export class MainScene extends Scene {
         this.startRecording.bind(this),
         this.stopRecording.bind(this),
         this.handleAssetsJson.bind(this),
-        this.handleTimelineJson.bind(this)
+        this.handleTimelineJson.bind(this),
+        this.assetService
       );
     }
 
