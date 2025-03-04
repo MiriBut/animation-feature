@@ -13,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@esotericsoftware/spine-core": "^4.2.70",
-    "@esotericsoftware/spine-phaser": "^4.2.71",
+    "@esotericsoftware/spine-phaser": "^4.2.74",
     "@ffmpeg/util": "^0.12.1",
     "gsap": "^3.12.7",
     "phaser": "^3.88.2",

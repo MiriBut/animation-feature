@@ -1,7 +1,7 @@
 // MessageModal.ts
 export type MessageType = "error" | "success" | "info";
 
-interface Message {
+export interface Message {
   type: MessageType;
   content: string;
 }
@@ -388,13 +388,13 @@ export function formatSuccessMessage(totalAssets: number): Message {
   return {
     type: "success",
     content: `${totalAssets} ${
-      totalAssets === 1 ? "קובץ נטען" : "קבצים נטענו"
-    } בהצלחה`,
+      totalAssets === 1 ? "file loaded" : "files loaded"
+    } successfully`,
   };
 }
 
 export function formatErrorMessage(fileName: string, reason?: string): Message {
-  const baseMessage = `נכשלה טעינת הקובץ: ${fileName}`;
+  const baseMessage = `failed to load the file: ${fileName}`;
   return {
     type: "error",
     content: reason ? `${baseMessage} (${reason})` : baseMessage,

@@ -3,6 +3,7 @@ import {
   TimelineAnimation,
 } from "../../types/interfaces/TimelineInterfaces";
 import { AssetElement } from "../../types/interfaces/AssetInterfaces";
+import { Url } from "url";
 
 export class Validators {
   static isValidNumberPair(
@@ -109,7 +110,7 @@ export class Validators {
 
     if (asset.assetUrl) {
       try {
-        new URL(asset.assetUrl, window.location.origin);
+        new URL(asset.assetUrl as string, window.location.origin);
       } catch {
         errors.push(`${prefix} Invalid assetUrl format`);
       }

@@ -1,13 +1,14 @@
 import Phaser from "phaser";
-import { AnimationScene } from "./scenes/AnimationScene";
+import { MainScene } from "./scenes/MainScene";
 import { SpinePlugin } from "@esotericsoftware/spine-phaser";
+import "./core/animation/animations";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.WEBGL,
   transparent: false,
   backgroundColor: "#000000",
   parent: "game-container",
-  scene: [AnimationScene],
+  scene: [MainScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -32,9 +33,6 @@ const config: Phaser.Types.Core.GameConfig = {
       },
     ],
   },
-
-  // @ts-ignore - התעלם מבדיקת הטיפוס
-  failOnMissingWebGL: false,
-} as Phaser.Types.Core.GameConfig;
+};
 
 export const game = new Phaser.Game(config);
