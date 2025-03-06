@@ -8,7 +8,6 @@
         "position": {
           "x": 960,
           "y": 540,
-
           "z": 2
         },
         "scale": {
@@ -19,6 +18,14 @@
         "rotation": 0
       },
       "timeline": {
+        "animation": [
+          {
+            "animationName": "jump",
+            "loop": "true",
+            "startTime": 2,
+            "endTime": 5
+          }
+        ],
         "position": [
           {
             "startTime": 0,

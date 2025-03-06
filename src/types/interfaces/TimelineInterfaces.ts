@@ -21,6 +21,7 @@ export interface TimelineElement {
     frequency?: number;
   };
   timeline?: {
+    animation?: TimelineAnimation[];
     scale?: TimelineAnimation[];
     position?: TimelineAnimation[];
     color?: TimelineAnimation[];
@@ -31,6 +32,7 @@ export interface TimelineElement {
     particleScale?: TimelineAnimation[];
     particleSpeed?: TimelineAnimation[];
     frequency?: TimelineAnimation[];
+    loop?: TimelineAnimation[];
   };
   onScreen?: {
     startTime: number;
@@ -85,6 +87,9 @@ export interface TimelineAnimation {
   endValue: any;
   easeIn: string;
   easeOut: string;
+  //for spine only
+  animationName: string;
+  loop: string;
 }
 
 export interface TimelineJson {

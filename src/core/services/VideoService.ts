@@ -34,29 +34,29 @@ export class VideoService {
     this.setupScene();
   }
 
-  private setSpineAnimation(
-    spineObject: SpineGameObject,
-    trackIndex: number,
-    animationName: string,
-    loop: boolean
-  ): void {
-    if (spineObject.animationState) {
-      spineObject.animationState.setAnimation(trackIndex, animationName, loop);
-      return;
-    }
+  // private setSpineAnimation(
+  //   spineObject: SpineGameObject,
+  //   trackIndex: number,
+  //   animationName: string,
+  //   loop: boolean
+  // ): void {
+  //   if (spineObject.animationState) {
+  //     spineObject.animationState.setAnimation(trackIndex, animationName, loop);
+  //     return;
+  //   }
 
-    if (
-      spineObject.state &&
-      typeof (spineObject.state as any).setAnimation === "function"
-    ) {
-      (spineObject.state as any).setAnimation(trackIndex, animationName, loop);
-      return;
-    }
+  //   if (
+  //     spineObject.state &&
+  //     typeof (spineObject.state as any).setAnimation === "function"
+  //   ) {
+  //     (spineObject.state as any).setAnimation(trackIndex, animationName, loop);
+  //     return;
+  //   }
 
-    console.warn(
-      `Could not set animation ${animationName} - no valid state found`
-    );
-  }
+  //   console.warn(
+  //     `Could not set animation ${animationName} - no valid state found`
+  //   );
+  // }
 
   private async setupScene(): Promise<void> {
     this.scene.cameras.main.setBackgroundColor("#ffffff");
@@ -145,6 +145,24 @@ export class VideoService {
 
     const screenWidth = this.scene.scale.width;
     const screenHeight = this.scene.scale.height;
+
+    if (timeline?.animation) {
+      sequence.push({
+        type: "spine",
+        config: {
+          property: "spine",
+          duration:
+            (timeline.animation[0].endTime - timeline.animation[0].startTime) *
+            1000,
+          easing: timeline.animation[0].easeIn || "Linear",
+          delay: timeline.animation[0].startTime * 1000,
+          startValue: undefined,
+          endValue: undefined,
+          animationName: timeline.animation[0].animationName,
+          loop: timeline.animation[0].loop,
+        },
+      });
+    }
 
     if (timeline?.position) {
       sequence.push({
@@ -326,54 +344,54 @@ export class VideoService {
             }
           }
 
-          if (targetSprite instanceof SpineGameObject) {
-            if (element.initialState.rotation !== undefined) {
-              targetSprite.setRotation(element.initialState.rotation);
-            }
+          // if (targetSprite instanceof SpineGameObject) {
+          //   if (element.initialState.rotation !== undefined) {
+          //     targetSprite.setRotation(element.initialState.rotation);
+          //   }
 
-            if (
-              element.initialState.animation &&
-              targetSprite.skeleton &&
-              targetSprite.skeleton.data
-            ) {
-              try {
-                const animationNames =
-                  targetSprite.skeleton.data.animations.map((a) => a.name);
+          //   if (
+          //     element.initialState.animation &&
+          //     targetSprite.skeleton &&
+          //     targetSprite.skeleton.data
+          //   ) {
+          //     try {
+          //       const animationNames =
+          //         targetSprite.skeleton.data.animations.map((a) => a.name);
 
-                const animationToPlay = element.initialState.animation;
-                if (animationNames.includes(animationToPlay)) {
-                  if (targetSprite.animationState) {
-                    targetSprite.animationState.setAnimation(
-                      0,
-                      animationToPlay,
-                      true
-                    );
-                  } else if (
-                    targetSprite.state &&
-                    typeof targetSprite.state === "object"
-                  ) {
-                    this.setSpineAnimation(
-                      targetSprite,
-                      0,
-                      animationToPlay,
-                      true
-                    );
-                  }
-                } else if (animationNames.length > 0) {
-                  const firstAnim = animationNames[0];
-                  if (targetSprite.animationState) {
-                    targetSprite.animationState.setAnimation(
-                      0,
-                      firstAnim,
-                      true
-                    );
-                  } else if (targetSprite.state) {
-                    this.setSpineAnimation(targetSprite, 0, firstAnim, true);
-                  }
-                }
-              } catch (animError) {}
-            }
-          }
+          //       const animationToPlay = element.initialState.animation;
+          //       if (animationNames.includes(animationToPlay)) {
+          //         if (targetSprite.animationState) {
+          //           targetSprite.animationState.setAnimation(
+          //             0,
+          //             animationToPlay,
+          //             true
+          //           );
+          //         } else if (
+          //           targetSprite.state &&
+          //           typeof targetSprite.state === "object"
+          //         ) {
+          //           this.setSpineAnimation(
+          //             targetSprite,
+          //             0,
+          //             animationToPlay,
+          //             true
+          //           );
+          //         }
+          //       } else if (animationNames.length > 0) {
+          //         const firstAnim = animationNames[0];
+          //         if (targetSprite.animationState) {
+          //           targetSprite.animationState.setAnimation(
+          //             0,
+          //             firstAnim,
+          //             true
+          //           );
+          //         } else if (targetSprite.state) {
+          //           this.setSpineAnimation(targetSprite, 0, firstAnim, true);
+          //         }
+          //       }
+          //   } catch (animError) {}
+          //  }
+          //}
         }
       }
 
@@ -402,6 +420,8 @@ export class VideoService {
                 sprite.x + animationTarget.x
               }, ${sprite.y + animationTarget.y})`
             );
+          } else {
+            console.log("**" + element.timeline);
           }
           const sequence = this.convertTimelineToAnimations(element);
           syncGroups.push({
