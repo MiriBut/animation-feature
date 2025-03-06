@@ -32,13 +32,7 @@ export class AnimationManager {
     config: AnimationConfig
   ): Promise<void> {
     const objectId = this.getObjectId(target);
-    // console.log(
-    //   `[${new Date().toISOString()}] AnimationManager: Starting animation ${type} for ${objectId}, delay: ${
-    //     config.delay || 0
-    //   }ms, duration: ${config.duration || 0}ms`
-    // );
 
-    // בדיקה אם יש כבר אנימציה מאותו סוג שרצה על האובייקט
     const objectAnimations = this.activeAnimations.get(objectId) || new Map();
 
     // אם יש אנימציה קיימת מאותו סוג, עצור אותה

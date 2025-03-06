@@ -147,20 +147,20 @@ export class VideoService {
     const screenHeight = this.scene.scale.height;
 
     if (timeline?.animation) {
-      sequence.push({
-        type: "spine",
-        config: {
-          property: "spine",
-          duration:
-            (timeline.animation[0].endTime - timeline.animation[0].startTime) *
-            1000,
-          easing: timeline.animation[0].easeIn || "Linear",
-          delay: timeline.animation[0].startTime * 1000,
-          startValue: undefined,
-          endValue: undefined,
-          animationName: timeline.animation[0].animationName,
-          loop: timeline.animation[0].loop,
-        },
+      timeline.animation.forEach((anim) => {
+        sequence.push({
+          type: "spine",
+          config: {
+            property: "spine",
+            duration: (anim.endTime - anim.startTime) * 1000,
+            easing: anim.easeIn || "Linear",
+            delay: anim.startTime * 1000,
+            startValue: undefined,
+            endValue: undefined,
+            animationName: anim.animationName,
+            loop: anim.loop,
+          },
+        });
       });
     }
 
@@ -343,55 +343,6 @@ export class VideoService {
               targetSprite.setTint(parseInt(element.initialState.color));
             }
           }
-
-          // if (targetSprite instanceof SpineGameObject) {
-          //   if (element.initialState.rotation !== undefined) {
-          //     targetSprite.setRotation(element.initialState.rotation);
-          //   }
-
-          //   if (
-          //     element.initialState.animation &&
-          //     targetSprite.skeleton &&
-          //     targetSprite.skeleton.data
-          //   ) {
-          //     try {
-          //       const animationNames =
-          //         targetSprite.skeleton.data.animations.map((a) => a.name);
-
-          //       const animationToPlay = element.initialState.animation;
-          //       if (animationNames.includes(animationToPlay)) {
-          //         if (targetSprite.animationState) {
-          //           targetSprite.animationState.setAnimation(
-          //             0,
-          //             animationToPlay,
-          //             true
-          //           );
-          //         } else if (
-          //           targetSprite.state &&
-          //           typeof targetSprite.state === "object"
-          //         ) {
-          //           this.setSpineAnimation(
-          //             targetSprite,
-          //             0,
-          //             animationToPlay,
-          //             true
-          //           );
-          //         }
-          //       } else if (animationNames.length > 0) {
-          //         const firstAnim = animationNames[0];
-          //         if (targetSprite.animationState) {
-          //           targetSprite.animationState.setAnimation(
-          //             0,
-          //             firstAnim,
-          //             true
-          //           );
-          //         } else if (targetSprite.state) {
-          //           this.setSpineAnimation(targetSprite, 0, firstAnim, true);
-          //         }
-          //       }
-          //   } catch (animError) {}
-          //  }
-          //}
         }
       }
 

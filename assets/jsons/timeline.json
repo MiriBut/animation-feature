@@ -20,10 +20,16 @@
       "timeline": {
         "animation": [
           {
+            "animationName": "run",
+            "startTime": 0,
+            "endTime": 1,
+            "loop": "true"
+          },
+          {
             "animationName": "jump",
-            "loop": "true",
-            "startTime": 2,
-            "endTime": 5
+            "startTime": 1,
+            "endTime": 6,
+            "loop": "true"
           }
         ],
         "position": [

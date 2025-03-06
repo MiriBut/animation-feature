@@ -25,6 +25,8 @@ export class SpineAnimation implements IAnimatable {
       const animationNames = this.target.skeleton.data.animations.map(
         (a) => a.name
       );
+      console.log("Available animations:", animationNames);
+
       if (!animationNames.includes(animationName)) {
         console.warn(`Animation ${animationName} not found, skipping.`);
         resolve();
