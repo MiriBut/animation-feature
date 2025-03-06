@@ -1,3 +1,4 @@
+import { SpineAnimation } from "./animations";
 import { AnimatableGameObject } from "./types";
 
 export function isAnimatable(
@@ -6,7 +7,8 @@ export function isAnimatable(
   return (
     obj instanceof Phaser.GameObjects.Sprite ||
     obj instanceof Phaser.GameObjects.Image ||
-    obj instanceof Phaser.GameObjects.Video
+    obj instanceof Phaser.GameObjects.Video ||
+    obj instanceof SpineAnimation
   );
 }
 

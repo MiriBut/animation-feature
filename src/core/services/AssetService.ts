@@ -25,8 +25,6 @@ export class AssetService {
   private loadedAssets: Set<string> = new Set();
   private assetsMap: Map<string, AssetInfo> = new Map();
   private successMessages: string[] = [];
-  private spineCharacter: SpineGameObject | null = null;
-  private assetsLoaded: boolean = false;
   private lastFailedSpines = new Map<string, number>();
   private formerScreenScale: { x: number; y: number } = { x: 0, y: 0 };
 
@@ -39,97 +37,6 @@ export class AssetService {
         y: this.scene.scale.height,
       };
     }
-  }
-  public handleResize(
-    oldWidth: number,
-    oldHeight: number,
-    newWidth: number,
-    newHeight: number
-  ): void {
-    console.log("שינוי רזולוציה התבצע!");
-    console.log(`!מידות ישנות: ${oldWidth}x${oldHeight}`);
-    console.log(`!מידות חדשות: ${newWidth}x${newHeight}`);
-
-    // עדכון המידות הישנות לשימוש עתידי
-    this.formerScreenScale = { x: newWidth, y: newHeight };
-
-    // חישוב היחסים בין הרזולוציה הישנה לחדשה
-    const widthRatio = newWidth / oldWidth;
-    const heightRatio = newHeight / oldHeight;
-
-    // עדכון כל האובייקטים במפה
-    this.assetsMap.forEach((assetInfo, assetName) => {
-      if (!assetInfo.sprite) {
-        console.log("! not assetInfo.sprite " + assetInfo.url);
-        return; // דילוג אם אין sprite
-      }
-      console.log("!assetInfo.sprite " + assetInfo.url);
-
-      const sprite = assetInfo.sprite;
-
-      // הגדרת ערכי ברירת מחדל
-      let currentX = 0;
-      let currentY = 0;
-      let scaleX = 1;
-      let scaleY = 1;
-      let alpha = 1;
-      let rotation = 0;
-
-      // בדיקת טיפוסים ושליפת מאפיינים לפי הטיפוס של ה-sprite
-      if (sprite instanceof Phaser.GameObjects.Sprite) {
-        currentX = sprite.x;
-        currentY = sprite.y;
-        scaleX = sprite.scaleX;
-        scaleY = sprite.scaleY;
-        alpha = sprite.alpha;
-        rotation = sprite.rotation;
-      } else if (sprite instanceof Phaser.GameObjects.Video) {
-        currentX = sprite.x;
-        currentY = sprite.y;
-        scaleX = sprite.scaleX;
-        scaleY = sprite.scaleY;
-        alpha = sprite.alpha;
-        rotation = sprite.rotation;
-      } else if (sprite instanceof SpineGameObject) {
-        currentX = sprite.x;
-        currentY = sprite.y;
-        scaleX = sprite.scaleX;
-        scaleY = sprite.scaleY;
-        alpha = sprite.alpha;
-        rotation = sprite.rotation;
-      } else {
-        console.warn(`Asset ${assetName} has an unsupported sprite type`);
-        return; // דילוג על טיפוסים לא נתמכים
-      }
-
-      // חישוב המיקום היחסי לפי הרזולוציה הישנה
-      const relativeX = oldWidth > 0 ? currentX / oldWidth : 0.5; // ברירת מחדל למרכז אם oldWidth הוא 0
-      const relativeY = oldHeight > 0 ? currentY / oldHeight : 0.5; // ברירת מחדל למרכז אם oldHeight הוא 0
-
-      // עדכון המיקום לפי הרזולוציה החדשה
-      const newX = relativeX * newWidth;
-      const newY = relativeY * newHeight;
-
-      // חישוב ה-scale החדש בהתאם ליחסי הרזולוציה
-      const newScaleX = scaleX * widthRatio;
-      const newScaleY = scaleY * heightRatio;
-
-      // שימוש ב-scale ממוצע או בחירה בין X ל-Y לפי הצורך
-      const newScale = Math.min(newScaleX, newScaleY); // כדי לשמור על יחס אחיד, ניתן לשנות לפי הצורך
-
-      const properties: AssetDisplayProperties = {
-        x: newX,
-        y: newY,
-        scale: newScale, // עדכון ה-scale היחסי
-        alpha: alpha,
-        rotation: rotation,
-        pivot: this.getAssetPivot(assetName),
-      };
-
-      // ניקוי והצגה מחדש של ה-sprite
-      this.cleanupExistingSprite(assetInfo);
-      this.displayAsset(assetName, properties);
-    });
   }
 
   // === Asset Management Methods ===
@@ -349,17 +256,17 @@ export class AssetService {
         );
         spine.name = assetName;
 
-        if (spine?.skeleton?.data?.animations?.length > 0) {
-          spine.animationState.setAnimation(
-            0,
-            spine.skeleton.data.animations[2].name,
-            true
-          );
-        } else {
-          console.error(
-            `AssetService: No animations found or animations array is empty for ${assetName}`
-          );
-        }
+        // if (spine?.skeleton?.data?.animations?.length > 0) {
+        //   spine.animationState.setAnimation(
+        //     0,
+        //     spine.skeleton.data.animations[2].name,
+        //     true
+        //   );
+        // } else {
+        //   console.error(
+        //     `AssetService: No animations found or animations array is empty for ${assetName}`
+        //   );
+        // }
         return spine;
       } catch (error) {
         console.error(
@@ -1216,5 +1123,98 @@ export class AssetService {
       autoCloseTime: 7000,
     });
     console.log("AssetService: displayLoadResults completed");
+  }
+
+  //this function doesnt working yet, for future use
+  public handleResize(
+    oldWidth: number,
+    oldHeight: number,
+    newWidth: number,
+    newHeight: number
+  ): void {
+    console.log("change reolusion done");
+    console.log(`old size: ${oldWidth}x${oldHeight}`);
+    console.log(`new size: ${newWidth}x${newHeight}`);
+
+    // עדכון המידות הישנות לשימוש עתידי
+    this.formerScreenScale = { x: newWidth, y: newHeight };
+
+    // חישוב היחסים בין הרזולוציה הישנה לחדשה
+    const widthRatio = newWidth / oldWidth;
+    const heightRatio = newHeight / oldHeight;
+
+    // עדכון כל האובייקטים במפה
+    this.assetsMap.forEach((assetInfo, assetName) => {
+      if (!assetInfo.sprite) {
+        console.log("! not assetInfo.sprite " + assetInfo.url);
+        return; // דילוג אם אין sprite
+      }
+      console.log("!assetInfo.sprite " + assetInfo.url);
+
+      const sprite = assetInfo.sprite;
+
+      // הגדרת ערכי ברירת מחדל
+      let currentX = 0;
+      let currentY = 0;
+      let scaleX = 1;
+      let scaleY = 1;
+      let alpha = 1;
+      let rotation = 0;
+
+      // בדיקת טיפוסים ושליפת מאפיינים לפי הטיפוס של ה-sprite
+      if (sprite instanceof Phaser.GameObjects.Sprite) {
+        currentX = sprite.x;
+        currentY = sprite.y;
+        scaleX = sprite.scaleX;
+        scaleY = sprite.scaleY;
+        alpha = sprite.alpha;
+        rotation = sprite.rotation;
+      } else if (sprite instanceof Phaser.GameObjects.Video) {
+        currentX = sprite.x;
+        currentY = sprite.y;
+        scaleX = sprite.scaleX;
+        scaleY = sprite.scaleY;
+        alpha = sprite.alpha;
+        rotation = sprite.rotation;
+      } else if (sprite instanceof SpineGameObject) {
+        currentX = sprite.x;
+        currentY = sprite.y;
+        scaleX = sprite.scaleX;
+        scaleY = sprite.scaleY;
+        alpha = sprite.alpha;
+        rotation = sprite.rotation;
+      } else {
+        console.warn(`Asset ${assetName} has an unsupported sprite type`);
+        return; // דילוג על טיפוסים לא נתמכים
+      }
+
+      // חישוב המיקום היחסי לפי הרזולוציה הישנה
+      const relativeX = oldWidth > 0 ? currentX / oldWidth : 0.5; // ברירת מחדל למרכז אם oldWidth הוא 0
+      const relativeY = oldHeight > 0 ? currentY / oldHeight : 0.5; // ברירת מחדל למרכז אם oldHeight הוא 0
+
+      // עדכון המיקום לפי הרזולוציה החדשה
+      const newX = relativeX * newWidth;
+      const newY = relativeY * newHeight;
+
+      // חישוב ה-scale החדש בהתאם ליחסי הרזולוציה
+      const newScaleX = scaleX * widthRatio;
+      const newScaleY = scaleY * heightRatio;
+
+      // שימוש ב-scale ממוצע או בחירה בין X ל-Y לפי הצורך
+      const newScale = Math.min(newScaleX, newScaleY); // כדי לשמור על יחס אחיד, ניתן לשנות לפי הצורך
+
+      const properties: AssetDisplayProperties = {
+        x: newX,
+        y: newY,
+        scale: newScale, // עדכון ה-scale היחסי
+        alpha: alpha,
+        rotation: rotation,
+        pivot: this.getAssetPivot(assetName),
+      };
+
+      // ניקוי והצגה מחדש של ה-sprite
+      this.cleanupExistingSprite(assetInfo);
+      this.displayAsset(assetName, properties);
+    });
   }
 }

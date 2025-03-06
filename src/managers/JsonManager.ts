@@ -357,54 +357,6 @@ export class JsonManager {
               sprite.setRotation(rotation);
             }
             sprite.setVisible(true);
-
-            // הפעלת אנימציה אם יש
-            if (animation && (sprite.state || sprite.animationState)) {
-              try {
-                // בדיקה שה-skeleton קיים ותקין
-                if (sprite.skeleton && sprite.skeleton.data) {
-                  const animationNames = sprite.skeleton.data.animations.map(
-                    (a) => a.name
-                  );
-                  console.log(
-                    `Available animations for ${element.assetName}:`,
-                    animationNames
-                  );
-
-                  if (animationNames.includes(animation)) {
-                    if (sprite.animationState) {
-                      sprite.animationState.setAnimation(0, animation, true);
-                    } else if (sprite.state) {
-                      // Type assertion to tell TypeScript that state is a Spine AnimationState
-                      (sprite.state as any).setAnimation(0, animation, true);
-                    }
-                    console.log(
-                      `Applied animation '${animation}' to ${element.assetName}`
-                    );
-                  } else if (animationNames.length > 0) {
-                    const firstAnim = animationNames[0];
-                    if (sprite.animationState) {
-                      sprite.animationState.setAnimation(0, firstAnim, true);
-                    } else if (sprite.state) {
-                      // Type assertion to tell TypeScript that state is a Spine AnimationState
-                      (sprite.state as any).setAnimation(0, firstAnim, true);
-                    }
-                    console.log(
-                      `Animation '${animation}' not found, using '${firstAnim}' instead`
-                    );
-                  }
-                } else {
-                  console.warn(
-                    `Spine object for ${element.assetName} has no skeleton data`
-                  );
-                }
-              } catch (animError) {
-                console.error(
-                  `Error applying animation to ${element.assetName}:`,
-                  animError
-                );
-              }
-            }
           }
         } else {
           // אם האובייקט לא קיים או לא תקף, נצטרך ליצור אותו מחדש
@@ -436,14 +388,14 @@ export class JsonManager {
                     ? animationNames[0]
                     : null;
 
-                  if (animToUse) {
-                    if (sprite.animationState) {
-                      sprite.animationState.setAnimation(0, animToUse, true);
-                    } else if (sprite.state) {
-                      // Type assertion to tell TypeScript that state is a Spine AnimationState
-                      (sprite.state as any).setAnimation(0, animToUse, true);
-                    }
-                  }
+                  // if (animToUse) {
+                  //   if (sprite.animationState) {
+                  //     sprite.animationState.setAnimation(0, animToUse, true);
+                  //   } else if (sprite.state) {
+                  //     // Type assertion to tell TypeScript that state is a Spine AnimationState
+                  //     (sprite.state as any).setAnimation(0, animToUse, true);
+                  //   }
+                  // }
                 }
               } catch (animError) {
                 console.error(

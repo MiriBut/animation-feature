@@ -53,7 +53,7 @@ export class AnimationRegistry {
       !(target instanceof Phaser.GameObjects.Sprite) &&
       !(target instanceof Phaser.GameObjects.Image) &&
       !(target instanceof Phaser.GameObjects.Video) &&
-      !(target instanceof SpineGameObject) // הוספה של בדיקה לאובייקטי Spine
+      !(target instanceof SpineGameObject)
     ) {
       throw new Error(
         `Object of type ${target.type} does not support animations`

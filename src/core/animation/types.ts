@@ -1,9 +1,12 @@
+import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist";
+
 export type AnimationPropertyType =
   | "scale"
   | "position"
   | "rotation"
   | "opacity"
-  | "color";
+  | "color"
+  | "spine";
 
 export interface AnimationConfig {
   property: AnimationPropertyType;
@@ -12,6 +15,8 @@ export interface AnimationConfig {
   duration: number;
   easing: string;
   delay?: number;
+  animationName?: string;
+  loop?: string;
 }
 
 // הגדרת הטיפוסים הנתמכים
@@ -19,7 +24,8 @@ export type AnimatableGameObject =
   | Phaser.GameObjects.Sprite
   | Phaser.GameObjects.Image
   | Phaser.GameObjects.Video
-  | Phaser.GameObjects.Container;
+  | Phaser.GameObjects.Container
+  | SpineGameObject;
 
 export interface IAnimatable {
   play(config: AnimationConfig): Promise<void>;
