@@ -74,7 +74,7 @@
     },
     {
       "assetName": "character_image",
-      "assetUrl": "assets/videos/Magic.mp4",
+      "assetUrl": "assets/images/character_image.png",
       "assetType": "image",
       "scale_override": {
         "x": 1,
