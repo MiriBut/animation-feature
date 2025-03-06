@@ -40,7 +40,7 @@
     },
     {
       "assetName": "magic_video",
-      "assetUrl": "assets/images/Magic.mp4",
+      "assetUrl": "assets/videos/Magic.mp4",
       "assetType": "video",
       "scale_override": {
         "x": 1,
