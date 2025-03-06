@@ -32,9 +32,7 @@ export class SpineAnimation implements IAnimatable {
       }
 
       if (this.target.animationState) {
-        console.log("*** " + config.loop);
         const isLoop = config.loop == "true" ? true : false;
-        console.log("*** " + typeof isLoop + " " + isLoop);
         this.target.animationState.setAnimation(0, animationName, isLoop);
 
         this.scene.time.delayedCall(duration, () => {
