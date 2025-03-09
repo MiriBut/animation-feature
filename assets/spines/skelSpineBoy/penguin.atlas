@@ -1,0 +1,90 @@
+
+penguin.png
+size: 1464,303
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+beak_down
+  rotate: false
+  xy: 1294, 121
+  size: 119, 83
+  orig: 119, 83
+  offset: 0, 0
+  index: -1
+beak_top
+  rotate: true
+  xy: 1415, 82
+  size: 122, 47
+  orig: 122, 47
+  offset: 0, 0
+  index: -1
+body
+  rotate: false
+  xy: 2, 2
+  size: 383, 299
+  orig: 383, 299
+  offset: 0, 0
+  index: -1
+eyes_background
+  rotate: false
+  xy: 1119, 25
+  size: 188, 81
+  orig: 188, 81
+  offset: 0, 0
+  index: -1
+glow
+  rotate: true
+  xy: 678, 25
+  size: 276, 242
+  orig: 284, 250
+  offset: 5, 2
+  index: -1
+head
+  rotate: true
+  xy: 387, 3
+  size: 298, 289
+  orig: 298, 289
+  offset: 0, 0
+  index: -1
+left_paw_down
+  rotate: true
+  xy: 1309, 48
+  size: 71, 83
+  orig: 71, 83
+  offset: 0, 0
+  index: -1
+left_pupil
+  rotate: true
+  xy: 1394, 35
+  size: 45, 46
+  orig: 45, 46
+  offset: 0, 0
+  index: -1
+pupil_right
+  rotate: false
+  xy: 1309, 4
+  size: 38, 42
+  orig: 38, 42
+  offset: 0, 0
+  index: -1
+right_paw
+  rotate: true
+  xy: 922, 26
+  size: 275, 195
+  orig: 275, 195
+  offset: 0, 0
+  index: -1
+tablet
+  rotate: true
+  xy: 1119, 108
+  size: 193, 173
+  orig: 193, 173
+  offset: 0, 0
+  index: -1
+upper_left_paw
+  rotate: true
+  xy: 1294, 206
+  size: 95, 132
+  orig: 95, 132
+  offset: 0, 0
+  index: -1
