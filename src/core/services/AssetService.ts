@@ -24,8 +24,10 @@ export class AssetService {
   private scene: Scene;
   private loadedAssets: Set<string> = new Set();
   private assetsMap: Map<string, AssetInfo> = new Map();
+  private elementsMap: Map<string, { assetName: string; sprite: any }> =
+    new Map();
   private successMessages: string[] = [];
-  private lastFailedSpines = new Map<string, number>();
+  //private lastFailedSpines = new Map<string, number>();
   private formerScreenScale: { x: number; y: number } = { x: 0, y: 0 };
 
   constructor(scene: Scene) {
@@ -37,6 +39,11 @@ export class AssetService {
         y: this.scene.scale.height,
       };
     }
+  }
+
+  public getElementSprite(elementName: string): any {
+    const element = this.elementsMap.get(elementName);
+    return element ? element.sprite : null;
   }
 
   // === Asset Management Methods ===
@@ -161,35 +168,27 @@ export class AssetService {
 
   // === Display Methods ===
 
+  // שינוי בפונקציית displayAsset בתוך AssetService
   public displayAsset(
     assetName: string,
-    properties: AssetDisplayProperties
+    properties: AssetDisplayProperties,
+    elementName: string // פרמטר חדש לזיהוי ייחודי של האלמנט
   ): Phaser.GameObjects.Video | SpineGameObject | Phaser.GameObjects.Sprite {
     const assetInfo = this.assetsMap.get(assetName);
     if (!assetInfo) {
       throw new Error(`Asset ${assetName} not found`);
     }
 
-    if (assetInfo.type === "spine" && this.lastFailedSpines.has(assetName)) {
-      const lastFailedTime = this.lastFailedSpines.get(assetName) || 0;
-      const now = Date.now();
-
-      if (now - lastFailedTime > 5000) {
-        this.loadSpineAsset(assetName, assetInfo as SpineAssetInfo).then(
-          (result) => {
-            if (result.success) {
-              this.lastFailedSpines.delete(assetName);
-            } else {
-              this.lastFailedSpines.set(assetName, now);
-            }
-          }
-        );
-      }
-    }
-
+    // נקיון ספרייט קיים אם יש (אל תשנה את הפונקציה הקיימת)
     this.cleanupExistingSprite(assetInfo);
+
+    // יצירת הספרייט
     const sprite = this.createSprite(assetName, assetInfo, properties);
-    //pivo is beeing on the asset json and not getting its type from timeline as other properties
+
+    // שימוש בשם האלמנט במקום שם האסט
+    sprite.name = elementName;
+
+    // המשך הקוד הקיים
     properties.pivot = this.getAssetPivot(assetName);
     const result = this.applyBasicProperties(sprite, properties, assetName);
 
@@ -197,12 +196,15 @@ export class AssetService {
       this.applyAdvancedProperties(result, properties);
     }
 
-    if (assetInfo.type === "spine" && !(result instanceof SpineGameObject)) {
-      this.lastFailedSpines.set(assetName, Date.now());
-    }
+    // במקום לשמור את הספרייט באסט, שמור אותו כמאפיין של האלמנט
+    // זה דורש מפה חדשה של אלמנטים
+    this.elementsMap.set(elementName, {
+      assetName: assetName,
+      sprite: result,
+    });
 
     this.successMessages.push(
-      `displayAsset [Displayed ${assetName} (${assetInfo.type}) on scene]`
+      `displayAsset [Displayed ${assetName} as ${elementName} (${assetInfo.type}) on scene]`
     );
 
     return result;
@@ -430,10 +432,24 @@ export class AssetService {
 
   // === Cleanup Methods ===
   public hideAllAssets(): void {
+    // קוד קיים לניקוי האסטים
     for (const [assetName, assetInfo] of this.assetsMap.entries()) {
       this.cleanupExistingSprite(assetInfo);
       this.resetAssetInfo(assetName, assetInfo);
     }
+
+    // ניקוי האלמנטים
+    for (const [elementName, element] of this.elementsMap.entries()) {
+      if (element.sprite) {
+        if (element.sprite instanceof Phaser.GameObjects.Video) {
+          element.sprite.stop();
+        }
+        element.sprite.destroy();
+      }
+    }
+
+    // ניקוי מפת האלמנטים
+    this.elementsMap.clear();
   }
 
   private resetAssetInfo(assetName: string, assetInfo: AssetInfo): void {
@@ -1214,7 +1230,8 @@ export class AssetService {
 
       // ניקוי והצגה מחדש של ה-sprite
       this.cleanupExistingSprite(assetInfo);
-      this.displayAsset(assetName, properties);
+      //fix this for future use:
+      //  this.displayAsset(assetName, properties);
     });
   }
 }
