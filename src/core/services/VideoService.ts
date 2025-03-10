@@ -301,7 +301,8 @@ export class VideoService {
             tint: element.initialState.color
               ? parseInt(element.initialState.color)
               : undefined,
-          }
+          },
+          element.elementName
         );
 
         sprite = spriteOrContainer;

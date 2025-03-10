@@ -257,18 +257,6 @@ export class AssetService {
           `${assetName}_atlas`
         );
         spine.name = assetName;
-
-        // if (spine?.skeleton?.data?.animations?.length > 0) {
-        //   spine.animationState.setAnimation(
-        //     0,
-        //     spine.skeleton.data.animations[2].name,
-        //     true
-        //   );
-        // } else {
-        //   console.error(
-        //     `AssetService: No animations found or animations array is empty for ${assetName}`
-        //   );
-        // }
         return spine;
       } catch (error) {
         console.error(
@@ -1084,6 +1072,9 @@ export class AssetService {
     return errors;
   }
 
+  /**
+   * Display results of asset loading and created elements
+   */
   private displayLoadResults(
     results: { assetName: string; success: boolean; error?: string }[]
   ): void {

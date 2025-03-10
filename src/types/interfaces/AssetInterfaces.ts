@@ -4,6 +4,7 @@ import { SpineGameObject } from "@esotericsoftware/spine-phaser";
 export type AssetType = "image" | "video" | "particle" | "spine";
 
 export interface AssetElement {
+  initialState: any;
   assetName: string;
   assetUrl:
     | string
