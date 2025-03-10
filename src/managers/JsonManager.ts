@@ -362,14 +362,18 @@ export class JsonManager {
           // אם האובייקט לא קיים או לא תקף, נצטרך ליצור אותו מחדש
           console.log(`Creating new asset: ${element.assetName}`);
           try {
-            sprite = this.assetService.displayAsset(element.assetName, {
-              x: position.x,
-              y: position.y,
-              scale: scale.x,
-              alpha: opacity,
-              rotation,
-              tint: parseInt(color.replace("0x", ""), 16),
-            });
+            sprite = this.assetService.displayAsset(
+              element.assetName,
+              {
+                x: position.x,
+                y: position.y,
+                scale: scale.x,
+                alpha: opacity,
+                rotation,
+                tint: parseInt(color.replace("0x", ""), 16),
+              },
+              element.elementName
+            );
 
             // אם יצרנו spine ויש אנימציה, ננסה להפעיל אותה
             if (
