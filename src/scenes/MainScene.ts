@@ -30,6 +30,7 @@ export class MainScene extends Scene {
   private readonly DEFAULT_HEIGHT = 1080;
 
   constructor() {
+    console.log("10.0.25 version 0.0");
     super({ key: "MainScene" });
   }
 
