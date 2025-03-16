@@ -1,6 +1,10 @@
 import { Scene } from "phaser";
 import { SyncSystem, SyncGroup } from "../animation/SyncSystem";
-import { AnimationPropertyType, SequenceItem } from "../animation/types";
+import {
+  AnimationPropertyType,
+  AudioConfig,
+  SequenceItem,
+} from "../animation/types";
 import { AssetService } from "./AssetService";
 import {
   TimelineElement,
@@ -25,6 +29,8 @@ export class VideoService {
     | Phaser.GameObjects.Video
     | SpineGameObject
     | Phaser.GameObjects.Container
+    | Phaser.GameObjects.Particles.ParticleEmitter
+    | Phaser.Sound.WebAudioSound
   > = new Map();
   private countdownTimer: CountdownTimer | null = null;
   testSpine: SpineGameObject | null | undefined;
@@ -33,30 +39,6 @@ export class VideoService {
     this.syncSystem = new SyncSystem(scene);
     this.setupScene();
   }
-
-  // private setSpineAnimation(
-  //   spineObject: SpineGameObject,
-  //   trackIndex: number,
-  //   animationName: string,
-  //   loop: boolean
-  // ): void {
-  //   if (spineObject.animationState) {
-  //     spineObject.animationState.setAnimation(trackIndex, animationName, loop);
-  //     return;
-  //   }
-
-  //   if (
-  //     spineObject.state &&
-  //     typeof (spineObject.state as any).setAnimation === "function"
-  //   ) {
-  //     (spineObject.state as any).setAnimation(trackIndex, animationName, loop);
-  //     return;
-  //   }
-
-  //   console.warn(
-  //     `Could not set animation ${animationName} - no valid state found`
-  //   );
-  // }
 
   private async setupScene(): Promise<void> {
     this.scene.cameras.main.setBackgroundColor("#ffffff");
@@ -107,12 +89,20 @@ export class VideoService {
       .map((element) => element.assetName)
       .filter(Boolean);
 
+    console.log("VideoService: Assets to load:", assetsToLoad);
+
     const loadResults = await Promise.all(
       assetsToLoad.map(async (assetName) => {
         const result = await this.assetService.loadAsset(assetName);
         return { assetName, result };
       })
     );
+
+    const failedAssets = loadResults.filter(({ result }) => !result.success);
+    if (failedAssets.length > 0) {
+      console.error("VideoService: Failed assets:", failedAssets);
+      // כאן אפשר גם להציג התראה למשתמש על אסטים שנכשלו
+    }
 
     const allLoaded = loadResults.every(({ result }) => result.success);
     if (!allLoaded) {
@@ -145,6 +135,74 @@ export class VideoService {
 
     const screenWidth = this.scene.scale.width;
     const screenHeight = this.scene.scale.height;
+
+    if (
+      timelineElement.assetType === "audio" ||
+      timeline?.play ||
+      timeline?.volume
+    ) {
+      // וודא שיש אובייקט אודיו תקין
+      if (!(sprite instanceof Phaser.Sound.WebAudioSound)) {
+        const audioKey = timelineElement.assetName || "bg_music";
+        let sound = this.scene.sound.get(audioKey);
+        if (!sound) {
+          sound = this.scene.sound.add(audioKey, {
+            volume: timelineElement.initialState?.volume || 0.5,
+            loop: timelineElement.initialState?.loop === true,
+          });
+        }
+        sprite = sound as Phaser.Sound.WebAudioSound;
+        this.activeSprites.set(timelineElement.elementName, sprite);
+      }
+
+      // טיפול בהגדרות Play
+      if (timeline?.play) {
+        timeline.play.forEach((playConfig) => {
+          console.log(
+            `VideoService: Converting audio play - delay: ${
+              playConfig.startTime * 1000
+            }ms, duration: ${
+              (playConfig.endTime - playConfig.startTime) * 1000
+            }ms`
+          );
+          sequence.push({
+            type: "audio",
+            config: {
+              property: "audio",
+              startValue: undefined,
+              endValue: undefined,
+              easing: "Linear",
+              duration: (playConfig.endTime - playConfig.startTime) * 1000,
+              delay: playConfig.startTime * 1000,
+              audioKey: timelineElement.assetName || "bg_music",
+              loop: playConfig.loop === "true",
+              stopOnComplete: playConfig.loop !== "true",
+            } as AudioConfig,
+          });
+        });
+      }
+
+      // טיפול בהגדרות Volume
+      if (timeline?.volume && timeline.volume.length > 0) {
+        timeline.volume.forEach((volumeConfig) => {
+          sequence.push({
+            type: "audio",
+            config: {
+              property: "audio",
+              easing: volumeConfig.easeIn || "Linear",
+              duration: (volumeConfig.endTime - volumeConfig.startTime) * 1000,
+              delay: volumeConfig.startTime * 1000,
+              audioKey: timelineElement.assetName || "bg_music",
+              volume: {
+                startValue: volumeConfig.startValue,
+                endValue: volumeConfig.endValue,
+              },
+              stopOnComplete: false, // ווליום לא מפסיק את האודיו
+            } as AudioConfig,
+          });
+        });
+      }
+    }
 
     if (timeline?.animation) {
       timeline.animation.forEach((anim) => {
@@ -264,7 +322,6 @@ export class VideoService {
         });
       }
     }
-
     return sequence;
   }
 
@@ -289,7 +346,24 @@ export class VideoService {
       let sprite = this.activeSprites.get(element.elementName);
       const isExistingSprite = !!sprite;
 
-      if (!sprite) {
+      // טיפול מיוחד באלמנטי אודיו
+      if (element.assetType === "audio") {
+        if (!sprite || !(sprite instanceof Phaser.Sound.WebAudioSound)) {
+          // בדוק אם האודיו כבר נטען ל-Phaser
+          let sound = this.scene.sound.get(element.assetName);
+          if (!sound) {
+            // אם לא נטען, טען אותו
+            sound = this.scene.sound.add(element.assetName, {
+              volume: element.initialState?.volume || 0.5,
+              loop: element.initialState?.loop === true,
+            });
+          }
+          sprite = sound as Phaser.Sound.WebAudioSound;
+          this.activeSprites.set(element.elementName, sprite);
+        }
+      }
+      // טיפול בשאר סוגי האלמנטים
+      else if (!sprite) {
         const spriteOrContainer = this.assetService.displayAsset(
           element.assetName,
           {
@@ -306,100 +380,134 @@ export class VideoService {
         );
 
         sprite = spriteOrContainer;
-        sprite.setVisible(true);
+        if (
+          sprite instanceof Phaser.GameObjects.Sprite ||
+          sprite instanceof Phaser.GameObjects.Image ||
+          sprite instanceof Phaser.GameObjects.Video ||
+          sprite instanceof SpineGameObject ||
+          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+        ) {
+          sprite.setVisible(true);
+        }
         this.activeSprites.set(element.elementName, sprite);
       } else {
-        let targetSprite = sprite;
-        if (sprite instanceof Phaser.GameObjects.Container) {
-          targetSprite = sprite.getAt(0) as
-            | Phaser.GameObjects.Sprite
-            | Phaser.GameObjects.Video
-            | SpineGameObject;
-        }
-
         if (
-          targetSprite instanceof Phaser.GameObjects.Sprite ||
-          targetSprite instanceof Phaser.GameObjects.Video ||
-          targetSprite instanceof SpineGameObject
+          sprite instanceof Phaser.GameObjects.Sprite ||
+          sprite instanceof Phaser.GameObjects.Image ||
+          sprite instanceof Phaser.GameObjects.Video ||
+          sprite instanceof SpineGameObject ||
+          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
         ) {
-          const newX = element.initialState.position?.x ?? targetSprite.x;
-          const newY = element.initialState.position?.y ?? targetSprite.y;
+          const newX = element.initialState.position?.x ?? sprite.x;
+          const newY = element.initialState.position?.y ?? sprite.y;
           console.log(
-            `miriVideoService: Updating position for ${element.elementName} to (${newX}, ${newY})`
+            `VideoService: Updating position for ${element.elementName} to (${newX}, ${newY})`
           );
-          targetSprite.setPosition(newX, newY);
-          targetSprite.setAlpha(
-            element.initialState.opacity ?? targetSprite.alpha
-          );
-          targetSprite.setScale(
-            element.initialState.scale?.x ?? targetSprite.scaleX
-          );
-          targetSprite.setVisible(true);
+          sprite.setPosition(newX, newY);
+          sprite.setAlpha(element.initialState.opacity ?? sprite.alpha);
+          sprite.setScale(element.initialState.scale?.x ?? sprite.scaleX);
+          sprite.setVisible(true);
 
-          if (targetSprite instanceof Phaser.GameObjects.Sprite) {
+          if (sprite instanceof Phaser.GameObjects.Sprite) {
             if (element.initialState.rotation !== undefined) {
-              targetSprite.setRotation(element.initialState.rotation);
+              sprite.setRotation(element.initialState.rotation);
             }
             if (element.initialState.color) {
-              targetSprite.setTint(parseInt(element.initialState.color));
+              sprite.setTint(parseInt(element.initialState.color));
             }
           }
         }
       }
 
-      if (
-        sprite instanceof Phaser.GameObjects.Sprite ||
-        sprite instanceof Phaser.GameObjects.Video ||
-        sprite instanceof Phaser.GameObjects.Container ||
-        sprite instanceof SpineGameObject
-      ) {
-        const zDepth = element.initialState.position?.z ?? 0;
-        sprite.setDepth(zDepth);
-
-        if (!isExistingSprite) {
+      if (element.timeline) {
+        let animationTarget = sprite;
+        if (sprite instanceof Phaser.GameObjects.Container) {
+          animationTarget = sprite.getAt(0) as
+            | Phaser.GameObjects.Sprite
+            | Phaser.GameObjects.Video
+            | Phaser.GameObjects.Container
+            | SpineGameObject
+            | Phaser.Sound.WebAudioSound
+            | Phaser.GameObjects.Particles.ParticleEmitter;
+          console.log(
+            `VideoService: Absolute position for ${element.elementName}: (${
+              sprite.x + animationTarget.x
+            }, ${sprite.y + animationTarget.y})`
+          );
+        } else {
+          console.log(
+            "** Timeline for " + element.elementName + ": ",
+            JSON.stringify(
+              element.timeline,
+              (key, value) => {
+                if (
+                  typeof value === "object" &&
+                  value instanceof Phaser.GameObjects.GameObject
+                ) {
+                  return { name: value.name, type: value.constructor.name };
+                }
+                return value;
+              },
+              2
+            )
+          );
         }
 
-        if (element.timeline) {
-          let animationTarget = sprite;
-          if (sprite instanceof Phaser.GameObjects.Container) {
-            animationTarget = sprite.getAt(0) as
-              | Phaser.GameObjects.Sprite
-              | Phaser.GameObjects.Video
-              | SpineGameObject;
-
-            console.log(
-              `VideoService: Absolute position for ${element.elementName}: (${
-                sprite.x + animationTarget.x
-              }, ${sprite.y + animationTarget.y})`
-            );
-          } else {
-            console.log("**" + element.timeline);
-          }
-          const sequence = this.convertTimelineToAnimations(element);
+        const sequence = this.convertTimelineToAnimations(element);
+        if (sequence.length > 0) {
           syncGroups.push({
             target: animationTarget,
             sequence,
           });
         }
-      } else {
-        console.warn(
-          `VideoService: Sprite for ${element.elementName} is not a valid type:`,
-          sprite
-        );
+      }
+
+      if (
+        sprite instanceof Phaser.GameObjects.Sprite ||
+        sprite instanceof Phaser.GameObjects.Image ||
+        sprite instanceof Phaser.GameObjects.Video ||
+        sprite instanceof Phaser.GameObjects.Container ||
+        sprite instanceof SpineGameObject ||
+        sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+      ) {
+        const zDepth = element.initialState.position?.z ?? 0;
+        sprite.setDepth(zDepth);
       }
     }
 
     for (const [elementName, sprite] of this.activeSprites.entries()) {
       if (!activeElements.has(elementName)) {
-        sprite.setVisible(false);
+        if (
+          sprite instanceof Phaser.GameObjects.Sprite ||
+          sprite instanceof Phaser.GameObjects.Image ||
+          sprite instanceof Phaser.GameObjects.Video ||
+          sprite instanceof SpineGameObject ||
+          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+        ) {
+          sprite.setVisible(false);
+        }
       }
     }
 
     console.log(
       `VideoService: Final activeSprites:`,
-      Array.from(this.activeSprites.entries())
+      Array.from(this.activeSprites.entries()).map(([name, sprite]) => {
+        if (
+          sprite instanceof Phaser.GameObjects.Sprite ||
+          sprite instanceof Phaser.GameObjects.Video ||
+          sprite instanceof Phaser.GameObjects.Container ||
+          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
+          sprite instanceof SpineGameObject
+        ) {
+          return [name, { name: sprite.name, type: sprite.constructor.name }];
+        }
+        if (sprite instanceof Phaser.Sound.WebAudioSound) {
+          return [name, { key: sprite.key, type: sprite.constructor.name }];
+        }
+        // אין צורך בברירת מחדל כי כל הסוגים מכוסים
+        throw new Error(`Unexpected sprite type for ${name}`);
+      })
     );
-
     if (syncGroups.length > 0) {
       await this.syncSystem.playSync(syncGroups);
     }
@@ -407,19 +515,43 @@ export class VideoService {
 
   public pauseAllAnimations(): void {
     this.activeSprites.forEach((sprite, name) => {
-      this.syncSystem.pauseAll([sprite]);
+      if (
+        sprite instanceof Phaser.GameObjects.Sprite ||
+        sprite instanceof Phaser.GameObjects.Video ||
+        sprite instanceof SpineGameObject ||
+        sprite instanceof Phaser.GameObjects.Container ||
+        sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+      ) {
+        this.syncSystem.pauseAll([sprite]); // או resumeAll/stopAll
+      }
     });
   }
 
   public resumeAllAnimations(): void {
     this.activeSprites.forEach((sprite, name) => {
-      this.syncSystem.resumeAll([sprite]);
+      if (
+        sprite instanceof Phaser.GameObjects.Sprite ||
+        sprite instanceof Phaser.GameObjects.Video ||
+        sprite instanceof SpineGameObject ||
+        sprite instanceof Phaser.GameObjects.Container ||
+        sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+      ) {
+        this.syncSystem.resumeAll([sprite]);
+      }
     });
   }
 
   public stopAllAnimations(): void {
     this.activeSprites.forEach((sprite, name) => {
-      this.syncSystem.stopAll([sprite]);
+      if (
+        sprite instanceof Phaser.GameObjects.Sprite ||
+        sprite instanceof Phaser.GameObjects.Video ||
+        sprite instanceof SpineGameObject ||
+        sprite instanceof Phaser.GameObjects.Container ||
+        sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+      ) {
+        this.syncSystem.stopAll([sprite]);
+      }
     });
   }
 
@@ -430,6 +562,23 @@ export class VideoService {
     | SpineGameObject
     | Phaser.GameObjects.Container
   > {
-    return new Map(this.activeSprites);
+    const filteredMap = new Map<
+      string,
+      | Phaser.GameObjects.Sprite
+      | Phaser.GameObjects.Video
+      | SpineGameObject
+      | Phaser.GameObjects.Container
+    >();
+    this.activeSprites.forEach((sprite, key) => {
+      if (
+        sprite instanceof Phaser.GameObjects.Sprite ||
+        sprite instanceof Phaser.GameObjects.Video ||
+        sprite instanceof SpineGameObject ||
+        sprite instanceof Phaser.GameObjects.Container
+      ) {
+        filteredMap.set(key, sprite);
+      }
+    });
+    return filteredMap;
   }
 }

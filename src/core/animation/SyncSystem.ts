@@ -1,12 +1,18 @@
-// src/core/animation/SyncSystem.ts
 import { Scene } from "phaser";
-import { AnimationPropertyType, AnimationConfig } from "./types";
+import { AnimationPropertyType, AnimationConfig, AudioConfig } from "./types";
 import { AnimationManager } from "./AnimationManager";
 import { SequenceSystem, SequenceItem } from "./SequenceSystem";
+import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist";
 
 export interface SyncGroup {
-  target: Phaser.GameObjects.GameObject;
-  sequence: SequenceItem[];
+  target:
+    | Phaser.GameObjects.Video
+    | SpineGameObject
+    | Phaser.GameObjects.Sprite
+    | Phaser.GameObjects.Particles.ParticleEmitter
+    | Phaser.Sound.WebAudioSound
+    | Phaser.GameObjects.Container;
+  sequence: SequenceItem[] | AudioConfig;
 }
 
 export class SyncSystem {
@@ -18,38 +24,50 @@ export class SyncSystem {
     this.sequenceSystem = new SequenceSystem(scene);
   }
 
-  /**
-   * מריץ אנימציות במקביל על מספר אובייקטים
-   */
   async playSync(groups: SyncGroup[]): Promise<void> {
-    console.log(
-      `SyncSystem: Starting animation playback for ${groups.length} groups`
-    );
-
-    // לוג מידע על כל אובייקט וכמות האנימציות שלו
-    groups.forEach((group) => {
-      console.log(
-        `SyncSystem: Group for ${group.target.name || "unnamed object"} has ${
-          group.sequence.length
-        } animations`
-      );
-    });
-
-    // מריץ את כל הרצפים במקביל
-    const startTime = Date.now();
     const promises = groups.map((group) => {
-      console.log(
-        `SyncSystem: Starting sequence for ${
-          group.target.name || "unnamed object"
-        }`
-      );
-      return this.sequenceSystem.playSequence(group.target, group.sequence);
+      // מקרה 1: אם האודיו מגיע כאובייקט AudioConfig בודד
+      if (
+        !Array.isArray(group.sequence) &&
+        typeof group.sequence === "object" &&
+        group.sequence !== null &&
+        (("property" in group.sequence &&
+          group.sequence.property === "audio") ||
+          "audioKey" in group.sequence)
+      ) {
+        console.log("Audio config detected directly");
+        const audioSequence: SequenceItem[] = [
+          {
+            type: "audio" as AnimationPropertyType,
+            config: group.sequence as AudioConfig,
+            delay: (group.sequence as AudioConfig).delay || 0,
+          },
+        ];
+        return this.sequenceSystem.playSequence(group.target, audioSequence);
+      }
+      // מקרה 2: אם זה מערך שמכיל אנימציית אודיו
+      else if (Array.isArray(group.sequence)) {
+        console.log("Checking sequence array for audio items...");
+
+        // בדוק אם יש פריטי אודיו במערך
+        const audioItems = group.sequence.filter(
+          (item) => item.type === "audio"
+        );
+        if (audioItems.length > 0) {
+          console.log(`Found ${audioItems.length} audio items in sequence`);
+        }
+
+        return this.sequenceSystem.playSequence(
+          group.target,
+          group.sequence as SequenceItem[]
+        );
+      } else {
+        console.log("Unknown sequence format:", group.sequence);
+        return Promise.resolve();
+      }
     });
 
-    // מחכה שכל האנימציות יסתיימו
     await Promise.all(promises);
-
-    const endTime = Date.now();
   }
 
   /**
@@ -75,43 +93,26 @@ export class SyncSystem {
     );
   }
 
-  /**
-   * עוצר את כל האנימציות בקבוצה
-   */
   stopAll(targets: Phaser.GameObjects.GameObject[]): void {
     targets.forEach((target) => {
       this.animationManager.stopAnimations(target);
     });
   }
 
-  /**
-   * משהה את כל האנימציות בקבוצה
-   */
   pauseAll(targets: Phaser.GameObjects.GameObject[]): void {
     targets.forEach((target) => {
       this.animationManager.pauseAnimations(target);
     });
   }
 
-  /**
-   * ממשיך את כל האנימציות שהושהו בקבוצה
-   */
   resumeAll(targets: Phaser.GameObjects.GameObject[]): void {
     targets.forEach((target) => {
       this.animationManager.resumeAnimations(target);
     });
   }
 
-  /**
-   * מאפס את כל האנימציות בקבוצה
-   */
   resetAll(targets: Phaser.GameObjects.GameObject[]): void {
     targets.forEach((target) => {
-      // console.log(
-      //   `[${new Date().toISOString()}] SyncSystem: Resetting animations for ${
-      //     target.name || "unnamed object"
-      //   }`
-      // );
       this.animationManager.resetAnimations(target);
     });
   }

@@ -15,7 +15,7 @@ export const DEFAULT_ASSETS = {
   },
   music: {
     key: "default-bg-music",
-    path: "assets/sounds/default-bg-music.wav",
+    path: "assets/audio/default-bg-music.wav",
   },
 } as const;
 

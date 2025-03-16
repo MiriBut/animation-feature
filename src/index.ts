@@ -15,6 +15,9 @@ const config: Phaser.Types.Core.GameConfig = {
     width: 1920,
     height: 1080,
   },
+  audio: {
+    disableWebAudio: false,
+  },
   callbacks: {
     preBoot: (game) => {
       console.log("Game is pre-booting");

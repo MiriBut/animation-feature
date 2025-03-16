@@ -37,6 +37,8 @@ export class ScaleAnimation implements IAnimatable {
 
   reset(): void {
     this.stop();
-    this.target.setScale(1, 1);
+    if ("setScale" in this.target) {
+      this.target.setScale(1, 1);
+    }
   }
 }

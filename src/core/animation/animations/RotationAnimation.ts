@@ -36,6 +36,8 @@ export class RotationAnimation implements IAnimatable {
 
   reset(): void {
     this.stop();
-    this.target.setAngle(0);
+    if ("setAngle" in this.target) {
+      this.target.setAngle(0);
+    }
   }
 }

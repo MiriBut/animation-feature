@@ -97,10 +97,10 @@ export class Validators {
 
     if (
       asset.assetType &&
-      !["image", "audio", "video", "particle"].includes(asset.assetType)
+      !["image", "sound", "video", "particle"].includes(asset.assetType)
     ) {
       errors.push(
-        `${prefix} Invalid assetType "${asset.assetType}". Must be one of: image, audio, video, particle`
+        `${prefix} Invalid assetType "${asset.assetType}". Must be one of: image, sound, video, particle`
       );
     }
 

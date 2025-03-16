@@ -38,6 +38,25 @@ export class AnimationRegistry {
     scene: Scene,
     target: Phaser.GameObjects.GameObject
   ): IAnimatable {
+    if (type === "audio") {
+      if (
+        target instanceof Phaser.Sound.WebAudioSound ||
+        target instanceof Phaser.Sound.HTML5AudioSound
+      ) {
+        const AudioAnimation = this.animations.get("audio");
+        if (!AudioAnimation) {
+          throw new Error(`Animation type audio not registered`);
+        }
+        return new AudioAnimation(scene, target as AnimatableGameObject);
+      } else {
+        throw new Error(
+          `Object of type ${
+            target?.constructor?.name || "undefined"
+          } does not support audio animations`
+        );
+      }
+    }
+
     // בדיקה אם מדובר באובייקט וידאו
     if (target instanceof Phaser.GameObjects.Video) {
       // אפשר גם סקיילינג לוידאו, אבל לא רוטציה וצבע
@@ -48,12 +67,21 @@ export class AnimationRegistry {
       }
     }
 
+    if (target instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
+      if (type !== "position" && type !== "opacity") {
+        throw new Error(
+          `Animation type ${type} not supported for ParticleEmitter objects`
+        );
+      }
+    }
+
     // וידאים אם מדובר באובייקט מונפש
     if (
       !(target instanceof Phaser.GameObjects.Sprite) &&
       !(target instanceof Phaser.GameObjects.Image) &&
       !(target instanceof Phaser.GameObjects.Video) &&
-      !(target instanceof SpineGameObject)
+      !(target instanceof SpineGameObject) &&
+      !(target instanceof Phaser.GameObjects.Particles.ParticleEmitter) // הוספנו את זה
     ) {
       throw new Error(
         `Object of type ${target.type} does not support animations`

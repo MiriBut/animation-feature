@@ -1,219 +1,332 @@
 import { Scene } from "phaser";
-import { DEFAULT_ASSETS } from "../config/constants";
 
 export class AudioManager {
-  private scene: Scene;
-  private bgMusic?: Phaser.Sound.BaseSound;
-  private audioContext: AudioContext;
-  private mediaStreamDestination: MediaStreamAudioDestinationNode;
-  private audioElement?: HTMLAudioElement;
-  private isLoaded: boolean = false;
-  private audioSource?: MediaElementAudioSourceNode;
-  private isAudioSourceConnected: boolean = false;
-  private initializationPromise?: Promise<void>;
+  private mainScene: Scene;
+  private audioContext?: AudioContext;
+  private destination?: MediaStreamAudioDestinationNode;
 
-  constructor(scene: Scene) {
-    this.scene = scene;
-    this.audioContext = new AudioContext();
-    this.mediaStreamDestination =
-      this.audioContext.createMediaStreamDestination();
+  constructor(mainScene: Scene) {
+    this.mainScene = mainScene;
   }
 
-  public isAudioReady(): boolean {
+  async ensureAudioContext(): Promise<void> {
+    if (!this.mainScene.sound) {
+      throw new Error("Scene sound system is not initialized");
+    }
+    if (!("context" in this.mainScene.sound)) {
+      throw new Error("Web Audio is not enabled. AudioContext is unavailable.");
+    }
+    this.audioContext = this.mainScene.sound.context as AudioContext;
+    if (!this.audioContext) {
+      throw new Error("AudioContext is not available in the scene");
+    }
+    if (this.audioContext.state === "suspended") {
+      await this.audioContext.resume();
+      console.log("AudioContext resumed successfully");
+    }
+  }
+
+  isAudioReady(): boolean {
     return (
-      this.isLoaded &&
-      !!this.audioElement &&
-      this.isAudioSourceConnected &&
-      this.audioContext.state === "running"
+      !!this.audioContext &&
+      this.audioContext.state === "running" &&
+      !!this.mainScene.sound
     );
   }
 
-  async initialize(): Promise<void> {
-    if (this.initializationPromise) {
-      return this.initializationPromise;
-    }
-
-    this.initializationPromise = this._initialize();
-    return this.initializationPromise;
-  }
-
-  private async _initialize(): Promise<void> {
+  async getAudioStream(): Promise<MediaStream> {
     try {
-      await this.preload();
-      await this.create();
       await this.ensureAudioContext();
-
-      if (!this.isAudioSourceConnected) {
-        await this.setupAudioSource();
-      }
-    } catch (error) {
-      console.error("Error during audio initialization:", error);
-      throw error;
-    }
-  }
-
-  async preload(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.isLoaded) {
-        resolve();
-        return;
+      if (!this.audioContext) {
+        throw new Error("AudioContext not initialized");
       }
 
-      this.scene.load.once("complete", () => {
-        this.isLoaded = true;
-        resolve();
-      });
-
-      this.scene.load.once("loaderror", (file: any) => {
-        reject(new Error(`Failed to load audio file: ${file.key}`));
-      });
-
-      this.scene.load.audio(
-        DEFAULT_ASSETS.music.key,
-        DEFAULT_ASSETS.music.path
+      console.log(
+        `AudioManager: AudioContext state: ${this.audioContext.state}`
       );
-      this.scene.load.start();
-    });
-  }
 
-  async create(): Promise<void> {
-    if (!this.isLoaded) {
-      throw new Error("Audio not loaded yet");
-    }
-
-    try {
-      const soundManager: any = this.scene.sound;
-      if (
-        soundManager.sounds &&
-        soundManager.sounds.some(
-          (sound: Phaser.Sound.BaseSound) => sound.isPlaying
-        )
-      ) {
-        console.log("Skipping default music because another sound is playing");
-        return;
+      // נסה לחדש שוב את האודיו קונטקסט אם צריך
+      if (this.audioContext.state !== "running") {
+        try {
+          await this.audioContext.resume();
+          console.log(
+            `AudioManager: AudioContext resumed to state: ${this.audioContext.state}`
+          );
+        } catch (e) {
+          console.error("Failed to resume AudioContext:", e);
+        }
       }
 
-      if (!this.scene.cache.audio.exists(DEFAULT_ASSETS.music.key)) {
-        throw new Error(
-          `Audio file not found in cache: ${DEFAULT_ASSETS.music.key}`
+      // נקה destination קודם אם יש
+      if (this.destination) {
+        console.log("AudioManager: Cleaning previous destination node");
+        delete this.destination;
+      }
+
+      this.destination = this.audioContext.createMediaStreamDestination();
+      console.log("AudioManager: Created new MediaStreamAudioDestinationNode");
+
+      // גישה בטוחה יותר למערך הסאונדים
+      const soundManager = this.mainScene.sound;
+      const soundsArray = Array.isArray((soundManager as any).sounds)
+        ? (soundManager as any).sounds
+        : [];
+
+      console.log(
+        "Available sounds:",
+        soundsArray.map((s: any) => ({
+          key: s.key,
+          isPlaying: s.isPlaying,
+          type: s.constructor.name,
+        }))
+      );
+
+      if (soundsArray.length === 0) {
+        console.warn("No sounds found in the scene");
+      }
+
+      let connectedSounds = 0;
+
+      // חיבור כל הסאונדים באמצעות זיהוי מדויק יותר
+      soundsArray.forEach((sound: any) => {
+        try {
+          if (
+            sound.constructor.name === "WebAudioSound" ||
+            sound instanceof Phaser.Sound.WebAudioSound
+          ) {
+            // גישה ל-AudioNode המתאים
+            if (sound.hasOwnProperty("_pan")) {
+              // Phaser 3 גרסה חדשה יותר של
+              const panNode = (sound as any)._pan;
+              if (panNode && panNode.connect && this.destination) {
+                panNode.connect(this.destination);
+                connectedSounds++;
+                console.log(`Connected sound via panNode: ${sound.key}`);
+              }
+            } else if (sound.hasOwnProperty("gain")) {
+              const gainNode = (sound as any).gain;
+              if (gainNode && gainNode.connect && this.destination) {
+                gainNode.connect(this.destination);
+                connectedSounds++;
+                console.log(`Connected sound via gainNode: ${sound.key}`);
+              }
+            }
+            // גישה ישירה למקור (השיטה הישנה או הגיבוי)
+            else if (sound.source && sound.source.connect && this.destination) {
+              sound.source.connect(this.destination);
+              connectedSounds++;
+              console.log(`Connected sound via source: ${sound.key}`);
+            } else {
+              console.warn(
+                `Sound ${sound.key} is WebAudioSound but missing expected nodes`
+              );
+
+              // פתרון גיבוי - ניסיון לגשת באמצעות המאפיינים הפנימיים
+              const internalProperties = Object.keys(sound).filter((k) =>
+                k.startsWith("_")
+              );
+              console.log(
+                `Internal properties for ${sound.key}:`,
+                internalProperties
+              );
+
+              // חיפוש אחר נודים אפשריים לחיבור
+              let connected = false;
+              for (const prop of internalProperties) {
+                const value = (sound as any)[prop];
+                if (
+                  value &&
+                  typeof value === "object" &&
+                  value.connect &&
+                  typeof value.connect === "function"
+                ) {
+                  try {
+                    value.connect(this.destination!);
+                    connected = true;
+                    connectedSounds++;
+                    console.log(`Connected sound via ${prop}: ${sound.key}`);
+                    break;
+                  } catch (e) {
+                    console.log(`Failed to connect via ${prop}:`, e);
+                  }
+                }
+              }
+
+              // נסיון נוסף - גש ל-AudioNode באמצעות ממשקים פנימיים
+              if (!connected) {
+                try {
+                  // נסה לקבל את ה-AudioNode ישירות מהמאפיינים של WebAudioSound
+                  if ((sound as any).getAudioNode) {
+                    const node = (sound as any).getAudioNode();
+                    if (node && this.destination) {
+                      node.connect(this.destination);
+                      connected = true;
+                      connectedSounds++;
+                      console.log(
+                        `Connected sound via getAudioNode method: ${sound.key}`
+                      );
+                    }
+                  }
+
+                  // נסה לגשת למאפיינים נוספים שקיימים בגרסאות שונות של Phaser
+                  const possibleNodeProps = [
+                    "_gainNode",
+                    "_muteNode",
+                    "pannerNode",
+                    "_output",
+                  ];
+                  for (const nodeProp of possibleNodeProps) {
+                    if (!connected && (sound as any)[nodeProp]) {
+                      const node = (sound as any)[nodeProp];
+                      if (
+                        node &&
+                        typeof node.connect === "function" &&
+                        this.destination
+                      ) {
+                        node.connect(this.destination);
+                        connected = true;
+                        connectedSounds++;
+                        console.log(
+                          `Connected sound via ${nodeProp}: ${sound.key}`
+                        );
+                        break;
+                      }
+                    }
+                  }
+                } catch (e) {
+                  console.error("Error during advanced connection attempt:", e);
+                }
+              }
+
+              if (!connected) {
+                console.warn(
+                  `Could not find any connectable nodes for sound ${sound.key}`
+                );
+              }
+            }
+          } else {
+            console.log(
+              `Sound ${sound.key} is not a WebAudioSound (type: ${sound.constructor.name})`
+            );
+          }
+        } catch (error) {
+          console.error(`Failed to connect sound ${sound.key}:`, error);
+        }
+      });
+
+      if (connectedSounds === 0) {
+        console.warn(
+          "No WebAudio sounds were connected. Trying special solutions..."
         );
+
+        // פתרון גיבוי - נסה ליצור קשר ישירות עם הקונטקסט
+        if (this.audioContext && this.destination) {
+          try {
+            // בדוק אם הסאונד מנג'ר מחזיק ב-master gain
+            const manager = this.mainScene.sound;
+            if ((manager as any).masterVolumeNode) {
+              (manager as any).masterVolumeNode.connect(this.destination);
+              console.log("Connected master volume node to destination");
+            }
+
+            // פתרון מתקדם - יצירת OscillatorNode סמוי שיאפשר לנו לחבר את המערכת
+            const dummyOscillator = this.audioContext.createOscillator();
+            const dummyGain = this.audioContext.createGain();
+            dummyGain.gain.value = 0; // העוצמה אפס כדי שלא יישמע
+
+            // בנה מעקף חיבור למערכת הסאונד
+            if ((manager as any).destination) {
+              // הזרם הקלט של המנג'ר
+              const managerDestination = (manager as any).destination;
+
+              // חבר את האוסילטור לגיין ולאחר מכן הן ליעד המקורי והן ליעד ההקלטה
+              dummyOscillator.connect(dummyGain);
+              dummyGain.connect(managerDestination);
+              dummyGain.connect(this.destination);
+
+              // הפעל את האוסילטור
+              dummyOscillator.start();
+
+              console.log("Set up audio routing bypass system");
+
+              // לניקוי מאוחר יותר
+              setTimeout(() => {
+                dummyOscillator.stop();
+                dummyOscillator.disconnect();
+                dummyGain.disconnect();
+              }, 10000);
+            }
+
+            // גישה מתקדמת נוספת - ניסיון לתפוס את הסאונדים ישירות מהקונטקסט
+            const contextAny = this.audioContext as any;
+            if (contextAny && contextAny.destination) {
+              // נסה לגשת למאפיינים פנימיים של הקונטקסט
+              console.log("Attempting to access context internal nodes");
+              const contextDestination = contextAny.destination;
+
+              // יצירת מעקף
+              const bypassGain = this.audioContext.createGain();
+              bypassGain.gain.value = 1.0;
+
+              // נסה למצוא את כל ה-nodes שאפשר לחבר
+              for (const prop in contextAny) {
+                if (
+                  contextAny[prop] &&
+                  typeof contextAny[prop] === "object" &&
+                  typeof contextAny[prop].connect === "function"
+                ) {
+                  try {
+                    contextAny[prop].connect(bypassGain);
+                    console.log(`Connected context.${prop} to bypass gain`);
+                  } catch (e) {
+                    // התעלם משגיאות חיבור
+                  }
+                }
+              }
+
+              // חבר את ה-bypass gain ליעד ההקלטה
+              bypassGain.connect(this.destination);
+              console.log("Set up context-level audio routing");
+            }
+          } catch (e) {
+            console.error("Failed to set up special audio routing:", e);
+          }
+        }
+
+        // בכל מקרה, מומלץ ליצור סאונד חדש כדי לוודא שיש משהו ב-stream
+        try {
+          const syntheticSound = this.audioContext.createOscillator();
+          const synthGain = this.audioContext.createGain();
+          synthGain.gain.value = 0.01; // כמעט לא נשמע, אבל מספיק כדי ליצור stream
+
+          syntheticSound.connect(synthGain);
+          synthGain.connect(this.destination!);
+
+          syntheticSound.start();
+
+          // עצור אחרי זמן קצר
+          setTimeout(() => {
+            syntheticSound.stop();
+            syntheticSound.disconnect();
+            synthGain.disconnect();
+          }, 5000);
+
+          console.log("Created synthetic sound to ensure stream is active");
+        } catch (e) {
+          console.error("Failed to create synthetic sound:", e);
+        }
       }
 
-      this.bgMusic = this.scene.sound.add(DEFAULT_ASSETS.music.key, {
-        loop: true,
-        volume: 0.5,
-      });
-
-      this.audioElement = new Audio(DEFAULT_ASSETS.music.path);
-      this.audioElement.loop = true;
-
-      await this.setupAudioSource();
-
-      await Promise.all([
-        this.bgMusic.play(),
-        this.audioElement.play().catch((e) => {
-          console.warn("Auto-play prevented:", e);
-        }),
-      ]);
-    } catch (error) {
-      console.error("Error in create:", error);
-      throw error;
-    }
-  }
-
-  private async ensureAudioContext(): Promise<void> {
-    try {
-      if (this.audioContext.state === "suspended") {
-        await this.audioContext.resume();
-        console.log("AudioContext resumed successfully");
-      }
-    } catch (error) {
-      console.error("Failed to resume AudioContext:", error);
-      throw error;
-    }
-  }
-
-  private async setupAudioSource(): Promise<void> {
-    if (!this.audioElement) {
-      throw new Error("Audio element not initialized");
-    }
-
-    if (this.isAudioSourceConnected) {
-      return;
-    }
-
-    try {
-      if (this.audioSource) {
-        this.audioSource.disconnect();
+      if (!this.destination) {
+        throw new Error("Destination node not initialized");
       }
 
-      this.audioSource = this.audioContext.createMediaElementSource(
-        this.audioElement
-      );
-      this.audioSource.connect(this.mediaStreamDestination);
-      this.audioSource.connect(this.audioContext.destination);
-
-      this.isAudioSourceConnected = true;
-      console.log("Audio source setup completed successfully");
-    } catch (error) {
-      console.error("Error in setupAudioSource:", error);
-      this.isAudioSourceConnected = false;
-      throw error;
-    }
-  }
-
-  async changeMusic(file: File): Promise<void> {
-    this.stopMusic();
-    this.isAudioSourceConnected = false;
-
-    try {
-      await this.ensureAudioContext();
-
-      const audioKey = `user-music-${Date.now()}`;
-      const audioUrl = URL.createObjectURL(
-        new Blob([await file.arrayBuffer()])
-      );
-
-      const audioBuffer = await this.audioContext.decodeAudioData(
-        await file.arrayBuffer()
-      );
-
-      this.scene.cache.audio.add(audioKey, audioBuffer);
-
-      this.bgMusic = this.scene.sound.add(audioKey, {
-        loop: true,
-        volume: 0.5,
-      });
-
-      this.audioElement = new Audio(audioUrl);
-      this.audioElement.loop = true;
-
-      await this.setupAudioSource();
-
-      await Promise.all([this.bgMusic.play(), this.audioElement.play()]);
-    } catch (error) {
-      console.error("Error changing music:", error);
-      throw error;
-    }
-  }
-
-  async getAudioStream(): Promise<MediaStream | undefined> {
-    try {
-      await this.ensureAudioContext();
-
-      if (!this.audioElement) {
-        console.warn("No audio element available");
-        return undefined;
-      }
-
-      if (!this.isAudioSourceConnected) {
-        await this.setupAudioSource();
-      }
-
-      const stream = this.mediaStreamDestination.stream;
-      if (!stream || stream.getAudioTracks().length === 0) {
-        console.warn("No audio tracks in stream");
-        return undefined;
+      const stream = this.destination.stream;
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        console.warn("No audio tracks available in the stream");
+      } else {
+        console.log(`Audio stream created with ${audioTracks.length} tracks`);
       }
 
       return stream;
@@ -223,31 +336,18 @@ export class AudioManager {
     }
   }
 
-  stopMusic(): void {
-    if (this.bgMusic?.isPlaying) {
-      this.bgMusic.stop();
-    }
-    if (this.audioElement) {
-      this.audioElement.pause();
-      this.audioElement.currentTime = 0;
-    }
-  }
-
   destroy(): void {
-    this.stopMusic();
-    if (this.audioSource) {
-      this.audioSource.disconnect();
-      this.audioSource = undefined;
+    if (this.audioContext && this.audioContext.state !== "closed") {
+      this.audioContext
+        .close()
+        .then(() => {
+          console.log("AudioContext closed");
+        })
+        .catch((error) => {
+          console.error("Failed to close AudioContext:", error);
+        });
     }
-    this.isAudioSourceConnected = false;
-    if (this.audioContext) {
-      this.audioContext.close();
-    }
-    if (this.audioElement) {
-      this.audioElement.src = "";
-      this.audioElement = undefined;
-    }
-    this.isLoaded = false;
-    this.initializationPromise = undefined;
+    this.audioContext = undefined;
+    this.destination = undefined;
   }
 }

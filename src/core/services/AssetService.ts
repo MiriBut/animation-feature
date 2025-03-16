@@ -8,6 +8,7 @@ import {
   ImageAssetInfo,
   VideoAssetInfo,
   SpineAssetInfo,
+  AudioAssetInfo,
 } from "../../types/interfaces/AssetInterfaces";
 import {
   showMessage,
@@ -71,9 +72,9 @@ export class AssetService {
   public async handleAssetsJson(file: File): Promise<void> {
     try {
       const fileContent = await file.text();
-
       const json = JSON.parse(fileContent) as AssetJson;
 
+      // בדיקת מבנה ה-JSON
       const structureErrors = this.validateAssetStructure(json);
       if (structureErrors.length > 0) {
         console.log(
@@ -89,6 +90,7 @@ export class AssetService {
         return;
       }
 
+      // בדיקת נגישות הנכסים
       const existenceErrors = await this.checkAssetsExistence(json.assets);
       if (existenceErrors.length > 0) {
         showMessage({
@@ -100,10 +102,46 @@ export class AssetService {
         return;
       }
 
+      // רישום והוספת הנכסים למפה
       await this.registerAssets(json.assets);
-      const loadResults = await this.loadAssets(json.assets);
 
+      // טעינת הנכסים
+      const loadResults = await this.loadAssets(json.assets);
       this.displayLoadResults(loadResults);
+
+      // בדיקה אם יש אלמנטים ב-JSON והצגתם
+      if (json.elements && Array.isArray(json.elements)) {
+        console.log(
+          "AssetService: Displaying elements from JSON:",
+          json.elements
+        );
+        json.elements.forEach((element) => {
+          const assetName = element.assetName;
+          const elementName = element.elementName;
+
+          // וידוא שהנכס נטען בהצלחה
+          if (!this.loadedAssets.has(assetName)) {
+            console.warn(
+              `AssetService: Cannot display ${elementName} - ${assetName} not loaded`
+            );
+            return;
+          }
+
+          // הגדרות להצגה מה-initialState
+          const properties: AssetDisplayProperties = {
+            ...element.initialState,
+            play: false, // להבטיח שהאודיו ינוגן אוטומטית
+          };
+
+          // הצגת האלמנט
+          this.displayAsset(assetName, properties, elementName);
+          console.log(
+            `AssetService: Displayed ${elementName} with asset ${assetName}`
+          );
+        });
+      } else {
+        console.log("AssetService: No elements found in JSON to display");
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -124,6 +162,12 @@ export class AssetService {
       let newAssetInfo: AssetInfo;
 
       switch (asset.assetType) {
+        case "audio":
+          newAssetInfo = {
+            type: "audio",
+            url: asset.assetUrl as string,
+          } as AudioAssetInfo;
+          break;
         case "spine":
           const spineUrl = asset.assetUrl as {
             atlasUrl: string;
@@ -168,46 +212,51 @@ export class AssetService {
 
   // === Display Methods ===
 
-  // שינוי בפונקציית displayAsset בתוך AssetService
   public displayAsset(
     assetName: string,
     properties: AssetDisplayProperties,
-    elementName: string // פרמטר חדש לזיהוי ייחודי של האלמנט
-  ): Phaser.GameObjects.Video | SpineGameObject | Phaser.GameObjects.Sprite {
+    elementName: string
+  ):
+    | Phaser.GameObjects.Video
+    | SpineGameObject
+    | Phaser.GameObjects.Sprite
+    | Phaser.GameObjects.Particles.ParticleEmitter
+    | Phaser.Sound.WebAudioSound {
     const assetInfo = this.assetsMap.get(assetName);
     if (!assetInfo) {
       throw new Error(`Asset ${assetName} not found`);
     }
 
-    // נקיון ספרייט קיים אם יש (אל תשנה את הפונקציה הקיימת)
     this.cleanupExistingSprite(assetInfo);
 
-    // יצירת הספרייט
-    const sprite = this.createSprite(assetName, assetInfo, properties);
+    const spriteOrAudio = this.createSprite(assetName, assetInfo, properties);
 
-    // שימוש בשם האלמנט במקום שם האסט
-    sprite.name = elementName;
-
-    // המשך הקוד הקיים
-    properties.pivot = this.getAssetPivot(assetName);
-    const result = this.applyBasicProperties(sprite, properties, assetName);
-
-    if (result instanceof Phaser.GameObjects.Sprite) {
-      this.applyAdvancedProperties(result, properties);
+    if (spriteOrAudio instanceof Phaser.Sound.WebAudioSound) {
+      this.applyAudioProperties(spriteOrAudio, properties);
+    } else if (
+      spriteOrAudio instanceof Phaser.GameObjects.Video ||
+      spriteOrAudio instanceof SpineGameObject ||
+      spriteOrAudio instanceof Phaser.GameObjects.Sprite ||
+      spriteOrAudio instanceof Phaser.GameObjects.Particles.ParticleEmitter
+    ) {
+      spriteOrAudio.name = elementName;
+      properties.pivot = this.getAssetPivot(assetName);
+      this.applyBasicProperties(spriteOrAudio, properties, assetName);
+      if (spriteOrAudio instanceof Phaser.GameObjects.Sprite) {
+        this.applyAdvancedProperties(spriteOrAudio, properties);
+      }
     }
 
-    // במקום לשמור את הספרייט באסט, שמור אותו כמאפיין של האלמנט
-    // זה דורש מפה חדשה של אלמנטים
     this.elementsMap.set(elementName, {
       assetName: assetName,
-      sprite: result,
+      sprite: spriteOrAudio,
     });
 
     this.successMessages.push(
       `displayAsset [Displayed ${assetName} as ${elementName} (${assetInfo.type}) on scene]`
     );
 
-    return result;
+    return spriteOrAudio;
   }
 
   private cleanupExistingSprite(assetInfo: AssetInfo): void {
@@ -215,86 +264,102 @@ export class AssetService {
       if (assetInfo.sprite instanceof Phaser.GameObjects.Video) {
         assetInfo.sprite.stop();
       }
-      assetInfo.sprite.destroy();
+      if (this.isAudioConfig(assetInfo.sprite)) {
+        //assetInfo.sprite.mute;
+      } else {
+        assetInfo.sprite.destroy();
+      }
     }
+  }
+
+  private isAudioConfig(obj: any): obj is Phaser.Types.Sound.SoundConfig {
+    // בדיקה של מאפיינים ייחודיים ל-SoundConfig
+    return (
+      obj &&
+      (obj.hasOwnProperty("key") ||
+        obj.hasOwnProperty("volume") ||
+        obj.hasOwnProperty("loop")) &&
+      !("destroy" in obj)
+    );
   }
 
   private createSprite(
     assetName: string,
     assetInfo: AssetInfo,
     properties: AssetDisplayProperties
-  ): Phaser.GameObjects.Video | SpineGameObject | Phaser.GameObjects.Sprite {
+  ):
+    | Phaser.GameObjects.Video
+    | SpineGameObject
+    | Phaser.GameObjects.Sprite
+    | Phaser.GameObjects.Particles.ParticleEmitter
+    | Phaser.Sound.WebAudioSound {
     const x = properties.x ?? 0;
     const y = properties.y ?? 0;
 
+    if (assetInfo.type === "audio") {
+      const audio = this.scene.sound.add(assetName, {
+        loop: properties.loop ?? false,
+        volume: properties.volume ?? 1,
+      }) as Phaser.Sound.WebAudioSound; // שינוי ל-WebAudioSound במקום BaseSound
+      // הוספת soundKey לאובייקט האודיו
+      (audio as any).soundKey = assetName; // Phaser לא מגדיר את זה כברירת מחדל, אז אנחנו מוסיפים ידנית
+      if (properties.play) {
+        audio.play();
+      }
+
+      return audio;
+    }
     if (assetInfo.type === "video") {
       const video = this.scene.add.video(x, y, assetName);
-      video.name = assetName;
       video.play(true);
-
       return video;
     }
     if (assetInfo.type === "spine") {
-      try {
-        const atlasKey = `${assetName}_atlas`;
-        const skeletonKey = assetName;
-
-        // if (this.scene.cache.custom && this.scene.cache.custom.spine) {
-        //   console.log(
-        //     `AssetService: Checking cache for ${assetName}: atlas=${this.scene.cache.custom.spine.has(
-        //       atlasKey
-        //     )}, skeleton=${
-        //       this.scene.cache.json.has(skeletonKey) ||
-        //       this.scene.cache.binary.has(skeletonKey)
-        //     }`
-        //   );
-        // }
-
-        const spine = this.scene.add.spine(
-          x,
-          y,
-          assetName,
-          `${assetName}_atlas`
-        );
-        spine.name = assetName;
-        return spine;
-      } catch (error) {
-        console.error(
-          `AssetService: Error creating spine object for ${assetName}:`,
-          error
-        );
-        try {
-          const placeholder = this.scene.add.sprite(x, y, "error_placeholder");
-          placeholder.name = assetName;
-
-          return placeholder;
-        } catch (e) {
-          console.error(
-            `AssetService: Could not create error placeholder sprite for ${assetName}:`,
-            e
-          );
-          const emptySprite = this.scene.add.sprite(x, y, "");
-          emptySprite.name = assetName;
-
-          return emptySprite;
-        }
+      const spine = this.scene.add.spine(x, y, assetName, `${assetName}_atlas`);
+      return spine;
+    }
+    if (assetInfo.type === "particle") {
+      const particleManager = this.scene.add.particles(2, 2, assetName);
+      if (properties.emitterConfig) {
+        particleManager.createEmitter(); ///properties.emitterConfig);
       }
+      particleManager.setPosition(x, y);
+      return particleManager; // נשאר ללא שינוי
     }
 
     const sprite = this.scene.add.sprite(x, y, assetName);
-    sprite.name = assetName;
-
     return sprite;
+  }
+
+  private applyAudioProperties(
+    audio: Phaser.Sound.BaseSound,
+    properties: AssetDisplayProperties
+  ): void {
+    // אנחנו משתמשים ב-type assertion כדי לעקוף את בדיקת הטיפוסים
+    const audioObj = audio as any;
+
+    if (properties.volume !== undefined) {
+      audioObj.volume = properties.volume;
+    }
+    if (properties.loop !== undefined) {
+      audioObj.loop = properties.loop;
+    }
   }
 
   private applyBasicProperties(
     sprite:
       | Phaser.GameObjects.Video
       | SpineGameObject
-      | Phaser.GameObjects.Sprite,
+      | Phaser.GameObjects.Sprite
+      | Phaser.GameObjects.Particles.ParticleEmitter,
+
     properties: AssetDisplayProperties,
     assetName: string
-  ): Phaser.GameObjects.Sprite | Phaser.GameObjects.Video | SpineGameObject {
+  ):
+    | Phaser.GameObjects.Video
+    | SpineGameObject
+    | Phaser.GameObjects.Sprite
+    | Phaser.GameObjects.Particles.ParticleEmitter {
     const assetInfo = this.assetsMap.get(assetName);
 
     sprite.setAlpha(properties.alpha ?? 1);
@@ -477,6 +542,8 @@ export class AssetService {
     }
 
     switch (assetInfo.type) {
+      case "audio":
+        return this.loadAudioAsset(assetName, assetInfo as AudioAssetInfo);
       case "video":
         return this.loadVideoAsset(assetName, assetInfo as VideoAssetInfo);
       case "spine":
@@ -499,6 +566,89 @@ export class AssetService {
           error: `Unsupported asset type: ${assetInfo}`,
         };
     }
+  }
+
+  private async loadAudioAsset(
+    assetName: string,
+    assetInfo: AudioAssetInfo
+  ): Promise<{ success: boolean; error?: string }> {
+    return new Promise((resolve) => {
+      const supportedFormats = ["mp3", "wav", "ogg"];
+      const fileExtension = assetInfo.url.split(".").pop()?.toLowerCase();
+
+      if (!fileExtension || !supportedFormats.includes(fileExtension)) {
+        console.error(
+          `Error: Unsupported file format for ${assetName}: ${fileExtension}`
+        );
+        return resolve({
+          success: false,
+          error: `Unsupported audio format: ${fileExtension}`,
+        });
+      }
+
+      console.log(
+        `Starting accessibility check for ${assetName} at: ${assetInfo.url}`
+      );
+      fetch(assetInfo.url, { method: "HEAD" })
+        .then((response) => {
+          if (!response.ok) {
+            console.error(
+              `Error: File ${assetName} is not accessible at ${assetInfo.url}`
+            );
+            return resolve({
+              success: false,
+              error: `Audio file inaccessible: ${assetInfo.url} (Status: ${response.status})`,
+            });
+          }
+
+          console.log(
+            `File ${assetName} is accessible, starting load into Phaser`
+          );
+          this.scene.load.audio(assetName, assetInfo.url);
+
+          this.scene.load.once("complete", () => {
+            console.log(
+              `Loading ${assetName} completed, registering in sound manager`
+            );
+            const sound = this.scene.sound.add(assetName); // רישום ידני
+            if (!sound) {
+              console.error(
+                `Error: ${assetName} failed to register in Phaser's sound manager`
+              );
+              resolve({
+                success: false,
+                error: `Sound ${assetName} failed to register in Phaser sound manager`,
+              });
+              return;
+            }
+            this.loadedAssets.add(assetName);
+            this.assetsMap.set(assetName, { ...assetInfo });
+            console.log(
+              `Success: Audio ${assetName} loaded and registered successfully`
+            );
+            resolve({ success: true });
+          });
+
+          this.scene.load.once("loaderror", (file: Phaser.Loader.File) => {
+            console.error(`Error loading file ${assetName}: ${file.url}`);
+            resolve({
+              success: false,
+              error: `Failed to load sound ${assetName}: ${file.url}`,
+            });
+          });
+
+          console.log(`Starting loading process for ${assetName}`);
+          this.scene.load.start();
+          console.log(`Loaded audio with key: ${assetName}`);
+        })
+        .catch((error) => {
+          console.error(`Error accessing file ${assetName}: ${error}`);
+          resolve({
+            success: false,
+            error: `Failed to fetch audio ${assetName}: ${error}`,
+          });
+        });
+    });
   }
 
   private async loadParticleAsset(
@@ -725,7 +875,6 @@ export class AssetService {
   > {
     const loadPromises = assets.map(async (asset) => {
       const result = await this.loadAsset(asset.assetName);
-
       return {
         assetName: asset.assetName,
         success: result.success,
@@ -751,16 +900,17 @@ export class AssetService {
 
         let assetExists = false;
         switch (assetInfo.type) {
+          case "audio": // הוספת מקרה לאודיו
+            assetExists = !!this.scene.sound.get(result.assetName);
+            break;
           case "video":
             assetExists =
               !!assetInfo.sprite &&
               assetInfo.sprite instanceof Phaser.GameObjects.Video;
-
             break;
           case "image":
           case "particle":
             assetExists = this.scene.textures.exists(result.assetName);
-
             break;
           case "spine":
             assetExists =
@@ -776,7 +926,7 @@ export class AssetService {
             assetExists = true;
         }
 
-        if (!assetExists && assetInfo.type != "spine") {
+        if (!assetExists && assetInfo.type !== "spine") {
           console.error(
             `AssetService: Asset ${result.assetName} reported success but asset verification failed!`
           );
@@ -871,7 +1021,7 @@ export class AssetService {
         );
       }
 
-      const validTypes = ["image", "video", "particle", "spine"];
+      const validTypes = ["image", "video", "particle", "spine", "audio"];
       if (!asset.assetType || !validTypes.includes(asset.assetType)) {
         console.log(
           `AssetService: ${assetPrefix} - 'assetType' validation failed`
@@ -963,6 +1113,9 @@ export class AssetService {
               "webp",
               "mp4",
               "webm",
+              "wav",
+              "mp3",
+              "ogg",
             ];
             const hasValidExtension = validExtensions.some((ext) =>
               url.toLowerCase().endsWith(`.${ext}`)

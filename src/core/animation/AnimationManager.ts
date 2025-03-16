@@ -5,6 +5,7 @@ import {
   IAnimatable,
   AnimatableGameObject,
   AnimationConfig,
+  AudioConfig,
 } from "./types";
 import { AnimationRegistry } from "./AnimationRegistory";
 import { ObjectIdGenerator } from "./utiles";
@@ -27,9 +28,9 @@ export class AnimationManager {
 
   // מתחיל אנימציה חדשה על אובייקט
   async animate(
-    target: Phaser.GameObjects.GameObject,
+    target: Phaser.GameObjects.GameObject | any,
     type: AnimationPropertyType,
-    config: AnimationConfig
+    config: AnimationConfig | AudioConfig
   ): Promise<void> {
     const objectId = this.getObjectId(target);
 

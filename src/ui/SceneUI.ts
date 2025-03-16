@@ -13,8 +13,7 @@ export class SceneUI {
 
   constructor(
     private onResolutionChange: (width: number, height: number) => void,
-    private onBackgroundChange: (file: File) => void,
-    private onMusicChange: (file: File) => void,
+    // private onBackgroundChange: (file: File) => void,
     private onRecordingStart: () => Promise<void>,
     private onRecordingStop: () => Promise<void>,
     private onAssetsJson: (file: File) => void,
@@ -126,10 +125,10 @@ export class SceneUI {
       //this.assetService.handleResize(oldWidth, oldHeight, newWidth, newHeight);
     };
 
-    const bgButton = document.createElement("button");
-    bgButton.textContent = "Change Background";
-    this.applyButtonStyles(bgButton, "#9C27B0");
-    bgButton.onclick = () => this.handleBackgroundSelect();
+    // const bgButton = document.createElement("button");
+    // bgButton.textContent = "Change Background";
+    // this.applyButtonStyles(bgButton, "#9C27B0");
+    // bgButton.onclick = () => this.handleBackgroundSelect();
 
     const musicButton = document.createElement("button");
     musicButton.textContent = "Change Music";
@@ -178,8 +177,8 @@ export class SceneUI {
     };
 
     this.container.appendChild(resolutionSelect);
-    this.container.appendChild(bgButton);
-    this.container.appendChild(musicButton);
+    // this.container.appendChild(bgButton);
+    //this.container.appendChild(musicButton);
     //this.container.appendChild(characterButton);
     this.container.appendChild(assetJsonButton);
     this.container.appendChild(timelineJsonButton);
@@ -208,23 +207,23 @@ export class SceneUI {
     input.remove();
   }
 
-  private handleBackgroundSelect(): void {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.style.display = "none";
+  // private handleBackgroundSelect(): void {
+  //   const input = document.createElement("input");
+  //   input.type = "file";
+  //   input.accept = "image/*";
+  //   input.style.display = "none";
 
-    input.onchange = (event: Event) => {
-      const target = event.target as HTMLInputElement;
-      if (target.files && target.files[0]) {
-        this.onBackgroundChange(target.files[0]);
-      }
-    };
+  //   input.onchange = (event: Event) => {
+  //     const target = event.target as HTMLInputElement;
+  //     if (target.files && target.files[0]) {
+  //       this.onBackgroundChange(target.files[0]);
+  //     }
+  //   };
 
-    document.body.appendChild(input);
-    input.click();
-    input.remove();
-  }
+  //   document.body.appendChild(input);
+  //   input.click();
+  //   input.remove();
+  // }
 
   private handleMusicSelect(): void {
     const input = document.createElement("input");
@@ -244,7 +243,6 @@ export class SceneUI {
           alert("Unsupported audio format. Please use MP3, WAV, or OGG.");
           return;
         }
-        this.onMusicChange(file);
       }
     };
 

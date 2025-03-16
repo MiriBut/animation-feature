@@ -1,14 +1,18 @@
-import { SpineAnimation } from "./animations";
+import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist";
+import { AudioAnimation, SpineAnimation } from "./animations";
 import { AnimatableGameObject } from "./types";
 
-export function isAnimatable(
-  obj: Phaser.GameObjects.GameObject
-): obj is AnimatableGameObject {
+// utils.ts - פונקציית isAnimatable משופרת
+export function isAnimatable(obj: unknown): obj is AnimatableGameObject {
   return (
-    obj instanceof Phaser.GameObjects.Sprite ||
-    obj instanceof Phaser.GameObjects.Image ||
-    obj instanceof Phaser.GameObjects.Video ||
-    obj instanceof SpineAnimation
+    obj !== null &&
+    typeof obj === "object" &&
+    (obj instanceof Phaser.GameObjects.Sprite ||
+      obj instanceof Phaser.GameObjects.Image ||
+      obj instanceof Phaser.GameObjects.Video ||
+      obj instanceof Phaser.GameObjects.Container ||
+      obj instanceof SpineGameObject ||
+      obj instanceof AudioAnimation)
   );
 }
 

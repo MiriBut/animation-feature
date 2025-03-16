@@ -1,7 +1,7 @@
 export interface TimelineElement {
   assetUrl: string;
   elementName: string;
-  assetType: "image" | "video" | "text" | "particle" | "spine";
+  assetType: "image" | "video" | "text" | "particle" | "spine" | "audio";
   assetName: string;
   particles?: {
     textureName: string; // שם הטקסטורה לפרטיקל
@@ -19,6 +19,10 @@ export interface TimelineElement {
     particleScale?: { min: number; max: number };
     particleSpeed?: { min: number; max: number };
     frequency?: number;
+    // for sounds
+    audio: string;
+    volume?: number;
+    loop?: boolean | undefined;
   };
   timeline?: {
     animation?: TimelineAnimation[];
@@ -27,12 +31,16 @@ export interface TimelineElement {
     color?: TimelineAnimation[];
     opacity?: TimelineAnimation[];
     rotation?: TimelineAnimation[];
-    // הוספת אנימציות ספציפיות לפרטיקלס
+    // for particles
     emitterScale?: TimelineAnimation[];
     particleScale?: TimelineAnimation[];
     particleSpeed?: TimelineAnimation[];
     frequency?: TimelineAnimation[];
+    // for audio
     loop?: TimelineAnimation[];
+    audio?: TimelineAnimation[];
+    volume: TimelineAnimation[];
+    play: TimelineAnimation[];
   };
   onScreen?: {
     startTime: number;
@@ -79,6 +87,13 @@ interface ParticleConfig {
 }
 
 export interface TimelineAnimation {
+  stopOnComplete: boolean;
+  detune: number;
+  rate: number;
+  markers: null;
+  fadeOut: number;
+  fadeIn: number;
+  audioKey: any;
   value: any;
   duration: number;
   startTime: number;

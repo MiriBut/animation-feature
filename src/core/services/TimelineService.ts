@@ -187,73 +187,45 @@ export class TimelineService {
   public async validateTimelineJson(json: TimelineJson): Promise<string[]> {
     const errors: string[] = [];
 
-    if (
-      !json["template video json"] ||
-      !Array.isArray(json["template video json"])
-    ) {
-      errors.push(
-        "Invalid structure - 'template video json' key is missing or not an array"
-      );
-      return errors;
-    }
-
-    if (json["template video json"].length === 0) {
-      errors.push("'template video json' array is empty - no elements defined");
-    }
-
     json["template video json"].forEach((element, index) => {
       const prefix = `Element #${index + 1} (${
         element.elementName || element.assetName || "unnamed"
       })`;
 
-      // בדיקת שדות בסיסיים
       if (!element.assetName) {
         errors.push(`${prefix}: 'assetName' is missing`);
       }
       if (!element.assetType) {
         errors.push(`${prefix}: 'assetType' is missing`);
+      } else if (
+        !["image", "video", "particle", "spine", "audio"].includes(
+          element.assetType
+        )
+      ) {
+        errors.push(
+          `${prefix}: 'assetType' must be one of: image, video, particle, spine, audio`
+        );
       }
 
-      // בדיקת initialState
-      if (element.initialState) {
-        if (element.initialState.position) {
-          if (
-            typeof element.initialState.position.x !== "number" ||
-            isNaN(element.initialState.position.x)
-          ) {
-            errors.push(
-              `${prefix}: 'initialState.position.x' must be a valid number`
-            );
-          }
-        }
-        if (element.initialState.scale) {
-          if (
-            typeof element.initialState.scale.x !== "number" ||
-            element.initialState.scale.x <= 0
-          ) {
-            errors.push(
-              `${prefix}: 'initialState.scale.x' must be a positive number`
-            );
-          }
+      if (element.assetType === "audio" && element.initialState) {
+        if (
+          element.initialState.volume !== undefined &&
+          (element.initialState.volume < 0 || element.initialState.volume > 1)
+        ) {
+          errors.push(
+            `${prefix}: 'initialState.volume' must be between 0 and 1`
+          );
         }
       }
 
-      // בדיקת timeline
-      if (element.timeline) {
-        if (element.timeline.position) {
-          element.timeline.position.forEach((pos, posIndex) => {
-            if (pos.startTime > pos.endTime) {
+      if (element.timeline && element.assetType === "audio") {
+        if (element.timeline.play) {
+          element.timeline.play.forEach((play, playIndex) => {
+            if (play.startTime > play.endTime) {
               errors.push(
-                `${prefix}: Timeline position #${posIndex + 1} - 'startTime' (${
-                  pos.startTime
-                }) is greater than 'endTime' (${pos.endTime})`
-              );
-            }
-            if (typeof pos.startValue.x !== "number") {
-              errors.push(
-                `${prefix}: Timeline position #${
-                  posIndex + 1
-                } - 'startValue.x' must be a number`
+                `${prefix}: Timeline play #${playIndex + 1} - 'startTime' (${
+                  play.startTime
+                }) is greater than 'endTime' (${play.endTime})`
               );
             }
           });

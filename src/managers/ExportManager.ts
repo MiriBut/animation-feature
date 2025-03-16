@@ -1,10 +1,15 @@
+// הוסף את הקוד הזה בתחילת ExportManager.ts
+import { PhaserAudioRecorder } from "./PhaserAudioRecorder";
+
 import { Scene } from "phaser";
+import { AudioManager } from "./AudioManager";
 import { ConversionManager } from "./ConversionManager";
 import {
   LoadingModal,
   LoadingModalProps,
 } from "../ui/LoadingModal/LoadingModal";
-import { AudioManager } from "./AudioManager";
+
+// שנה את המחלקה ExportManager לפי הקוד הבא:
 
 export class ExportManager {
   private scene: Scene;
@@ -17,34 +22,69 @@ export class ExportManager {
   private initializationAttempts: number = 0;
   private readonly MAX_INIT_ATTEMPTS = 3;
 
+  // הוסף שדה חדש לרקורדר האודיו שלנו
+  private audioRecorder: PhaserAudioRecorder;
+
   constructor(scene: Scene, audioManager: AudioManager) {
     this.scene = scene;
     this.audioManager = audioManager;
     this.conversionManager = new ConversionManager();
+    // יצירת מופע של הרקורדר החדש
+    this.audioRecorder = new PhaserAudioRecorder(scene);
   }
 
-  private async ensureAudioInitialized(): Promise<boolean> {
+  async ensureAudioInitialized(): Promise<boolean> {
     if (this.initializationAttempts >= this.MAX_INIT_ATTEMPTS) {
       console.error("Max audio initialization attempts reached");
       return false;
     }
-
     try {
       this.initializationAttempts++;
 
+      // אתחול מערכת האודיו הרגילה
+      await this.audioManager.ensureAudioContext();
       if (!this.audioManager.isAudioReady()) {
-        console.log("Audio not ready, attempting initialization...");
-        await this.audioManager.initialize();
-
-        // Wait for a short period to ensure audio context is properly started
+        console.log("Audio not ready, waiting...");
         await new Promise((resolve) => setTimeout(resolve, 500));
+        return await this.ensureAudioInitialized(); // נסה שוב
+      }
+      console.log("Audio initialized successfully");
+
+      // אתחול מערכת הרקורדר החדשה
+      const recorderInitialized = await this.audioRecorder.initialize();
+      if (!recorderInitialized) {
+        console.warn(
+          "Advanced audio recorder initialization failed, falling back to standard method"
+        );
+      } else {
+        console.log("Advanced audio recorder initialized successfully");
       }
 
-      return this.audioManager.isAudioReady();
+      // בדיקת האודיו סטרים (גם מהמערכת הרגילה וגם מהרקורדר המתקדם)
+      const audioStream = await this.getOptimalAudioStream();
+      if (!audioStream || audioStream.getAudioTracks().length === 0) {
+        throw new Error("No audio tracks available in any audio system");
+      }
+
+      return true;
     } catch (error) {
       console.error("Error initializing audio:", error);
       return false;
     }
+  }
+
+  // מתודה חדשה לבחירת סטרים האודיו הטוב ביותר
+  private async getOptimalAudioStream(): Promise<MediaStream | undefined> {
+    // קודם נסה להשיג סטרים מהרקורדר המתקדם
+    const advancedStream = this.audioRecorder.getAudioStream();
+    if (advancedStream && advancedStream.getAudioTracks().length > 0) {
+      console.log("Using advanced audio recorder stream");
+      return advancedStream;
+    }
+
+    // אם לא הצליח, נפנה למערכת הרגילה
+    console.log("Falling back to standard audio manager");
+    return await this.audioManager.getAudioStream();
   }
 
   async startRecording(): Promise<void> {
@@ -54,7 +94,7 @@ export class ExportManager {
     }
 
     try {
-      // Ensure audio is initialized before starting
+      // אתחול מערכות האודיו לפני תחילת ההקלטה
       const isAudioReady = await this.ensureAudioInitialized();
       if (!isAudioReady) {
         throw new Error(
@@ -65,7 +105,7 @@ export class ExportManager {
       const canvas = this.scene.game.canvas;
       const videoStream = canvas.captureStream(30);
 
-      // Get audio stream with retry logic
+      // השג סטרים אודיו עם מנגנון ניסיון חוזר
       const audioStream = await this.retryGetAudioStream();
       if (!audioStream) {
         throw new Error("Failed to initialize audio stream");
@@ -75,9 +115,13 @@ export class ExportManager {
       if (audioTracks.length === 0) {
         throw new Error("No audio tracks available - ensure audio is playing");
       }
-
-      console.log("Audio tracks found:", audioTracks.length);
-      console.log("Audio track settings:", audioTracks[0].getSettings());
+      audioTracks.forEach((track) => {
+        if (track.enabled === false || track.muted) {
+          console.warn("Audio track is muted or disabled:", track);
+          // נסה להפעיל את הטרק
+          track.enabled = true;
+        }
+      });
 
       const combinedTracks = new MediaStream([
         ...videoStream.getVideoTracks(),
@@ -111,22 +155,24 @@ export class ExportManager {
   ): Promise<MediaStream | undefined> {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const stream = await this.audioManager.getAudioStream();
-        if (stream) {
-          return stream;
+        // נסה להשיג סטרים אודיו מהמערכת האופטימלית
+        const stream = await this.getOptimalAudioStream();
+        if (!stream || stream.getAudioTracks().length === 0) {
+          console.log(`Attempt ${attempt}: No audio tracks, retrying...`);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
         }
         console.log(
-          `Attempt ${attempt}: No audio stream available, retrying...`
+          "Audio stream obtained successfully:",
+          stream.getAudioTracks()
         );
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return stream;
       } catch (error) {
         console.error(`Attempt ${attempt}: Error getting audio stream:`, error);
-        if (attempt === maxAttempts) {
-          throw error;
-        }
+        if (attempt === maxAttempts) throw error;
       }
     }
-    return undefined;
+    throw new Error("Failed to get valid audio stream after all attempts");
   }
 
   public async changeResolution(
@@ -247,19 +293,20 @@ export class ExportManager {
   }
 
   private getSupportedMimeType(): string {
+    const preferredType = "video/webm;codecs=vp8,opus";
+    if (MediaRecorder.isTypeSupported(preferredType)) {
+      return preferredType;
+    }
+    // המשך ללוגיקה המקורית
     const mimeTypes = [
       "video/webm;codecs=vp9,opus",
       "video/webm;codecs=vp8,opus",
       "video/webm;codecs=h264,opus",
       "video/webm",
     ];
-
     for (const type of mimeTypes) {
-      if (MediaRecorder.isTypeSupported(type)) {
-        return type;
-      }
+      if (MediaRecorder.isTypeSupported(type)) return type;
     }
-
     throw new Error("No supported mime type found for MediaRecorder");
   }
 
@@ -273,6 +320,10 @@ export class ExportManager {
       this.loadingModal.close();
       this.loadingModal = null;
     }
+
+    // נקה גם את הרקורדר החדש
+    this.audioRecorder.destroy();
+
     this.initializationAttempts = 0;
   }
 }

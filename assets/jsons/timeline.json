@@ -1,6 +1,51 @@
 {
   "template video json": [
     {
+      "elementName": "kic1",
+      "assetType": "audio",
+      "assetName": "kick",
+      "initialState": {
+        "volume": 0.5,
+        "loop": true
+      },
+      "timeline": {
+        "play": [
+          {
+            "startTime": 1,
+            "endTime": 10,
+            "loop": "true"
+          }
+        ],
+        "volume": [
+          {
+            "startTime": 0,
+            "endTime": 10,
+            "startValue": 0,
+            "endValue": 1,
+            "easeIn": "Linear"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "kic2",
+      "assetType": "audio",
+      "assetName": "kick",
+      "initialState": {
+        "volume": 0.5,
+        "loop": true
+      },
+      "timeline": {
+        "play": [
+          {
+            "startTime": 11,
+            "endTime": 15,
+            "loop": "false"
+          }
+        ]
+      }
+    },
+    {
       "elementName": "characterSpine",
       "assetType": "spine",
       "assetName": "character_spine",

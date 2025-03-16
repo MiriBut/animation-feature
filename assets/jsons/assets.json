@@ -1,6 +1,11 @@
 {
   "assets": [
     {
+      "assetName": "kick",
+      "assetUrl": "assets/audio/kick_h_08-224057.mp3",
+      "assetType": "audio"
+    },
+    {
       "assetName": "character_spine",
       "assetUrl": {
         "atlasUrl": "assets/spines/skelSpineBoy/spineboy-pma.atlas",

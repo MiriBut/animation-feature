@@ -1,11 +1,11 @@
 // src/core/animation/SequenceSystem.ts
 import { Scene } from "phaser";
-import { AnimationPropertyType, AnimationConfig } from "./types";
+import { AnimationPropertyType, AnimationConfig, AudioConfig } from "./types";
 import { AnimationManager } from "./AnimationManager";
 
 export interface SequenceItem {
   type: AnimationPropertyType;
-  config: AnimationConfig;
+  config: AnimationConfig | AudioConfig;
   delay?: number; // עיכוב לפני הפעלת האנימציה
 }
 
@@ -23,7 +23,7 @@ export class SequenceSystem {
    * @param sequence רצף האנימציות להפעלה
    */
   async playSequence(
-    target: Phaser.GameObjects.GameObject,
+    target: Phaser.GameObjects.GameObject | Phaser.Sound.WebAudioSound,
     sequence: SequenceItem[]
   ): Promise<void> {
     // console.log(
@@ -31,9 +31,10 @@ export class SequenceSystem {
     //     sequence.length
     //   } items for ${target.name || "unnamed object"}`
     // );
-
     // לוג מידע על כל אנימציה בסדרה
     sequence.forEach((item) => {
+      console.log("Playing sequence item:", JSON.stringify(item, null, 2));
+
       const startTimeMs = item.config.delay || 0;
       const durationMs = item.config.duration || 0;
       console.log(

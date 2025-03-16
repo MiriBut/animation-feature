@@ -37,6 +37,8 @@ export class PositionAnimation implements IAnimatable {
 
   reset(): void {
     this.stop();
-    this.target.setPosition(0, 0);
+    if ("setPosition" in this.target) {
+      this.target.setPosition(0, 0);
+    }
   }
 }

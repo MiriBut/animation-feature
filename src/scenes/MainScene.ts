@@ -52,11 +52,7 @@ export class MainScene extends Scene {
     this.stopAndRemoveScene("bootScene");
   }
 
-  preload(): void {
-    // this.backgroundManager.preload();
-    // this.characterManager.preload();
-    // this.audioManager.preload();
-  }
+  preload(): void {}
 
   async create(): Promise<void> {
     console.log(
@@ -66,6 +62,8 @@ export class MainScene extends Scene {
     );
     this.initializeScene();
 
+    this.audioManager = new AudioManager(this);
+
     // Make sure background reloads if we're resizing
     if (this.currentBackground) {
       await this.reloadBackground();
@@ -74,8 +72,7 @@ export class MainScene extends Scene {
     if (!this.ui) {
       this.ui = new SceneUI(
         this.updateResolution.bind(this),
-        this.handleBackgroundChange.bind(this),
-        this.handleMusicChange.bind(this),
+        // this.handleBackgroundChange.bind(this),
         // this.handleCharacterChange.bind(this),
         this.startRecording.bind(this),
         this.stopRecording.bind(this),
@@ -223,18 +220,18 @@ export class MainScene extends Scene {
     }
   }
 
-  private async handleMusicChange(file: File): Promise<void> {
-    try {
-      await this.audioManager.changeMusic(file);
-    } catch (error) {
-      console.error("Error changing music:", error);
-      showMessage({
-        isOpen: true,
-        title: "Music Error",
-        messages: [createErrorMessage("Failed to change music")],
-      });
-    }
-  }
+  // private async handleMusicChange(file: File): Promise<void> {
+  //   try {
+  //     await this.audioManager.changeMusic(file);
+  //   } catch (error) {
+  //     console.error("Error changing music:", error);
+  //     showMessage({
+  //       isOpen: true,
+  //       title: "Music Error",
+  //       messages: [createErrorMessage("Failed to change music")],
+  //     });
+  //   }
+  // }
 
   // private async handleCharacterChange(
   //   skelFile: File,
