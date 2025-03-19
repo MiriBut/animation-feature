@@ -11,6 +11,7 @@ export interface SyncGroup {
     | Phaser.GameObjects.Sprite
     | Phaser.GameObjects.Particles.ParticleEmitter
     | Phaser.Sound.WebAudioSound
+    | Phaser.GameObjects.Text
     | Phaser.GameObjects.Container;
   sequence: SequenceItem[] | AudioConfig;
 }

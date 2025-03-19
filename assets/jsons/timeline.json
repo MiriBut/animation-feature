@@ -1,316 +1,161 @@
 {
   "template video json": [
     {
-      "elementName": "kic1",
-      "assetType": "audio",
-      "assetName": "kick",
+      "elementName": "titleText",
+      "assetType": "text",
+      "assetName": "title_text",
       "initialState": {
-        "volume": 0.5,
-        "loop": true
+        "position": {
+          "x": 960,
+          "y": 200,
+          "z": 10
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 0.5,
+        "text": "Welcome!",
+        "fontSize": "100",
+        "color": "#ffffff",
+        "fontWeight": "normal",
+        "fontStyle": "normal",
+        "textDecoration": "none"
       },
       "timeline": {
-        "play": [
+        "scale": [
           {
-            "startTime": 1,
-            "endTime": 10,
-            "loop": "true"
+            "startTime": 5,
+            "endTime": 5,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 1,
+              "y": 1
+            },
+            "easeIn": "Quad.easeIn"
           }
         ],
-        "volume": [
+        "opacity": [
           {
-            "startTime": 0,
-            "endTime": 10,
-            "startValue": 0,
+            "startTime": 4,
+            "endTime": 5,
+            "startValue": 1,
             "endValue": 1,
             "easeIn": "Linear"
           }
-        ]
-      }
-    },
-    {
-      "elementName": "kic2",
-      "assetType": "audio",
-      "assetName": "kick",
-      "initialState": {
-        "volume": 0.5,
-        "loop": true
-      },
-      "timeline": {
-        "play": [
-          {
-            "startTime": 11,
-            "endTime": 15,
-            "loop": "false"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "characterSpine",
-      "assetType": "spine",
-      "assetName": "character_spine",
-      "initialState": {
-        "position": {
-          "x": 1000,
-          "y": 540,
-          "z": 2
-        },
-        "scale": {
-          "x": 0.5,
-          "y": 0.5
-        },
-        "opacity": 1,
-        "rotation": 0
-      },
-      "timeline": {
-        "animation": [
-          {
-            "animationName": "idle",
-            "startTime": 0,
-            "endTime": 10,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 11,
-            "endTime": 20,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 6,
-            "endTime": 10,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 11,
-            "endTime": 13,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 14,
-            "endTime": 20,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 21,
-            "endTime": 23,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 24,
-            "endTime": 26,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 28,
-            "endTime": 32,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 34,
-            "endTime": 39,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 40,
-            "endTime": 41,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 42,
-            "endTime": 45,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 46,
-            "endTime": 50,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 52,
-            "endTime": 56,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 57,
-            "endTime": 60,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 61,
-            "endTime": 64,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 65,
-            "endTime": 100,
-            "loop": "true"
-          }
         ],
-        "position": [
+        "text": [
           {
             "startTime": 0,
             "endTime": 5,
-            "startValue": {
-              "x": 1000,
-              "y": 540
+            "value": "Welcome!",
+            "fontSize": {
+              "startValue": "100",
+              "endValue": "100"
             },
-            "endValue": {
-              "x": 1000,
-              "y": 540
+            "color": {
+              "startValue": "#00000",
+              "endValue": "#ffffff"
             },
-            "easeIn": "Linear",
-            "easeOut": "Linear"
-          }
-        ],
-        "scale": [
-          {
-            "startTime": 2,
-            "endTime": 4,
-            "startValue": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "endValue": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "textDecoration": "normal",
+            "easeIn": "Sine.easeIn"
           }
         ]
       }
     },
     {
-      "elementName": "characterSpine01",
-      "assetType": "spine",
-      "assetName": "character_spine",
+      "elementName": "titleText1",
+      "assetType": "text",
+      "assetName": "title_text1",
       "initialState": {
         "position": {
-          "x": 500,
-          "y": 540,
-          "z": 2
+          "x": 960,
+          "y": 600,
+          "z": 10
         },
         "scale": {
-          "x": 0.5,
-          "y": 0.5
+          "x": 1,
+          "y": 1
         },
-        "opacity": 1,
-        "rotation": 0
+        "opacity": 0.5,
+        "text": "Welcome!",
+        "fontSize": "100",
+        "color": "#ff69b4",
+        "fontWeight": "normal",
+        "fontStyle": "normal",
+        "textDecoration": "none"
       },
       "timeline": {
-        "animation": [
+        "scale": [
           {
-            "animationName": "run",
-            "startTime": 0,
-            "endTime": 10,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 11,
-            "endTime": 20,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 6,
-            "endTime": 10,
-            "loop": "true"
-          },
-          {
-            "animationName": "shoot",
-            "startTime": 11,
-            "endTime": 13,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 14,
-            "endTime": 20,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 21,
-            "endTime": 23,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 24,
-            "endTime": 26,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 28,
-            "endTime": 32,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 34,
-            "endTime": 39,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 40,
-            "endTime": 41,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 42,
-            "endTime": 45,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 46,
-            "endTime": 50,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 52,
-            "endTime": 56,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 57,
-            "endTime": 60,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 61,
-            "endTime": 64,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 65,
-            "endTime": 100,
-            "loop": "true"
+            "startTime": 5,
+            "endTime": 5,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 1,
+              "y": 1
+            },
+            "easeIn": "Quad.easeIn"
           }
         ],
+        "opacity": [
+          {
+            "startTime": 4,
+            "endTime": 5,
+            "startValue": 1,
+            "endValue": 1,
+            "easeIn": "Linear"
+          }
+        ],
+        "text": [
+          {
+            "startTime": 0,
+            "endTime": 5,
+            "value": "Welcome!",
+            "fontSize": {
+              "startValue": "100",
+              "endValue": "100"
+            },
+
+            "fontWeight": "bold",
+            "fontStyle": "italic",
+            "textDecoration": "underline",
+            "easeIn": "Sine.easeIn"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "titleText2",
+      "assetType": "text",
+      "assetName": "title_text2",
+      "initialState": {
+        "position": {
+          "x": 660,
+          "y": 900,
+          "z": 10
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 0.5,
+        "text": "Welcome!",
+        "fontSize": "100",
+        "color": "#800080",
+        "fontWeight": "normal",
+        "fontStyle": "normal",
+        "textDecoration": "none"
+      },
+      "timeline": {
         "position": [
           {
             "startTime": 0,
@@ -321,7 +166,7 @@
             },
             "endValue": {
               "x": 500,
-              "y": 540
+              "y": 560
             },
             "easeIn": "Linear",
             "easeOut": "Linear"
@@ -329,98 +174,17 @@
         ],
         "scale": [
           {
-            "startTime": 2,
-            "endTime": 4,
+            "startTime": 5,
+            "endTime": 5,
             "startValue": {
-              "x": 0.5,
-              "y": 0.5
+              "x": 1,
+              "y": 1
             },
             "endValue": {
-              "x": 0.5,
-              "y": 0.5
+              "x": 1,
+              "y": 1
             },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "sparklesEffect",
-      "assetType": "particle",
-      "assetName": "sparkle_particle",
-      "particles": {
-        "textureName": "particle",
-        "config": {
-          "frequency": 50,
-          "lifespan": {
-            "min": 800,
-            "max": 1500
-          },
-          "quantity": 3,
-          "speed": {
-            "min": 100,
-            "max": 150,
-            "radial": false
-          },
-          "scale": {
-            "start": 0.4,
-            "end": 0.1,
-            "min": 0.1,
-            "max": 0.4
-          },
-          "alpha": {
-            "start": 1,
-            "end": 0,
-            "min": 0.6,
-            "max": 1
-          },
-          "rotate": {
-            "min": -45,
-            "max": 45
-          },
-          "tint": ["0xFFFFFF", "0xFFE5CC", "0xFFF0E6"],
-          "blendMode": "ADD",
-          "emitZone": {
-            "type": "edge",
-            "source": {
-              "x": 0,
-              "y": 0,
-              "width": 10,
-              "height": 600
-            }
-          },
-          "gravityX": -50,
-          "gravityY": 10
-        }
-      },
-      "initialState": {
-        "position": {
-          "x": 960,
-          "y": 540,
-          "z": 5
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 1
-      },
-      "timeline": {
-        "position": [
-          {
-            "startTime": 0,
-            "endTime": 10,
-            "startValue": {
-              "x": 960,
-              "y": 540
-            },
-            "endValue": {
-              "x": -500,
-              "y": 0
-            },
-            "easeIn": "Linear",
-            "easeOut": "Linear"
+            "easeIn": "Quad.easeIn"
           }
         ],
         "opacity": [
@@ -429,43 +193,62 @@
             "endTime": 5,
             "startValue": 1,
             "endValue": 1,
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
+            "easeIn": "Linear"
+          }
+        ],
+        "text": [
+          {
+            "startTime": 0,
+            "endTime": 5,
+            "value": "Welcome!",
+            "fontSize": {
+              "startValue": "100",
+              "endValue": "100"
+            },
+            "fontWeight": "bold",
+            "fontStyle": "italic",
+            "textDecoration": "normal",
+            "easeIn": "Cubic.easeOut"
           }
         ]
       }
     },
     {
-      "elementName": "magicVideo",
-      "assetType": "video",
-      "assetName": "magic_video",
+      "elementName": "titleText3",
+      "assetType": "text",
+      "assetName": "title_text2",
       "initialState": {
         "position": {
-          "x": 960,
-          "y": 540,
-          "z": 1
+          "x": 100,
+          "y": 900,
+          "z": 10
         },
         "scale": {
           "x": 1,
           "y": 1
         },
-        "opacity": 1
+        "opacity": 0.5,
+        "text": "Welcome!",
+        "fontSize": "100",
+        "color": "#800080",
+        "fontWeight": "normal",
+        "fontStyle": "normal",
+        "textDecoration": "none"
       },
       "timeline": {
         "scale": [
           {
-            "startTime": 0,
+            "startTime": 5,
             "endTime": 5,
             "startValue": {
               "x": 1,
               "y": 1
             },
             "endValue": {
-              "x": 1.5,
+              "x": 1,
               "y": 1
             },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
+            "easeIn": "Quad.easeIn"
           }
         ],
         "opacity": [
@@ -474,268 +257,22 @@
             "endTime": 5,
             "startValue": 1,
             "endValue": 1,
-            "easeIn": "Linear",
-            "easeOut": "Linear"
+            "easeIn": "Linear"
           }
-        ]
-      }
-    },
-
-    {
-      "elementName": "backgroundImage",
-      "assetType": "image",
-      "assetName": "background_image",
-      "initialState": {
-        "position": {
-          "x": 960,
-          "y": 540,
-          "z": 0
-        },
-        "scale": {
-          "x": 2,
-          "y": 2
-        },
-        "opacity": 1
-      },
-      "timeline": {
-        "scale": [
+        ],
+        "text": [
           {
             "startTime": 0,
             "endTime": 5,
-            "startValue": {
-              "x": 1,
-              "y": 1
+            "value": "Welcome!",
+            "fontSize": {
+              "startValue": "100",
+              "endValue": "100"
             },
-            "endValue": {
-              "x": 2,
-              "y": 2
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "logoImage",
-      "assetType": "image",
-      "assetName": "logo_image",
-      "onScreen": [
-        {
-          "startTime": 10,
-          "endTime": 20
-        },
-        {
-          "startTime": 30,
-          "endTime": 40
-        }
-      ],
-      "initialState": {
-        "position": {
-          "x": 960,
-          "y": 540,
-          "z": 1
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "rotation": 0,
-        "opacity": 1
-      },
-      "timeline": {
-        "scale": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
-              "x": 1.5,
-              "y": 1.5
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
-          }
-        ],
-        "rotation": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": 0,
-            "endValue": 360,
-            "easeIn": "Linear",
-            "easeOut": "Linear"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "characterImage",
-      "assetType": "image",
-      "assetName": "character_image",
-      "initialState": {
-        "position": {
-          "x": 960,
-          "y": 540,
-          "z": 5
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "color": "0xFFFFFF",
-        "opacity": 1
-      },
-      "timeline": {
-        "position": [
-          {
-            "startTime": 5,
-            "endTime": 10,
-            "startValue": {
-              "z": 5
-            },
-            "endValue": {
-              "z": -1
-            },
-            "easeIn": "Expo.easeIn",
-            "easeOut": "Expo.easeOut"
-          }
-        ],
-        "color": [
-          {
-            "startTime": 2,
-            "endTime": 10,
-            "startValue": "0xFFFFFF",
-            "endValue": "0xFF0000",
-            "easeIn": "Sine.easeIn",
-            "easeOut": "Sine.easeOut"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "iconImage",
-      "assetType": "image",
-      "assetName": "icon_image",
-      "initialState": {
-        "position": {
-          "x": 1000,
-          "y": 540,
-          "z": 3
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 1
-      },
-      "timeline": {
-        "position": [
-          {
-            "startTime": 5,
-            "endTime": 12,
-            "startValue": {
-              "x": 0,
-              "y": -20
-            },
-            "endValue": {
-              "x": 100,
-              "y": 50
-            },
-            "easeIn": "Expo.easeIn",
-            "easeOut": "Expo.easeOut"
-          }
-        ],
-        "scale": [
-          {
-            "startTime": 5,
-            "endTime": 12,
-            "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
-              "x": 2,
-              "y": 2
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
-          }
-        ]
-      }
-    },
-
-    {
-      "elementName": "Banner_Image",
-      "assetType": "image",
-      "assetName": "Banner_image",
-      "initialState": {
-        "position": {
-          "x": 960,
-          "y": 540,
-          "z": -1
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 1,
-        "color": "0x0000FF"
-      },
-      "timeline": {
-        "position": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": {
-              "x": 960,
-              "y": 540
-            },
-            "endValue": {
-              "x": 50,
-              "y": 50
-            },
-            "easeIn": "Circ.easeIn",
-            "easeOut": "Circ.easeOut"
-          }
-        ],
-        "scale": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
-          }
-        ],
-        "color": [
-          {
-            "startTime": 12,
-            "endTime": 20,
-            "startValue": "0x0000FF",
-            "endValue": "0x0000FF",
-            "easeIn": "Sine.easeIn",
-            "easeOut": "Sine.easeOut"
-          }
-        ],
-        "opacity": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": 1,
-            "endValue": 0.3,
-            "easeIn": "Back.easeIn",
-            "easeOut": "Back.easeOut"
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "textDecoration": "underline",
+            "easeIn": "Sine.easeIn"
           }
         ]
       }

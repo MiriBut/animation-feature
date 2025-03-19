@@ -1,6 +1,24 @@
 {
   "assets": [
     {
+      "assetName": "title_text",
+      "assetType": "text",
+      "fontFamily": "myfont1",
+      "assetUrl": "assets/fonts/devil-summoner-italic.ttf"
+    },
+    {
+      "assetName": "title_text1",
+      "assetType": "text",
+      "fontFamily": "myfont2",
+      "assetUrl": "assets/fonts/V5PRC___.TTF"
+    },
+    {
+      "assetName": "title_text2",
+      "assetType": "text",
+      "fontFamily": "Arial",
+      "assetUrl": "none"
+    },
+    {
       "assetName": "kick",
       "assetUrl": "assets/audio/kick_h_08-224057.mp3",
       "assetType": "audio"

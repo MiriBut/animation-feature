@@ -8,19 +8,31 @@ export type AnimationPropertyType =
   | "opacity"
   | "color"
   | "spine"
+  | "text"
   | "audio";
 
 export interface AnimationConfig {
   property: AnimationPropertyType;
-  startValue: any;
-  endValue: any;
+  startValue?: any; // שינוי לאופציונלי
+  endValue?: any;
   duration: number;
   easing: string;
   delay?: number;
   animationName?: string;
   audioKey?: string;
-  loop?: string; // נשאר string כדי להתאים ל-SyncSystem
+  loop?: string;
+  // for audio
   volume?: string;
+  //for text
+  textValue?: string;
+  fontSize?: string | { startValue: number; endValue: number };
+  color?: string | { startValue: string; endValue: string };
+  fontWeight?: string;
+  fontStyle?: string;
+  textDecoration?: string;
+
+  fontName?: string;
+  assetName?: string;
 }
 
 export interface AudioConfig {
@@ -60,7 +72,8 @@ export type AnimatableGameObject =
   | Phaser.GameObjects.Video
   | Phaser.GameObjects.Container
   | SpineGameObject
-  | Phaser.Sound.WebAudioSound; // שינוי מ-AudioAnimation ל-WebAudioSound ישיר
+  | Phaser.Sound.WebAudioSound
+  | Phaser.GameObjects.Text;
 
 export interface IAnimatable {
   play(config: AnimationConfig | AudioConfig): Promise<void>;
