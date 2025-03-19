@@ -1,7 +1,13 @@
 // src/types/interfaces/AssetInterfaces.ts
 import { SpineGameObject } from "@esotericsoftware/spine-phaser";
 
-export type AssetType = "image" | "video" | "particle" | "spine" | "audio";
+export type AssetType =
+  | "image"
+  | "video"
+  | "particle"
+  | "spine"
+  | "audio"
+  | "text";
 
 export interface AssetJson {
   elements: boolean;
@@ -24,6 +30,14 @@ export interface AssetDisplayProperties {
   volume?: number;
   loop?: boolean;
   play?: boolean; //for imiiate play (is needed?)
+
+  //for text
+  text?: string;
+  fontSize?: string | number;
+  color?: string;
+  fontStyle?: string;
+  fontWeight?: string;
+  textDecoration?: string;
 }
 
 export interface BaseAssetInfo {
@@ -67,12 +81,21 @@ export interface ParticleAssetInfo extends BaseAssetInfo {
   textureName?: string;
   sprite?: Phaser.GameObjects.Sprite;
 }
+
 export interface AudioAssetInfo extends BaseAssetInfo {
   type: "audio";
   url: string;
   sprite?: Phaser.Types.Sound.SoundConfig;
 }
+export interface TextAssetInfo extends BaseAssetInfo {
+  fontFamily: string;
+  isSystemFont?: boolean;
+  type: "text";
+  url: string;
+  sprite?: Phaser.GameObjects.Text;
+}
 export interface AssetElement extends BaseAssetInfo {
+  fontFamily: any;
   initialState: any;
   assetName: string;
   assetUrl:

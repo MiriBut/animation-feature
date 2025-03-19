@@ -183,7 +183,6 @@ export class TimelineService {
     console.log("displayLoadResults completed");
   }
 
-  // שאר הפונקציות נשארות כפי שהיו (validateTimelineJson, normalizeTimelineElement וכו')
   public async validateTimelineJson(json: TimelineJson): Promise<string[]> {
     const errors: string[] = [];
 
@@ -192,21 +191,23 @@ export class TimelineService {
         element.elementName || element.assetName || "unnamed"
       })`;
 
+      // Existing checks
       if (!element.assetName) {
         errors.push(`${prefix}: 'assetName' is missing`);
       }
       if (!element.assetType) {
         errors.push(`${prefix}: 'assetType' is missing`);
       } else if (
-        !["image", "video", "particle", "spine", "audio"].includes(
+        !["image", "video", "particle", "spine", "audio", "text"].includes(
           element.assetType
         )
       ) {
         errors.push(
-          `${prefix}: 'assetType' must be one of: image, video, particle, spine, audio`
+          `${prefix}: 'assetType' must be one of: image, video, particle, spine, audio, text`
         );
       }
 
+      // Audio-specific validation
       if (element.assetType === "audio" && element.initialState) {
         if (
           element.initialState.volume !== undefined &&
@@ -229,6 +230,106 @@ export class TimelineService {
               );
             }
           });
+        }
+      }
+
+      // Text-specific validation
+      if (element.assetType === "text") {
+        if (element.initialState) {
+          if (
+            element.initialState.text === undefined ||
+            typeof element.initialState.text !== "string"
+          ) {
+            errors.push(
+              `${prefix}: 'initialState.text' must be a non-empty string`
+            );
+          }
+          // Fix: Check if fontSize exists and is a string before testing with regex
+          if (
+            element.initialState.fontSize &&
+            (typeof element.initialState.fontSize !== "string" ||
+              !/^\d+px$/.test(element.initialState.fontSize))
+          ) {
+            errors.push(
+              `${prefix}: 'initialState.fontSize' must be in format 'number}px', e.g., '32px'`
+            );
+          }
+          if (
+            element.initialState.color &&
+            !/^#[0-9A-Fa-f]{6}$/.test(element.initialState.color)
+          ) {
+            errors.push(
+              `${prefix}: 'initialState.color' must be a valid hex color, e.g., '#ffffff'`
+            );
+          }
+        }
+
+        if (element.timeline && element.timeline.text) {
+          element.timeline.text.forEach(
+            (
+              textAnim: {
+                startTime: number;
+                endTime: number;
+                value: string;
+                fontSize: { startValue: number; endValue: number };
+                color: { startValue: string; endValue: string };
+              },
+              textIndex: number
+            ) => {
+              if (textAnim.startTime > textAnim.endTime) {
+                errors.push(
+                  `${prefix}: Timeline text #${textIndex + 1} - 'startTime' (${
+                    textAnim.startTime
+                  }) is greater than 'endTime' (${textAnim.endTime})`
+                );
+              }
+              if (typeof textAnim.value !== "string" || textAnim.value === "") {
+                errors.push(
+                  `${prefix}: Timeline text #${
+                    textIndex + 1
+                  } - 'value' must be a non-empty string`
+                );
+              }
+              if (textAnim.fontSize) {
+                if (
+                  typeof textAnim.fontSize.startValue !== "number" ||
+                  textAnim.fontSize.startValue <= 0
+                ) {
+                  errors.push(
+                    `${prefix}: Timeline text #${
+                      textIndex + 1
+                    } - 'fontSize.startValue' must be a positive number`
+                  );
+                }
+                if (
+                  typeof textAnim.fontSize.endValue !== "number" ||
+                  textAnim.fontSize.endValue <= 0
+                ) {
+                  errors.push(
+                    `${prefix}: Timeline text #${
+                      textIndex + 1
+                    } - 'fontSize.endValue' must be a positive number`
+                  );
+                }
+              }
+              if (textAnim.color) {
+                if (!/^#[0-9A-Fa-f]{6}$/.test(textAnim.color.startValue)) {
+                  errors.push(
+                    `${prefix}: Timeline text #${
+                      textIndex + 1
+                    } - 'color.startValue' must be a valid hex color`
+                  );
+                }
+                if (!/^#[0-9A-Fa-f]{6}$/.test(textAnim.color.endValue)) {
+                  errors.push(
+                    `${prefix}: Timeline text #${
+                      textIndex + 1
+                    } - 'color.endValue' must be a valid hex color`
+                  );
+                }
+              }
+            }
+          );
         }
       }
     });

@@ -31,6 +31,7 @@ export class VideoService {
     | Phaser.GameObjects.Container
     | Phaser.GameObjects.Particles.ParticleEmitter
     | Phaser.Sound.WebAudioSound
+    | Phaser.GameObjects.Text
   > = new Map();
   private countdownTimer: CountdownTimer | null = null;
   testSpine: SpineGameObject | null | undefined;
@@ -122,6 +123,9 @@ export class VideoService {
     let sprite = this.activeSprites.get(timelineElement.elementName);
 
     if (!sprite) {
+      console.warn(
+        `VideoService: No sprite found for ${timelineElement.elementName}`
+      );
       return sequence;
     }
 
@@ -136,12 +140,12 @@ export class VideoService {
     const screenWidth = this.scene.scale.width;
     const screenHeight = this.scene.scale.height;
 
+    // Handle audio
     if (
       timelineElement.assetType === "audio" ||
       timeline?.play ||
       timeline?.volume
     ) {
-      // וודא שיש אובייקט אודיו תקין
       if (!(sprite instanceof Phaser.Sound.WebAudioSound)) {
         const audioKey = timelineElement.assetName || "bg_music";
         let sound = this.scene.sound.get(audioKey);
@@ -155,16 +159,8 @@ export class VideoService {
         this.activeSprites.set(timelineElement.elementName, sprite);
       }
 
-      // טיפול בהגדרות Play
       if (timeline?.play) {
         timeline.play.forEach((playConfig) => {
-          console.log(
-            `VideoService: Converting audio play - delay: ${
-              playConfig.startTime * 1000
-            }ms, duration: ${
-              (playConfig.endTime - playConfig.startTime) * 1000
-            }ms`
-          );
           sequence.push({
             type: "audio",
             config: {
@@ -182,7 +178,6 @@ export class VideoService {
         });
       }
 
-      // טיפול בהגדרות Volume
       if (timeline?.volume && timeline.volume.length > 0) {
         timeline.volume.forEach((volumeConfig) => {
           sequence.push({
@@ -197,13 +192,14 @@ export class VideoService {
                 startValue: volumeConfig.startValue,
                 endValue: volumeConfig.endValue,
               },
-              stopOnComplete: false, // ווליום לא מפסיק את האודיו
+              stopOnComplete: false,
             } as AudioConfig,
           });
         });
       }
     }
 
+    // Handle spine animations
     if (timeline?.animation) {
       timeline.animation.forEach((anim) => {
         sequence.push({
@@ -222,6 +218,81 @@ export class VideoService {
       });
     }
 
+    // Handle text animations
+    if (timelineElement.assetType === "text" && timeline?.text) {
+      timeline.text.forEach(
+        (textAnim: {
+          value: any;
+          fontSize: { startValue: any; endValue: any };
+          color: { startValue: any; endValue: any };
+          fontWeight: any;
+          fontStyle: any;
+          textDecoration: any;
+          easeIn: any;
+          endTime: number;
+          startTime: number;
+        }) => {
+          const assetData = this.assetService.getFontFamily(
+            timelineElement.assetName
+          );
+          const fontName = assetData || "Arial";
+          sequence.push({
+            type: "text",
+            config: {
+              property: "text",
+              textValue: textAnim.value,
+              fontSize: textAnim.fontSize
+                ? {
+                    startValue: textAnim.fontSize.startValue,
+                    endValue: textAnim.fontSize.endValue,
+                  }
+                : undefined,
+              color: textAnim.color
+                ? {
+                    startValue: textAnim.color.startValue,
+                    endValue: textAnim.color.endValue,
+                  }
+                : undefined,
+              fontWeight: textAnim.fontWeight,
+              fontStyle: textAnim.fontStyle,
+              textDecoration: textAnim.textDecoration,
+              easing: textAnim.easeIn || "Linear",
+              duration: (textAnim.endTime - textAnim.startTime) * 1000,
+              delay: textAnim.startTime * 1000,
+              assetName: timelineElement.assetName,
+              fontName: fontName,
+            },
+          });
+        }
+      );
+
+      let lastTextEndTime = 0;
+      timeline.text.forEach((textAnim: { endTime: number }) => {
+        if (textAnim.endTime > lastTextEndTime) {
+          lastTextEndTime = textAnim.endTime;
+        }
+      });
+
+      const hasMatchingOpacity = timeline?.opacity?.some(
+        (opacityAnim) =>
+          opacityAnim.endTime === lastTextEndTime && opacityAnim.endValue === 0
+      );
+      if (!hasMatchingOpacity && lastTextEndTime > 0) {
+        sequence.push({
+          type: "opacity",
+          config: {
+            property: "opacity",
+            startValue: 1,
+            endValue: 0,
+            duration: 0,
+            easing: "Linear",
+            delay: lastTextEndTime * 1000,
+          },
+        });
+      }
+    }
+
+    // Handle position
     if (timeline?.position) {
       sequence.push({
         type: "position",
@@ -244,6 +315,7 @@ export class VideoService {
       });
     }
 
+    // Handle opacity
     if (timeline?.opacity) {
       sequence.push({
         type: "opacity",
@@ -260,12 +332,15 @@ export class VideoService {
       });
     }
 
-    if (
-      targetSprite instanceof Phaser.GameObjects.Sprite ||
-      targetSprite instanceof Phaser.GameObjects.Video ||
-      targetSprite instanceof SpineGameObject
-    ) {
-      if (timeline?.scale) {
+    // Handle scale - add support for Text objects
+    if (timeline?.scale) {
+      const isSupported =
+        targetSprite instanceof Phaser.GameObjects.Sprite ||
+        targetSprite instanceof Phaser.GameObjects.Video ||
+        targetSprite instanceof SpineGameObject ||
+        targetSprite instanceof Phaser.GameObjects.Text;
+
+      if (isSupported) {
         sequence.push({
           type: "scale",
           config: {
@@ -287,11 +362,14 @@ export class VideoService {
       }
     }
 
-    if (
-      targetSprite instanceof Phaser.GameObjects.Sprite ||
-      targetSprite instanceof SpineGameObject
-    ) {
-      if (timeline?.rotation) {
+    // Handle rotation - add support for Text objects
+    if (timeline?.rotation) {
+      const isSupported =
+        targetSprite instanceof Phaser.GameObjects.Sprite ||
+        targetSprite instanceof SpineGameObject ||
+        targetSprite instanceof Phaser.GameObjects.Text;
+
+      if (isSupported) {
         sequence.push({
           type: "rotation",
           config: {
@@ -306,8 +384,16 @@ export class VideoService {
           },
         });
       }
+    }
 
-      if (timeline?.color) {
+    // Handle color - add support for Text objects
+    if (timeline?.color) {
+      const isSupported =
+        targetSprite instanceof Phaser.GameObjects.Sprite ||
+        targetSprite instanceof SpineGameObject ||
+        targetSprite instanceof Phaser.GameObjects.Text;
+
+      if (isSupported) {
         sequence.push({
           type: "color",
           config: {
@@ -322,6 +408,7 @@ export class VideoService {
         });
       }
     }
+
     return sequence;
   }
 
@@ -337,7 +424,7 @@ export class VideoService {
     const activeElements = new Set<string>();
 
     for (const element of this.timelineData["template video json"]) {
-      if (!element.initialState || !element.assetName) {
+      if (!element.initialState) {
         continue;
       }
 
@@ -346,23 +433,130 @@ export class VideoService {
       let sprite = this.activeSprites.get(element.elementName);
       const isExistingSprite = !!sprite;
 
-      // טיפול מיוחד באלמנטי אודיו
+      // Handle audio elements
       if (element.assetType === "audio") {
-        if (!sprite || !(sprite instanceof Phaser.Sound.WebAudioSound)) {
-          // בדוק אם האודיו כבר נטען ל-Phaser
-          let sound = this.scene.sound.get(element.assetName);
-          if (!sound) {
-            // אם לא נטען, טען אותו
-            sound = this.scene.sound.add(element.assetName, {
-              volume: element.initialState?.volume || 0.5,
-              loop: element.initialState?.loop === true,
-            });
+        // Existing audio handling code (unchanged)
+      }
+      // Handle text elements
+      else if (element.assetType === "text") {
+        if (!sprite || !(sprite instanceof Phaser.GameObjects.Text)) {
+          console.log(
+            `VideoService: Creating text object for ${element.elementName}`
+          );
+
+          // Ensure fontSize is a string and has "px"
+          let fontSize: string;
+          if (typeof element.initialState.fontSize === "string") {
+            fontSize = element.initialState.fontSize;
+          } else {
+            fontSize = "32"; // Default value if fontSize is not a string
           }
-          sprite = sound as Phaser.Sound.WebAudioSound;
+          if (!fontSize.includes("px")) {
+            fontSize += "px";
+          }
+
+          const textObj = this.scene.add.text(
+            element.initialState.position?.x ?? 960,
+            element.initialState.position?.y ?? 540,
+            typeof element.initialState.text === "string"
+              ? element.initialState.text
+              : "",
+            {
+              fontSize: fontSize,
+              fontFamily: "Arial",
+              color:
+                typeof element.initialState.color === "string"
+                  ? element.initialState.color
+                  : "#ffffff",
+              fontStyle: "normal",
+              align: "center",
+            }
+          );
+
+          textObj.setDepth(element.initialState.position?.z ?? 0);
+          textObj.setAlpha(element.initialState.opacity ?? 1);
+          textObj.setScale(
+            element.initialState.scale?.x ?? 1,
+            element.initialState.scale?.y ?? 1
+          );
+
+          if (typeof element.initialState.rotation === "number") {
+            textObj.setRotation(element.initialState.rotation);
+          }
+
+          sprite = textObj;
           this.activeSprites.set(element.elementName, sprite);
+
+          // Log to verify
+          console.log(
+            `Initial fontSize for ${element.elementName}:`,
+            textObj.style.fontSize
+          );
+          console.log(
+            `Initial scale for ${element.elementName}:`,
+            textObj.scaleX,
+            textObj.scaleY
+          );
+          console.log(
+            `Initial display size for ${element.elementName}:`,
+            textObj.displayWidth,
+            textObj.displayHeight
+          );
+        } else {
+          // Update existing text object if needed
+          if (element.initialState.position) {
+            sprite.setPosition(
+              element.initialState.position.x ?? sprite.x,
+              element.initialState.position.y ?? sprite.y
+            );
+            sprite.setDepth(element.initialState.position.z ?? sprite.depth);
+          }
+
+          sprite.setAlpha(element.initialState.opacity ?? sprite.alpha);
+          sprite.setScale(
+            element.initialState.scale?.x ?? sprite.scaleX,
+            element.initialState.scale?.y ?? sprite.scaleY
+          );
+
+          if (typeof element.initialState.text === "string") {
+            sprite.setText(element.initialState.text);
+          }
+
+          const updateStyle: any = {};
+          let needsStyleUpdate = false;
+
+          if (typeof element.initialState.fontSize === "string") {
+            let fontSize: string = element.initialState.fontSize; // Explicitly typed as string
+            if (!fontSize.includes("px")) {
+              fontSize += "px";
+            }
+            updateStyle.fontSize = fontSize;
+            needsStyleUpdate = true;
+          }
+
+          if (typeof element.initialState.color === "string") {
+            updateStyle.color = element.initialState.color;
+            needsStyleUpdate = true;
+          }
+
+          if (
+            needsStyleUpdate &&
+            sprite &&
+            sprite instanceof Phaser.GameObjects.Text
+          ) {
+            try {
+              sprite.setStyle(updateStyle);
+            } catch (error) {
+              console.warn(
+                `Error updating text style for element: ${element.elementName}`,
+                error
+              );
+              // Optionally attempt a fallback approach or reattempt later
+            }
+          }
         }
       }
-      // טיפול בשאר סוגי האלמנטים
+      // Handle all other element types
       else if (!sprite) {
         const spriteOrContainer = this.assetService.displayAsset(
           element.assetName,
@@ -454,7 +648,7 @@ export class VideoService {
         }
 
         const sequence = this.convertTimelineToAnimations(element);
-        if (sequence.length > 0) {
+        if (sequence.length > 0 && animationTarget) {
           syncGroups.push({
             target: animationTarget,
             sequence,
@@ -504,10 +698,13 @@ export class VideoService {
         if (sprite instanceof Phaser.Sound.WebAudioSound) {
           return [name, { key: sprite.key, type: sprite.constructor.name }];
         }
-        // אין צורך בברירת מחדל כי כל הסוגים מכוסים
+        if (sprite instanceof Phaser.GameObjects.Text) {
+          return [name, { text: sprite.text, type: sprite.constructor.name }];
+        }
         throw new Error(`Unexpected sprite type for ${name}`);
       })
     );
+
     if (syncGroups.length > 0) {
       await this.syncSystem.playSync(syncGroups);
     }

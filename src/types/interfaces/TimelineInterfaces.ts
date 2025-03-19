@@ -8,6 +8,9 @@ export interface TimelineElement {
     config: ParticleConfig;
   };
   initialState?: {
+    fontWeight: boolean;
+    fontSize: boolean;
+    text: undefined;
     animation: string;
     position?: { x: number; y: number; z?: number };
     scale?: { x: number; y: number };
@@ -25,6 +28,7 @@ export interface TimelineElement {
     loop?: boolean | undefined;
   };
   timeline?: {
+    text: any;
     animation?: TimelineAnimation[];
     scale?: TimelineAnimation[];
     position?: TimelineAnimation[];
