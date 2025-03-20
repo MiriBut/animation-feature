@@ -1,13 +1,16 @@
 import { AssetService } from "@/core/services/AssetService";
+import { VideoService } from "@/core/services/VideoService";
 import {
   MAX_AUDIO_FILE_SIZE,
   SUPPORTED_AUDIO_FORMATS,
   SUPPORTED_RESOLUTIONS,
 } from "../config/constants";
+import { MainScene } from "@/scenes/MainScene";
 
 export class SceneUI {
   private container: HTMLDivElement;
   private assetService: AssetService;
+  private mainScene: MainScene;
   private currentWidth: number;
   private currentHeight: number;
 
@@ -18,11 +21,13 @@ export class SceneUI {
     private onRecordingStop: () => Promise<void>,
     private onAssetsJson: (file: File) => void,
     private onTimelineJson: (file: File) => void,
-    assetService: AssetService
+    assetService: AssetService,
+    mainScene: MainScene
   ) {
     console.log("scene ui starts");
     this.container = this.createContainer();
     this.assetService = assetService;
+    this.mainScene = mainScene;
 
     // שמירת המידות ההתחלתיות של הסצנה
     this.currentWidth = assetService["scene"].scale.width; // גישה ישירה לscene
@@ -122,13 +127,8 @@ export class SceneUI {
       this.currentWidth = newWidth;
       this.currentHeight = newHeight;
 
-      this.assetService.handleResize(oldWidth, oldHeight, newWidth, newHeight);
+      //this.mainScene.uiResize(oldWidth, oldHeight, newWidth, newHeight);
     };
-
-    // const bgButton = document.createElement("button");
-    // bgButton.textContent = "Change Background";
-    // this.applyButtonStyles(bgButton, "#9C27B0");
-    // bgButton.onclick = () => this.handleBackgroundSelect();
 
     const musicButton = document.createElement("button");
     musicButton.textContent = "Change Music";
@@ -207,24 +207,6 @@ export class SceneUI {
     input.remove();
   }
 
-  // private handleBackgroundSelect(): void {
-  //   const input = document.createElement("input");
-  //   input.type = "file";
-  //   input.accept = "image/*";
-  //   input.style.display = "none";
-
-  //   input.onchange = (event: Event) => {
-  //     const target = event.target as HTMLInputElement;
-  //     if (target.files && target.files[0]) {
-  //       this.onBackgroundChange(target.files[0]);
-  //     }
-  //   };
-
-  //   document.body.appendChild(input);
-  //   input.click();
-  //   input.remove();
-  // }
-
   private handleMusicSelect(): void {
     const input = document.createElement("input");
     input.type = "file";
@@ -250,39 +232,6 @@ export class SceneUI {
     input.click();
     input.remove();
   }
-
-  // private handleCharacterSelect(): void {
-  //   const input = document.createElement("input");
-  //   input.type = "file";
-  //   input.accept = ".skel,.json,.atlas,.png";
-  //   input.multiple = true;
-  //   input.style.display = "none";
-
-  //   input.onchange = (event: Event) => {
-  //     const target = event.target as HTMLInputElement;
-  //     if (target.files) {
-  //       const files = Array.from(target.files);
-  //       const skelFile = files.find(
-  //         (f) => f.name.endsWith(".skel") || f.name.endsWith(".json")
-  //       );
-  //       const atlasFile = files.find((f) => f.name.endsWith(".atlas"));
-  //       const pngFiles = files.filter((f) => f.name.endsWith(".png"));
-
-  //       if (!skelFile || !atlasFile || pngFiles.length === 0) {
-  //         alert(
-  //           "Please select skeleton (.skel/.json), atlas (.atlas), and texture (.png) files"
-  //         );
-  //         return;
-  //       }
-
-  //       this.onCharacterChange(skelFile, atlasFile, pngFiles);
-  //     }
-  //   };
-
-  //   document.body.appendChild(input);
-  //   input.click();
-  //   input.remove();
-  // }
 
   private adjustColor(color: string, amount: number): string {
     return (

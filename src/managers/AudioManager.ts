@@ -4,6 +4,8 @@ export class AudioManager {
   private mainScene: Scene;
   private audioContext?: AudioContext;
   private destination?: MediaStreamAudioDestinationNode;
+  sound: any;
+  backgroundMusic: any;
 
   constructor(mainScene: Scene) {
     this.mainScene = mainScene;
@@ -349,5 +351,35 @@ export class AudioManager {
     }
     this.audioContext = undefined;
     this.destination = undefined;
+  }
+
+  // Add this method to AudioManager class (if not already present)
+  // תיקון ל-AudioManager.stopAllAudio
+  public stopAllAudio(): void {
+    console.log("AudioManager: Stopping all audio");
+
+    // בדוק אם sound קיים לפני הגישה אליו
+    if (this.sound && typeof this.sound.stopAll === "function") {
+      this.sound.stopAll();
+    } else {
+      console.warn(
+        "AudioManager: sound object is undefined or doesn't have stopAll method"
+      );
+
+      // ניסיון גישה ישירה ל-sound של הסצנה
+      if (
+        this.mainScene.sound &&
+        typeof this.mainScene.sound.stopAll === "function"
+      ) {
+        this.mainScene.sound.stopAll();
+      }
+    }
+
+    // עצור רקע מוזיקלי אם קיים
+    if (this.backgroundMusic) {
+      if (typeof this.backgroundMusic.stop === "function") {
+        this.backgroundMusic.stop();
+      }
+    }
   }
 }

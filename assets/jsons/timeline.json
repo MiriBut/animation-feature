@@ -446,8 +446,8 @@
           "z": 1
         },
         "scale": {
-          "x": 1,
-          "y": 1
+          "x": 0.5,
+          "y": 0.5
         },
         "opacity": 1
       },
@@ -457,11 +457,11 @@
             "startTime": 0,
             "endTime": 5,
             "startValue": {
-              "x": 1,
-              "y": 1
+              "x": 0.5,
+              "y": 0.5
             },
             "endValue": {
-              "x": 1.5,
+              "x": 1,
               "y": 1
             },
             "easeIn": "Quad.easeIn",
@@ -503,12 +503,12 @@
             "startTime": 0,
             "endTime": 5,
             "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
               "x": 2,
               "y": 2
+            },
+            "endValue": {
+              "x": 1,
+              "y": 1
             },
             "easeIn": "Quad.easeIn",
             "easeOut": "Quad.easeOut"
@@ -679,8 +679,8 @@
           "z": -1
         },
         "scale": {
-          "x": 1,
-          "y": 1
+          "x": 2,
+          "y": 2
         },
         "opacity": 1,
         "color": "0x0000FF"
@@ -707,8 +707,8 @@
             "startTime": 10,
             "endTime": 20,
             "startValue": {
-              "x": 1,
-              "y": 1
+              "x": 2,
+              "y": 2
             },
             "endValue": {
               "x": 0.5,

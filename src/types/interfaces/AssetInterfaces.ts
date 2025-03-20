@@ -48,8 +48,25 @@ export interface BaseAssetInfo {
     | SpineGameObject
     | Phaser.GameObjects.GameObject
     | Phaser.Types.Sound.SoundConfig;
-  pivot_override?: { x: number; y: number };
+  pivot_override?: {
+    x: number;
+    y: number;
+    aspect_ratio_override?: {
+      // שדה חדש
+      width: number;
+      height: number;
+    };
+  };
 }
+
+export interface SpineState {
+  setAnimation: (
+    trackIndex: number,
+    animationName: string,
+    loop: boolean
+  ) => void;
+}
+
 export interface SpineState {
   setAnimation: (
     trackIndex: number,

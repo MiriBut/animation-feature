@@ -248,4 +248,30 @@ export class AnimationManager {
       .getAll()
       .find((obj) => this.getObjectId(obj) === objectId);
   }
+
+  /**
+   * עוצר את כל האנימציות על כל האובייקטים
+   */
+  stopAll(): void {
+    console.log("AnimationManager: Stopping all animations for all objects");
+
+    // עבור על כל האובייקטים עם אנימציות פעילות ועצור אותן
+    this.activeAnimations.forEach((animations, objectId) => {
+      console.log(`AnimationManager: Stopping all animations for ${objectId}`);
+
+      // עצור את כל האנימציות לאובייקט
+      animations.forEach((animation, type) => {
+        console.log(
+          `AnimationManager: Stopping ${type} animation for ${objectId}`
+        );
+        animation.stop();
+      });
+    });
+
+    // נקה את המיפוי של האנימציות הפעילות
+    this.activeAnimations.clear();
+
+    // נקה את תור האנימציות
+    this.animationQueue.clear();
+  }
 }

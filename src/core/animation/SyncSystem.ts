@@ -26,6 +26,7 @@ export class SyncSystem {
   }
 
   async playSync(groups: SyncGroup[]): Promise<void> {
+    console.log("playSync");
     const promises = groups.map((group) => {
       // מקרה 1: אם האודיו מגיע כאובייקט AudioConfig בודד
       if (
@@ -116,5 +117,41 @@ export class SyncSystem {
     targets.forEach((target) => {
       this.animationManager.resetAnimations(target);
     });
+  }
+
+  // Add this method to SyncSystem class
+  public reset(): void {
+    console.log("SyncSystem: Resetting timeline and animations");
+
+    // Stop all current animations
+    this.stopAllAnimations();
+
+    // Clear timeline
+    this.clearTimeline();
+
+    // Reset internal state
+    this.resetState();
+  }
+
+  // Helper methods that might be needed
+  private stopAllAnimations(): void {
+    console.log("SyncSystem: Stopping all active animations");
+
+    // עצירת כל האנימציות במנהל האנימציות
+    this.animationManager.stopAll();
+
+    // עצירת כל רצפי האנימציות במערכת הרצפים
+    this.sequenceSystem.stopAllSequences();
+  }
+
+  private clearTimeline(): void {
+    console.log("SyncSystem: Clearing animation timeline data");
+
+    // איפוס או ניקוי נתוני טיימליין (אם יש)
+    this.sequenceSystem.clearAllSequences();
+  }
+
+  private resetState(): void {
+    // Implementation to reset internal state
   }
 }

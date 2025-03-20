@@ -1590,12 +1590,27 @@ export class AssetService {
       const newScale = Math.min(newScaleX, newScaleY);
 
       // Update sprite properties
-      sprite.setPosition(newX, newY);
-      sprite.setScale(newScale);
+      if (sprite && typeof sprite.setPosition === "function") {
+        sprite.setPosition(newX, newY);
+        sprite.setScale(newScale);
+      } else {
+        console.warn(
+          `AssetService: Sprite doesn't support setPosition method: ${elementName}`
+        );
+      }
 
       console.log(
         `Updated ${elementName}: Position (${newX}, ${newY}), Scale: ${newScale}`
       );
     });
+  }
+
+  // Add this method to AssetService class
+  public async reset(): Promise<void> {
+    console.log("AssetService: Resetting service state");
+
+    this.hideAllAssets();
+
+    console.log("AssetService: Reset completed");
   }
 }

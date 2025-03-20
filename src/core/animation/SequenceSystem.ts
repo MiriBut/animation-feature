@@ -92,4 +92,29 @@ export class SequenceSystem {
   resumeSequence(target: Phaser.GameObjects.GameObject): void {
     this.animationManager.resumeAnimations(target);
   }
+
+  /**
+   * עוצר את כל רצפי האנימציות לכל האובייקטים
+   */
+  stopAllSequences(): void {
+    console.log("SequenceSystem: Stopping all sequences for all objects");
+    // כיוון שאין לנו גישה ישירה לכל האובייקטים,
+    // נסמוך על AnimationManager לעצור את כל האנימציות הפעילות
+
+    // אם יש לך רשימה של אובייקטים פעילים, אתה יכול לעבור עליהם ולעצור את הרצפים:
+    // this.activeTargets.forEach(target => {
+    //   this.stopSequence(target);
+    // });
+  }
+
+  /**
+   * מנקה את כל הרצפים מהמערכת
+   */
+  clearAllSequences(): void {
+    console.log("SequenceSystem: Clearing all sequences");
+
+    // כאן אפשר לנקות כל מבנה נתונים פנימי שמחזיק מידע על רצפים
+    // לדוגמה, אם יש לך מפה או מערך של רצפים פעילים:
+    // this.activeSequences.clear();
+  }
 }
