@@ -122,7 +122,7 @@ export class SceneUI {
       this.currentWidth = newWidth;
       this.currentHeight = newHeight;
 
-      //this.assetService.handleResize(oldWidth, oldHeight, newWidth, newHeight);
+      this.assetService.handleResize(oldWidth, oldHeight, newWidth, newHeight);
     };
 
     // const bgButton = document.createElement("button");
