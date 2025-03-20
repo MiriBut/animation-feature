@@ -44,18 +44,29 @@ export class AssetService {
   private scene: Scene;
   private loadedAssets: Set<string> = new Set();
   private assetsMap: Map<string, AssetInfo> = new Map();
-  private elementsMap: Map<string, { assetName: string; sprite: any }> =
-    new Map();
+  private elementsMap: Map<
+    string,
+    {
+      assetName: string;
+      sprite: any;
+      originalScale: number;
+      originalRelativeX: number;
+      originalRelativeY: number;
+    }
+  > = new Map();
   private successMessages: string[] = [];
   private formerScreenScale: { x: number; y: number } = { x: 0, y: 0 };
+  private initialWidth: number;
+  private initialHeight: number;
 
   constructor(scene: Scene) {
     this.scene = scene;
-
+    this.initialWidth = scene.scale.width;
+    this.initialHeight = scene.scale.height;
     if (this.formerScreenScale.x === 0 && this.formerScreenScale.y === 0) {
       this.formerScreenScale = {
-        x: this.scene.scale.width,
-        y: this.scene.scale.height,
+        x: this.initialWidth,
+        y: this.initialHeight,
       };
     }
   }
@@ -316,9 +327,21 @@ export class AssetService {
       }
     }
 
+    // Calculate and save the original relative position based on initial resolution
+    const originalX = properties.x ?? this.scene.scale.width / 2; // Default to center if not provided
+    const originalY = properties.y ?? this.scene.scale.height / 2; // Default to center if not provided
+    const originalRelativeX =
+      this.initialWidth > 0 ? originalX / this.initialWidth : 0.5;
+    const originalRelativeY =
+      this.initialHeight > 0 ? originalY / this.initialHeight : 0.5;
+    const originalScale = properties.scale ?? 1;
+
     this.elementsMap.set(elementName, {
       assetName: assetName,
       sprite: spriteOrAudio,
+      originalScale: originalScale,
+      originalRelativeX: originalRelativeX, // Save original relative X
+      originalRelativeY: originalRelativeY, // Save original relative Y
     });
 
     this.successMessages.push(
@@ -1533,90 +1556,46 @@ export class AssetService {
     newWidth: number,
     newHeight: number
   ): void {
-    console.log("change reolusion done");
-    console.log(`old size: ${oldWidth}x${oldHeight}`);
-    console.log(`new size: ${newWidth}x${newHeight}`);
+    console.log(
+      `Resolution changed from ${oldWidth}x${oldHeight} to ${newWidth}x${newHeight}`
+    );
 
-    // עדכון המידות הישנות לשימוש עתידי
+    // Update formerScreenScale for future reference
     this.formerScreenScale = { x: newWidth, y: newHeight };
 
-    // חישוב היחסים בין הרזולוציה הישנה לחדשה
-    const widthRatio = newWidth / oldWidth;
-    const heightRatio = newHeight / oldHeight;
+    // Calculate the ratio relative to the initial resolution
+    const widthRatio = newWidth / this.initialWidth;
+    const heightRatio = newHeight / this.initialHeight;
 
-    // עדכון כל האובייקטים במפה
-    this.assetsMap.forEach((assetInfo, assetName) => {
-      if (!assetInfo.sprite) {
-        console.log("! not assetInfo.sprite " + assetInfo.url);
-        return; // דילוג אם אין sprite
-      }
-      console.log("!assetInfo.sprite " + assetInfo.url);
-
-      const sprite = assetInfo.sprite;
-
-      // הגדרת ערכי ברירת מחדל
-      let currentX = 0;
-      let currentY = 0;
-      let scaleX = 1;
-      let scaleY = 1;
-      let alpha = 1;
-      let rotation = 0;
-
-      // בדיקת טיפוסים ושליפת מאפיינים לפי הטיפוס של ה-sprite
-      if (sprite instanceof Phaser.GameObjects.Sprite) {
-        currentX = sprite.x;
-        currentY = sprite.y;
-        scaleX = sprite.scaleX;
-        scaleY = sprite.scaleY;
-        alpha = sprite.alpha;
-        rotation = sprite.rotation;
-      } else if (sprite instanceof Phaser.GameObjects.Video) {
-        currentX = sprite.x;
-        currentY = sprite.y;
-        scaleX = sprite.scaleX;
-        scaleY = sprite.scaleY;
-        alpha = sprite.alpha;
-        rotation = sprite.rotation;
-      } else if (sprite instanceof SpineGameObject) {
-        currentX = sprite.x;
-        currentY = sprite.y;
-        scaleX = sprite.scaleX;
-        scaleY = sprite.scaleY;
-        alpha = sprite.alpha;
-        rotation = sprite.rotation;
-      } else {
-        console.warn(`Asset ${assetName} has an unsupported sprite type`);
-        return; // דילוג על טיפוסים לא נתמכים
+    // Iterate over all elements in elementsMap
+    this.elementsMap.forEach((element, elementName) => {
+      const sprite = element.sprite;
+      if (!sprite) {
+        console.log(`No sprite found for element ${elementName}`);
+        return; // Skip if there's no sprite
       }
 
-      // חישוב המיקום היחסי לפי הרזולוציה הישנה
-      const relativeX = oldWidth > 0 ? currentX / oldWidth : 0.5; // ברירת מחדל למרכז אם oldWidth הוא 0
-      const relativeY = oldHeight > 0 ? currentY / oldHeight : 0.5; // ברירת מחדל למרכז אם oldHeight הוא 0
+      // Use original relative positions, default to 0.5 (center) if not set
+      const originalRelativeX = element.originalRelativeX ?? 0.5;
+      const originalRelativeY = element.originalRelativeY ?? 0.5;
+      const originalScale = element.originalScale ?? 1;
 
-      // עדכון המיקום לפי הרזולוציה החדשה
-      const newX = relativeX * newWidth;
-      const newY = relativeY * newHeight;
+      // Calculate new position based on original relative position and new resolution
+      const newX = originalRelativeX * newWidth;
+      const newY = originalRelativeY * newHeight;
 
-      // חישוב ה-scale החדש בהתאם ליחסי הרזולוציה
-      const newScaleX = scaleX * widthRatio;
-      const newScaleY = scaleY * heightRatio;
+      // Calculate new scale based on original scale and initial resolution
+      const newScaleX = originalScale * widthRatio;
+      const newScaleY = originalScale * heightRatio;
+      const newScale = Math.min(newScaleX, newScaleY);
 
-      // שימוש ב-scale ממוצע או בחירה בין X ל-Y לפי הצורך
-      const newScale = Math.min(newScaleX, newScaleY); // כדי לשמור על יחס אחיד, ניתן לשנות לפי הצורך
+      // Update sprite properties
+      sprite.setPosition(newX, newY);
+      sprite.setScale(newScale);
 
-      const properties: AssetDisplayProperties = {
-        x: newX,
-        y: newY,
-        scale: newScale, // עדכון ה-scale היחסי
-        alpha: alpha,
-        rotation: rotation,
-        pivot: this.getAssetPivot(assetName),
-      };
-
-      // ניקוי והצגה מחדש של ה-sprite
-      this.cleanupExistingSprite(assetInfo);
-      //fix this for future use:
-      //  this.displayAsset(assetName, properties);
+      console.log(
+        `Updated ${elementName}: Position (${newX}, ${newY}), Scale: ${newScale}`
+      );
     });
   }
 }

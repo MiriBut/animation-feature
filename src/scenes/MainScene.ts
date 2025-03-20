@@ -124,7 +124,7 @@ export class MainScene extends Scene {
       // Fade out camera
       await new Promise<void>((resolve) => {
         this.cameras.main.fadeOut(
-          300, // Increase fade time for better visual feedback
+          300,
           0,
           0,
           0,
@@ -134,8 +134,15 @@ export class MainScene extends Scene {
         );
       });
 
+      // Get old dimensions from current scene size
+      const oldWidth = this.scale.width;
+      const oldHeight = this.scale.height;
+
       // Set new game size
       this.scale.setGameSize(width, height);
+
+      // Update asset positions
+      this.assetService.handleResize(oldWidth, oldHeight, width, height);
 
       // Update export manager resolution
       await this.exportManager.changeResolution(width, height);
@@ -172,7 +179,6 @@ export class MainScene extends Scene {
         messages: [createErrorMessage("Failed to update resolution")],
       });
     } finally {
-      // Always reset the flag, even if there was an error
       this.isResizing = false;
     }
   }
