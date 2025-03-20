@@ -14,9 +14,9 @@ export class TextAnimation {
   currentFontWeight: string | undefined;
   private isDestroyed: boolean = false;
 
-  constructor(scene: Phaser.Scene, target: Phaser.GameObjects.Text) {
+  constructor(scene: Phaser.Scene, target: AnimatableGameObject) {
     this.scene = scene;
-    this.target = target;
+    this.target = target as Phaser.GameObjects.Text;
 
     this.scene = scene;
     if (!(target instanceof Phaser.GameObjects.Text)) {
