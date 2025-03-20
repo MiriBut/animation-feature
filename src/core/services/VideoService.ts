@@ -122,7 +122,7 @@ export class VideoService {
 
     let sprite = this.activeSprites.get(timelineElement.elementName);
 
-    if (!sprite) {
+    if (!sprite && timelineElement.assetType != "audio") {
       console.warn(
         `VideoService: No sprite found for ${timelineElement.elementName}`
       );

@@ -1,6 +1,746 @@
 {
   "template video json": [
     {
+      "elementName": "kic1",
+      "assetType": "audio",
+      "assetName": "kick",
+      "initialState": {
+        "volume": 0.5,
+        "loop": true
+      },
+      "timeline": {
+        "play": [
+          {
+            "startTime": 1,
+            "endTime": 10,
+            "loop": "true"
+          }
+        ],
+        "volume": [
+          {
+            "startTime": 0,
+            "endTime": 10,
+            "startValue": 0,
+            "endValue": 1,
+            "easeIn": "Linear"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "kic2",
+      "assetType": "audio",
+      "assetName": "kick",
+      "initialState": {
+        "volume": 0.5,
+        "loop": true
+      },
+      "timeline": {
+        "play": [
+          {
+            "startTime": 11,
+            "endTime": 15,
+            "loop": "false"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "characterSpine",
+      "assetType": "spine",
+      "assetName": "character_spine",
+      "initialState": {
+        "position": {
+          "x": 1000,
+          "y": 540,
+          "z": 2
+        },
+        "scale": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "opacity": 1,
+        "rotation": 0
+      },
+      "timeline": {
+        "animation": [
+          {
+            "animationName": "idle",
+            "startTime": 0,
+            "endTime": 10,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 11,
+            "endTime": 20,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 6,
+            "endTime": 10,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 11,
+            "endTime": 13,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 14,
+            "endTime": 20,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 21,
+            "endTime": 23,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 24,
+            "endTime": 26,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 28,
+            "endTime": 32,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 34,
+            "endTime": 39,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 40,
+            "endTime": 41,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 42,
+            "endTime": 45,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 46,
+            "endTime": 50,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 52,
+            "endTime": 56,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 57,
+            "endTime": 60,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 61,
+            "endTime": 64,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 65,
+            "endTime": 100,
+            "loop": "true"
+          }
+        ],
+        "position": [
+          {
+            "startTime": 0,
+            "endTime": 5,
+            "startValue": {
+              "x": 1000,
+              "y": 540
+            },
+            "endValue": {
+              "x": 1000,
+              "y": 540
+            },
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 2,
+            "endTime": 4,
+            "startValue": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "endValue": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "characterSpine01",
+      "assetType": "spine",
+      "assetName": "character_spine",
+      "initialState": {
+        "position": {
+          "x": 500,
+          "y": 540,
+          "z": 2
+        },
+        "scale": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "opacity": 1,
+        "rotation": 0
+      },
+      "timeline": {
+        "animation": [
+          {
+            "animationName": "run",
+            "startTime": 0,
+            "endTime": 10,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 11,
+            "endTime": 20,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 6,
+            "endTime": 10,
+            "loop": "true"
+          },
+          {
+            "animationName": "shoot",
+            "startTime": 11,
+            "endTime": 13,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 14,
+            "endTime": 20,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 21,
+            "endTime": 23,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 24,
+            "endTime": 26,
+            "loop": "true"
+          },
+          {
+            "animationName": "run",
+            "startTime": 28,
+            "endTime": 32,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 34,
+            "endTime": 39,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 40,
+            "endTime": 41,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 42,
+            "endTime": 45,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 46,
+            "endTime": 50,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 52,
+            "endTime": 56,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 57,
+            "endTime": 60,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 61,
+            "endTime": 64,
+            "loop": "true"
+          },
+          {
+            "animationName": "jump",
+            "startTime": 65,
+            "endTime": 100,
+            "loop": "true"
+          }
+        ],
+        "position": [
+          {
+            "startTime": 0,
+            "endTime": 5,
+            "startValue": {
+              "x": 500,
+              "y": 540
+            },
+            "endValue": {
+              "x": 500,
+              "y": 540
+            },
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 2,
+            "endTime": 4,
+            "startValue": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "endValue": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "sparklesEffect",
+      "assetType": "particle",
+      "assetName": "sparkle_particle",
+      "particles": {
+        "textureName": "particle",
+        "config": {
+          "frequency": 50,
+          "lifespan": {
+            "min": 800,
+            "max": 1500
+          },
+          "quantity": 3,
+          "speed": {
+            "min": 100,
+            "max": 150,
+            "radial": false
+          },
+          "scale": {
+            "start": 0.4,
+            "end": 0.1,
+            "min": 0.1,
+            "max": 0.4
+          },
+          "alpha": {
+            "start": 1,
+            "end": 0,
+            "min": 0.6,
+            "max": 1
+          },
+          "rotate": {
+            "min": -45,
+            "max": 45
+          },
+          "tint": ["0xFFFFFF", "0xFFE5CC", "0xFFF0E6"],
+          "blendMode": "ADD",
+          "emitZone": {
+            "type": "edge",
+            "source": {
+              "x": 0,
+              "y": 0,
+              "width": 10,
+              "height": 600
+            }
+          },
+          "gravityX": -50,
+          "gravityY": 10
+        }
+      },
+      "initialState": {
+        "position": {
+          "x": 960,
+          "y": 540,
+          "z": 5
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "position": [
+          {
+            "startTime": 0,
+            "endTime": 10,
+            "startValue": {
+              "x": 960,
+              "y": 540
+            },
+            "endValue": {
+              "x": -500,
+              "y": 0
+            },
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          }
+        ],
+        "opacity": [
+          {
+            "startTime": 4,
+            "endTime": 5,
+            "startValue": 1,
+            "endValue": 1,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "magicVideo",
+      "assetType": "video",
+      "assetName": "magic_video",
+      "initialState": {
+        "position": {
+          "x": 960,
+          "y": 540,
+          "z": 1
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "scale": [
+          {
+            "startTime": 0,
+            "endTime": 5,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 1.5,
+              "y": 1
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "opacity": [
+          {
+            "startTime": 4,
+            "endTime": 5,
+            "startValue": 1,
+            "endValue": 1,
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          }
+        ]
+      }
+    },
+
+    {
+      "elementName": "backgroundImage",
+      "assetType": "image",
+      "assetName": "background_image",
+      "initialState": {
+        "position": {
+          "x": 960,
+          "y": 540,
+          "z": 0
+        },
+        "scale": {
+          "x": 2,
+          "y": 2
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "scale": [
+          {
+            "startTime": 0,
+            "endTime": 5,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 2,
+              "y": 2
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "logoImage",
+      "assetType": "image",
+      "assetName": "logo_image",
+      "onScreen": [
+        {
+          "startTime": 10,
+          "endTime": 20
+        },
+        {
+          "startTime": 30,
+          "endTime": 40
+        }
+      ],
+      "initialState": {
+        "position": {
+          "x": 960,
+          "y": 540,
+          "z": 1
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0,
+        "opacity": 1
+      },
+      "timeline": {
+        "scale": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 1.5,
+              "y": 1.5
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "rotation": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": 0,
+            "endValue": 360,
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "characterImage",
+      "assetType": "image",
+      "assetName": "character_image",
+      "initialState": {
+        "position": {
+          "x": 960,
+          "y": 540,
+          "z": 5
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "color": "0xFFFFFF",
+        "opacity": 1
+      },
+      "timeline": {
+        "position": [
+          {
+            "startTime": 5,
+            "endTime": 10,
+            "startValue": {
+              "z": 5
+            },
+            "endValue": {
+              "z": -1
+            },
+            "easeIn": "Expo.easeIn",
+            "easeOut": "Expo.easeOut"
+          }
+        ],
+        "color": [
+          {
+            "startTime": 2,
+            "endTime": 10,
+            "startValue": "0xFFFFFF",
+            "endValue": "0xFF0000",
+            "easeIn": "Sine.easeIn",
+            "easeOut": "Sine.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "iconImage",
+      "assetType": "image",
+      "assetName": "icon_image",
+      "initialState": {
+        "position": {
+          "x": 1000,
+          "y": 540,
+          "z": 3
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "position": [
+          {
+            "startTime": 5,
+            "endTime": 12,
+            "startValue": {
+              "x": 0,
+              "y": -20
+            },
+            "endValue": {
+              "x": 100,
+              "y": 50
+            },
+            "easeIn": "Expo.easeIn",
+            "easeOut": "Expo.easeOut"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 5,
+            "endTime": 12,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 2,
+              "y": 2
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+
+    {
+      "elementName": "Banner_Image",
+      "assetType": "image",
+      "assetName": "Banner_image",
+      "initialState": {
+        "position": {
+          "x": 960,
+          "y": 540,
+          "z": -1
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1,
+        "color": "0x0000FF"
+      },
+      "timeline": {
+        "position": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": {
+              "x": 960,
+              "y": 540
+            },
+            "endValue": {
+              "x": 50,
+              "y": 50
+            },
+            "easeIn": "Circ.easeIn",
+            "easeOut": "Circ.easeOut"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "color": [
+          {
+            "startTime": 12,
+            "endTime": 20,
+            "startValue": "0x0000FF",
+            "endValue": "0x0000FF",
+            "easeIn": "Sine.easeIn",
+            "easeOut": "Sine.easeOut"
+          }
+        ],
+        "opacity": [
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": 1,
+            "endValue": 0.3,
+            "easeIn": "Back.easeIn",
+            "easeOut": "Back.easeOut"
+          }
+        ]
+      }
+    },
+    {
       "elementName": "titleText",
       "assetType": "text",
       "assetName": "title_text",
