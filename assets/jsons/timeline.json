@@ -53,7 +53,7 @@
         "position": {
           "x": 1000,
           "y": 540,
-          "z": 2
+          "z": 5
         },
         "scale": {
           "x": 0.5,
@@ -167,11 +167,13 @@
             "endTime": 5,
             "startValue": {
               "x": 1000,
-              "y": 540
+              "y": 540,
+              "z": 5
             },
             "endValue": {
               "x": 1000,
-              "y": 540
+              "y": 540,
+              "z": 5
             },
             "easeIn": "Linear",
             "easeOut": "Linear"
@@ -187,7 +189,7 @@
             },
             "endValue": {
               "x": 0.5,
-              "y": 0.5
+              "y": 2
             },
             "easeIn": "Quad.easeIn",
             "easeOut": "Quad.easeOut"
@@ -203,7 +205,7 @@
         "position": {
           "x": 500,
           "y": 540,
-          "z": 2
+          "z": 5
         },
         "scale": {
           "x": 0.5,
@@ -592,12 +594,64 @@
       "timeline": {
         "position": [
           {
-            "startTime": 5,
-            "endTime": 10,
+            "startTime": 0,
+            "endTime": 2,
             "startValue": {
+              "x": 100,
+              "y": 100,
               "z": 5
             },
             "endValue": {
+              "x": 400,
+              "y": 100,
+              "z": 5
+            },
+            "easeIn": "Expo.easeIn",
+            "easeOut": "Expo.easeOut"
+          },
+          {
+            "startTime": 2,
+            "endTime": 5,
+            "startValue": {
+              "x": 400,
+              "y": 100,
+              "z": 5
+            },
+            "endValue": {
+              "x": 400,
+              "y": 400,
+              "z": 5
+            },
+            "easeIn": "Expo.easeIn",
+            "easeOut": "Expo.easeOut"
+          },
+          {
+            "startTime": 5,
+            "endTime": 7,
+            "startValue": {
+              "x": 400,
+              "y": 400,
+              "z": 5
+            },
+            "endValue": {
+              "x": 100,
+              "y": 400,
+              "z": 5
+            },
+            "easeIn": "Expo.easeIn",
+            "easeOut": "Expo.easeOut"
+          },
+          {
+            "startTime": 7,
+            "endTime": 9,
+            "startValue": {
+              "x": 100,
+              "y": 400,
+              "z": 5
+            },
+            "endValue": {
+              "x": 100,
+              "y": 100,
               "z": -1
             },
             "easeIn": "Expo.easeIn",

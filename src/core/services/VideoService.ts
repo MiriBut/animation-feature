@@ -296,7 +296,7 @@ export class VideoService {
             startValue: undefined,
             endValue: undefined,
             animationName: anim.animationName,
-            loop: anim.loop,
+            loop: String(anim.loop),
           },
         });
       });
@@ -378,37 +378,51 @@ export class VideoService {
 
     // Handle position - השתמש בערכים המותאמים ישירות
     if (timeline?.position) {
-      sequence.push({
-        type: "position",
-        config: {
-          property: "position",
-          startValue: timeline.position[0].startValue, // כבר מותאם מ-adjustTimeline
-          endValue: timeline.position[0].endValue, // כבר מותאם מ-adjustTimeline
-          duration:
-            (timeline.position[0].endTime - timeline.position[0].startTime) *
-            1000,
-          easing: timeline.position[0].easeIn || "Linear",
-          delay: timeline.position[0].startTime * 1000,
-        },
+      // Loop through all position animations
+      timeline.position.forEach((positionAnim) => {
+        const startZ =
+          positionAnim.startValue.z ??
+          timelineElement.initialState?.position?.z ??
+          0;
+        const endZ = positionAnim.endValue.z ?? startZ;
+
+        sequence.push({
+          type: "position",
+          config: {
+            property: "position",
+            startValue: {
+              x: positionAnim.startValue.x,
+              y: positionAnim.startValue.y,
+              z: startZ,
+            },
+            endValue: {
+              x: positionAnim.endValue.x,
+              y: positionAnim.endValue.y,
+              z: endZ,
+            },
+            duration: (positionAnim.endTime - positionAnim.startTime) * 1000,
+            easing: positionAnim.easeIn || "Linear",
+            delay: positionAnim.startTime * 1000,
+          },
+        });
+        console.log(
+          `Position for ${timelineElement.elementName}: Start (${positionAnim.startValue.x}, ${positionAnim.startValue.y}, z:${startZ}), End (${positionAnim.endValue.x}, ${positionAnim.endValue.y}, z:${endZ}), Time: ${positionAnim.startTime}-${positionAnim.endTime}`
+        );
       });
-      console.log(
-        `Position for ${timelineElement.elementName}: Start (${timeline.position[0].startValue.x}, ${timeline.position[0].startValue.y}), End (${timeline.position[0].endValue.x}, ${timeline.position[0].endValue.y})`
-      );
     }
 
     // Handle opacity
     if (timeline?.opacity) {
+      const opacityAnim = timeline.opacity[0]; // Get first animation
       sequence.push({
         type: "opacity",
         config: {
           property: "opacity",
-          startValue: timeline.opacity[0].startValue,
-          endValue: timeline.opacity[0].endValue,
-          duration:
-            (timeline.opacity[0].endTime - timeline.opacity[0].startTime) *
-            1000,
-          easing: timeline.opacity[0].easeIn || "Linear",
-          delay: timeline.opacity[0].startTime * 1000,
+          startValue: opacityAnim.startValue,
+          endValue: opacityAnim.endValue,
+          duration: (opacityAnim.endTime - opacityAnim.startTime) * 1000,
+          easing: opacityAnim.easeIn || "Linear",
+          delay: opacityAnim.startTime * 1000,
         },
       });
     }
@@ -422,20 +436,20 @@ export class VideoService {
         targetSprite instanceof Phaser.GameObjects.Text;
 
       if (isSupported) {
+        const scaleAnim = timeline.scale[0]; // Get first animation
         sequence.push({
           type: "scale",
           config: {
             property: "scale",
-            startValue: timeline.scale[0].startValue, // כבר מותאם מ-adjustTimeline
-            endValue: timeline.scale[0].endValue, // כבר מותאם מ-adjustTimeline
-            duration:
-              (timeline.scale[0].endTime - timeline.scale[0].startTime) * 1000,
-            easing: timeline.scale[0].easeIn || "Linear",
-            delay: timeline.scale[0].startTime * 1000,
+            startValue: scaleAnim.startValue,
+            endValue: scaleAnim.endValue,
+            duration: (scaleAnim.endTime - scaleAnim.startTime) * 1000,
+            easing: scaleAnim.easeIn || "Linear",
+            delay: scaleAnim.startTime * 1000,
           },
         });
         console.log(
-          `Scale for ${timelineElement.elementName}: Start (${timeline.scale[0].startValue.x}, ${timeline.scale[0].startValue.y}), End (${timeline.scale[0].endValue.x}, ${timeline.scale[0].endValue.y})`
+          `Scale for ${timelineElement.elementName}: Start (${scaleAnim.startValue.x}, ${scaleAnim.startValue.y}), End (${scaleAnim.endValue.x}, ${scaleAnim.endValue.y})`
         );
       }
     }
@@ -569,9 +583,20 @@ export class VideoService {
         ...element.initialState,
         position: element.initialState.position
           ? {
-              x: (element.initialState.position.x ?? 0) * widthRatio,
-              y: (element.initialState.position.y ?? 0) * heightRatio,
-              z: element.initialState.position.z ?? 0,
+              x:
+                element.initialState.position.x !== undefined
+                  ? element.initialState.position.x * widthRatio
+                  : (this.activeSprites.get(element.elementName)?.x ?? 0) *
+                    widthRatio,
+              y:
+                element.initialState.position.y !== undefined
+                  ? element.initialState.position.y * heightRatio
+                  : (this.activeSprites.get(element.elementName)?.y ?? 0) *
+                    heightRatio,
+              z:
+                element.initialState.position.z !== undefined
+                  ? element.initialState.position.z
+                  : 0,
             }
           : undefined,
         scale: uniformScale,
@@ -692,7 +717,8 @@ export class VideoService {
           element.timeline,
           widthRatio,
           heightRatio,
-          element.assetName
+          element.assetName,
+          element
         );
         const sequence = this.convertTimelineToAnimations({
           ...element,
@@ -742,22 +768,69 @@ export class VideoService {
     timeline: any,
     widthRatio: number,
     heightRatio: number,
-    assetName: string
+    assetName: string,
+    element: any // נעביר את כל ה-element
   ): any {
     const adjustedTimeline = { ...timeline };
 
     if (adjustedTimeline.position) {
-      adjustedTimeline.position = adjustedTimeline.position.map((pos: any) => ({
-        ...pos,
-        startValue: {
-          x: pos.startValue.x * widthRatio,
-          y: pos.startValue.y * heightRatio,
-        },
-        endValue: {
-          x: pos.endValue.x * widthRatio,
-          y: pos.endValue.y * heightRatio,
-        },
-      }));
+      // נשמור את הערכים ההתחלתיים מה-initialState
+      const initialX = element.initialState?.position?.x ?? 0;
+      const initialY = element.initialState?.position?.y ?? 0;
+      const initialZ = element.initialState?.position?.z ?? 0;
+
+      adjustedTimeline.position = adjustedTimeline.position.map(
+        (pos: any, index: number) => {
+          // נשמור את הערכים האחרונים מהמיקום הקודם
+          const previousX =
+            index > 0
+              ? adjustedTimeline.position[index - 1].endValue.x
+              : initialX;
+          const previousY =
+            index > 0
+              ? adjustedTimeline.position[index - 1].endValue.y
+              : initialY;
+          const previousZ =
+            index > 0
+              ? adjustedTimeline.position[index - 1].endValue.z
+              : initialZ;
+
+          return {
+            ...pos,
+            startValue: {
+              x:
+                pos.startValue.x !== undefined
+                  ? pos.startValue.x * widthRatio
+                  : previousX * widthRatio,
+              y:
+                pos.startValue.y !== undefined
+                  ? pos.startValue.y * heightRatio
+                  : previousY * heightRatio,
+              z: pos.startValue.z !== undefined ? pos.startValue.z : previousZ,
+            },
+            endValue: {
+              x:
+                pos.endValue.x !== undefined
+                  ? pos.endValue.x * widthRatio
+                  : pos.startValue.x !== undefined
+                  ? pos.startValue.x * widthRatio
+                  : previousX * widthRatio,
+              y:
+                pos.endValue.y !== undefined
+                  ? pos.endValue.y * heightRatio
+                  : pos.startValue.y !== undefined
+                  ? pos.startValue.y * heightRatio
+                  : previousY * heightRatio,
+              z:
+                pos.endValue.z !== undefined
+                  ? pos.endValue.z
+                  : pos.startValue.z !== undefined
+                  ? pos.startValue.z
+                  : previousZ,
+            },
+          };
+        }
+      );
     }
 
     if (adjustedTimeline.scale) {
