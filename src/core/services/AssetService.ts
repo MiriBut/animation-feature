@@ -214,8 +214,6 @@ export class AssetService {
   }
 
   private async registerAssets(assets: AssetElement[]): Promise<void> {
-    // List of common system fonts
-
     assets.forEach((asset) => {
       const assetName = asset.assetName.trim();
       let newAssetInfo: AssetInfo;
@@ -223,25 +221,22 @@ export class AssetService {
       switch (asset.assetType) {
         case "text":
           const fontFamily = asset.fontFamily || "Arial";
-          console.log(
-            `Registering text asset ${assetName} with font ${fontFamily}`
-          );
-
-          // Check if it's a system font
           const isSystemFont = this.isSystemFont(fontFamily);
-          console.log(`Is ${fontFamily} a system font? ${isSystemFont}`);
-
           newAssetInfo = {
             type: "text",
-            // For system fonts, we don't need a URL
             url: isSystemFont ? "" : (asset.assetUrl as string),
             fontFamily: fontFamily,
-            isSystemFont: isSystemFont, // Add a flag to indicate it's a system font
+            isSystemFont: isSystemFont,
           } as TextAssetInfo;
-
-          console.log(`Created text asset info:`, newAssetInfo);
           break;
-
+        case "image":
+          newAssetInfo = {
+            type: "image",
+            url: asset.assetUrl as string,
+            aspect_ratio_override: asset.aspect_ratio_override, // שמירת aspect_ratio_override
+            scale_override: asset.scale_override, // שמירת scale_override
+          } as ImageAssetInfo;
+          break;
         case "audio":
           newAssetInfo = {
             type: "audio",
@@ -274,11 +269,12 @@ export class AssetService {
             textureName: assetName,
           } as ParticleAssetInfo;
           break;
-        case "image":
         default:
           newAssetInfo = {
             type: "image",
             url: asset.assetUrl as string,
+            aspect_ratio_override: asset.aspect_ratio_override, // שמירת aspect_ratio_override גם בברירת מחדל
+            scale_override: asset.scale_override,
           } as ImageAssetInfo;
           break;
       }
@@ -286,6 +282,7 @@ export class AssetService {
         newAssetInfo.pivot_override = asset.pivot_override;
       }
       this.assetsMap.set(assetName, newAssetInfo);
+      console.log(`Registered asset ${assetName} with info:`, newAssetInfo); // לוג לבדיקה
     });
   }
 
@@ -315,21 +312,28 @@ export class AssetService {
       this.applyAudioProperties(spriteOrAudio, properties);
     } else if (
       spriteOrAudio instanceof Phaser.GameObjects.Video ||
-      spriteOrAudio instanceof SpineGameObject ||
       spriteOrAudio instanceof Phaser.GameObjects.Sprite ||
-      spriteOrAudio instanceof Phaser.GameObjects.Particles.ParticleEmitter
+      spriteOrAudio instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
+      spriteOrAudio instanceof SpineGameObject
     ) {
       spriteOrAudio.name = elementName;
       properties.pivot = this.getAssetPivot(assetName);
       this.applyBasicProperties(spriteOrAudio, properties, assetName);
       if (spriteOrAudio instanceof Phaser.GameObjects.Sprite) {
-        this.applyAdvancedProperties(spriteOrAudio, properties);
+        // העברת aspect_ratio_override ל-applyAdvancedProperties
+        this.applyAdvancedProperties(spriteOrAudio, {
+          ...properties,
+          ratio: assetInfo.aspect_ratio_override || properties.ratio,
+        });
       }
+    } else if (spriteOrAudio instanceof Phaser.GameObjects.Text) {
+      spriteOrAudio.name = elementName;
+      this.applyBasicProperties(spriteOrAudio, properties, assetName);
     }
 
-    // Calculate and save the original relative position based on initial resolution
-    const originalX = properties.x ?? this.scene.scale.width / 2; // Default to center if not provided
-    const originalY = properties.y ?? this.scene.scale.height / 2; // Default to center if not provided
+    // חישוב ושמירת מיקום יחסי מקורי
+    const originalX = properties.x ?? this.scene.scale.width / 2;
+    const originalY = properties.y ?? this.scene.scale.height / 2;
     const originalRelativeX =
       this.initialWidth > 0 ? originalX / this.initialWidth : 0.5;
     const originalRelativeY =
@@ -340,8 +344,8 @@ export class AssetService {
       assetName: assetName,
       sprite: spriteOrAudio,
       originalScale: originalScale,
-      originalRelativeX: originalRelativeX, // Save original relative X
-      originalRelativeY: originalRelativeY, // Save original relative Y
+      originalRelativeX: originalRelativeX,
+      originalRelativeY: originalRelativeY,
     });
 
     this.successMessages.push(
@@ -386,85 +390,93 @@ export class AssetService {
     | Phaser.GameObjects.Particles.ParticleEmitter
     | Phaser.Sound.WebAudioSound
     | Phaser.GameObjects.Text {
-    {
-      const x = properties.x ?? 0;
-      const y = properties.y ?? 0;
+    const x = properties.x ?? 0;
+    const y = properties.y ?? 0;
 
-      if (assetInfo.type === "text") {
-        const textInfo = assetInfo as TextAssetInfo;
-        console.log(`Creating text with font family: ${textInfo.fontFamily}`);
-
-        const style: Phaser.Types.GameObjects.Text.TextStyle & {
-          fontWeight?: string;
-        } = {
-          fontFamily: textInfo.fontFamily || "Arial",
-          fontSize: properties.fontSize || "32px",
-          color: properties.color || "#ffffff",
-          fontStyle: properties.fontStyle || "normal",
-          fontWeight: properties.fontWeight || "normal",
-        };
-
-        console.log(`Text style being applied:`, style);
-
-        const text = this.scene.add.text(x, y, properties.text || "", style);
-        console.log(`Text object created:`, text);
-        // ...
-
-        if (properties.textDecoration === "underline") {
-          const underline = this.scene.add.graphics();
-          const color = parseInt(
-            (properties.color || "#ffffff").replace("#", "0x"),
-            16
-          );
-          underline.lineStyle(2, color, 1);
-          underline.lineBetween(0, text.height, text.width, text.height);
-          underline.setPosition(x, y);
-          text.setData("underline", underline);
-        }
-
-        return text;
-      }
-
-      if (assetInfo.type === "audio") {
-        const audio = this.scene.sound.add(assetName, {
-          loop: properties.loop ?? false,
-          volume: properties.volume ?? 1,
-        }) as Phaser.Sound.WebAudioSound; // שינוי ל-WebAudioSound במקום BaseSound
-        // הוספת soundKey לאובייקט האודיו
-        (audio as any).soundKey = assetName; // Phaser לא מגדיר את זה כברירת מחדל, אז אנחנו מוסיפים ידנית
-        if (properties.play) {
-          audio.play();
-        }
-
-        return audio;
-      }
-      if (assetInfo.type === "video") {
-        const video = this.scene.add.video(x, y, assetName);
-        video.play(true);
-        return video;
-      }
-      if (assetInfo.type === "spine") {
-        const spine = this.scene.add.spine(
-          x,
-          y,
-          assetName,
-          `${assetName}_atlas`
+    if (assetInfo.type === "spine") {
+      const spine = this.scene.add.spine(x, y, assetName, `${assetName}_atlas`);
+      // Apply scale_override immediately if it exists
+      if (assetInfo.scale_override) {
+        spine.setScale(assetInfo.scale_override.x, assetInfo.scale_override.y);
+        console.log(
+          `Applied scale_override to ${assetName} on creation: x=${assetInfo.scale_override.x}, y=${assetInfo.scale_override.y}`
         );
-        return spine;
+      } else if (properties.scaleX && properties.scaleY) {
+        spine.setScale(properties.scaleX, properties.scaleY);
+        console.log(
+          `Applied initial scale to ${assetName}: x=${properties.scaleX}, y=${properties.scaleY}`
+        );
       }
-      if (assetInfo.type === "particle") {
-        const particleManager = this.scene.add.particles(2, 2, assetName);
-        if (properties.emitterConfig) {
-          particleManager.createEmitter(); ///properties.emitterConfig);
-        }
-        particleManager.setPosition(x, y);
-        return particleManager; // נשאר ללא שינוי
+      return spine;
+    }
+
+    if (assetInfo.type === "text") {
+      const textInfo = assetInfo as TextAssetInfo;
+      console.log(`Creating text with font family: ${textInfo.fontFamily}`);
+
+      const style: Phaser.Types.GameObjects.Text.TextStyle & {
+        fontWeight?: string;
+      } = {
+        fontFamily: textInfo.fontFamily || "Arial",
+        fontSize: properties.fontSize || "32px",
+        color: properties.color || "#ffffff",
+        fontStyle: properties.fontStyle || "normal",
+        fontWeight: properties.fontWeight || "normal",
+      };
+
+      console.log(`Text style being applied:`, style);
+
+      const text = this.scene.add.text(x, y, properties.text || "", style);
+      console.log(`Text object created:`, text);
+      // ...
+
+      if (properties.textDecoration === "underline") {
+        const underline = this.scene.add.graphics();
+        const color = parseInt(
+          (properties.color || "#ffffff").replace("#", "0x"),
+          16
+        );
+        underline.lineStyle(2, color, 1);
+        underline.lineBetween(0, text.height, text.width, text.height);
+        underline.setPosition(x, y);
+        text.setData("underline", underline);
       }
 
-      const sprite = this.scene.add.sprite(x, y, assetName);
-      return sprite;
+      return text;
     }
+
+    if (assetInfo.type === "audio") {
+      const audio = this.scene.sound.add(assetName, {
+        loop: properties.loop ?? false,
+        volume: properties.volume ?? 1,
+      }) as Phaser.Sound.WebAudioSound; // שינוי ל-WebAudioSound במקום BaseSound
+      // הוספת soundKey לאובייקט האודיו
+      (audio as any).soundKey = assetName; // Phaser לא מגדיר את זה כברירת מחדל, אז אנחנו מוסיפים ידנית
+      if (properties.play) {
+        audio.play();
+      }
+
+      return audio;
+    }
+    if (assetInfo.type === "video") {
+      const video = this.scene.add.video(x, y, assetName);
+      video.play(true);
+      return video;
+    }
+
+    if (assetInfo.type === "particle") {
+      const particleManager = this.scene.add.particles(2, 2, assetName);
+      if (properties.emitterConfig) {
+        particleManager.createEmitter(); ///properties.emitterConfig);
+      }
+      particleManager.setPosition(x, y);
+      return particleManager; // נשאר ללא שינוי
+    }
+
+    const sprite = this.scene.add.sprite(x, y, assetName);
+    return sprite;
   }
+
   private applyAudioProperties(
     audio: Phaser.Sound.BaseSound,
     properties: AssetDisplayProperties
@@ -587,49 +599,62 @@ export class AssetService {
     sprite: Phaser.GameObjects.Sprite,
     properties: AssetDisplayProperties
   ): void {
-    if (properties.ratio) {
-      this.applyAspectRatio(sprite, properties);
+    const assetInfo = this.assetsMap.get(
+      sprite.name || properties.assetName || ""
+    );
+
+    let scaleX: number;
+    let scaleY: number;
+
+    // תעדוף Scale מה-properties (מ-VideoService) על פני scale_override
+    if (properties.scaleX !== undefined && properties.scaleY !== undefined) {
+      scaleX = properties.scaleX;
+      scaleY = properties.scaleY;
+      console.log(
+        `Using scale from properties for ${sprite.name}: ScaleX=${scaleX}, ScaleY=${scaleY}`
+      );
+    } else if (assetInfo?.scale_override) {
+      scaleX = assetInfo.scale_override.x ?? properties.scale ?? 1;
+      scaleY = assetInfo.scale_override.y ?? properties.scale ?? 1;
+      console.log(
+        `Applied Scale Override for ${sprite.name}: ScaleX=${scaleX}, ScaleY=${scaleY}`
+      );
+    } else {
+      scaleX = properties.scaleX ?? properties.scale ?? 1;
+      scaleY = properties.scaleY ?? properties.scale ?? 1;
     }
 
-    if (properties.rotation !== undefined) {
-      sprite.setRotation(properties.rotation);
-    }
+    sprite.setScale(scaleX, scaleY);
 
-    if (properties.tint !== undefined) {
-      sprite.setTint(properties.tint);
-    }
-
-    sprite.setOrigin(properties.pivot?.x ?? 0.5, properties.pivot?.y ?? 0.5); // נקודת העוגן במרכז האלמנט
+    // Log size for debugging
+    const texture = sprite.texture;
+    const sourceImage = texture.getSourceImage();
     console.log(
-      "@@@ Origin " +
-        sprite.name +
-        " " +
-        properties.pivot?.x +
-        " , " +
-        properties.pivot?.y
+      `Original size of ${sprite.name}: ${sourceImage.width}x${sourceImage.height}`
     );
-    console.log("@@@ position " + " " + properties.x + " , " + properties.y);
     console.log(
-      "@@@ screen size " +
-        " " +
-        this.scene.scale.width +
-        " , " +
-        this.scene.scale.height
+      `Scaled size of ${sprite.name}: ${sprite.displayWidth}x${sprite.displayHeight}`
     );
 
-    sprite.setPosition(
-      properties.x ?? this.scene.scale.width / 2,
-      properties.y ?? this.scene.scale.height / 2
-    );
+    const effectiveRatio = assetInfo?.aspect_ratio_override || properties.ratio;
+    if (effectiveRatio) {
+      console.log(`Effective Ratio for ${sprite.name}:`, effectiveRatio);
+      console.log(`Applying Aspect Ratio for ${sprite.name}`);
+      this.applyAspectRatio(sprite, {
+        ...properties,
+        scaleX: scaleX,
+        scaleY: scaleY,
+        ratio: effectiveRatio,
+      });
+    } else {
+      console.log(
+        `No Aspect Ratio applied for ${sprite.name}, keeping ScaleX=${sprite.scaleX}, ScaleY=${sprite.scaleY}`
+      );
+    }
 
-    const anchorExample = this.calculatePositionByLastResolution(
-      properties.x ?? 1,
-      properties.y ?? 1,
-      1920,
-      1080
-    );
-
-    console.log("@@ new anchor " + anchorExample.x + " , " + properties.y);
+    sprite.setOrigin(properties.pivot?.x ?? 0.5, properties.pivot?.y ?? 0.5);
+    sprite.setPosition(400, 300); // Hardcode for testing
+    sprite.setVisible(true);
   }
 
   private calculatePositionByLastResolution(
@@ -669,19 +694,36 @@ export class AssetService {
     sprite: Phaser.GameObjects.Sprite,
     properties: AssetDisplayProperties
   ): void {
-    if (!properties.ratio) return;
+    const effectiveRatio = properties.ratio;
+    if (!effectiveRatio) {
+      console.warn(
+        `No aspect ratio provided for ${sprite.name}, skipping adjustment`
+      );
+      return;
+    }
 
     const texture = sprite.texture;
     const sourceImage = texture.getSourceImage();
-    const targetRatio = properties.ratio.width / properties.ratio.height;
+    const targetRatio = effectiveRatio.width / effectiveRatio.height;
     const currentRatio = sourceImage.width / sourceImage.height;
-    const scale = properties.scale ?? 1;
 
+    let scaleX = properties.scaleX ?? properties.scale ?? 1;
+    let scaleY = properties.scaleY ?? properties.scale ?? 1;
+
+    // התאמת ה-Scale ליחס הרצוי תוך שימוש בציר הקטן יותר
+    const minScale = Math.min(scaleX, scaleY);
     if (targetRatio > currentRatio) {
-      sprite.setScale(scale, scale * (currentRatio / targetRatio));
+      scaleX = minScale * targetRatio;
+      scaleY = minScale;
     } else {
-      sprite.setScale(scale * (targetRatio / currentRatio), scale);
+      scaleY = minScale / targetRatio;
+      scaleX = minScale;
     }
+
+    sprite.setScale(scaleX, scaleY);
+    console.log(
+      `Applied Aspect Ratio for ${sprite.name}: ScaleX=${scaleX}, ScaleY=${scaleY}`
+    );
   }
 
   // === Cleanup Methods ===
@@ -984,7 +1026,11 @@ export class AssetService {
           this.loadedAssets.add(assetName);
           const sprite = this.scene.add.sprite(0, 0, assetName);
           sprite.setVisible(false);
-          this.assetsMap.set(assetName, { ...assetInfo, sprite });
+          // שמירה על כל המאפיינים המקוריים של assetInfo
+          this.assetsMap.set(assetName, {
+            ...assetInfo, // כולל aspect_ratio_override ו-scale_override
+            sprite, // מוסיף את הספרייט
+          });
           this.successMessages.push(
             `loadImageAsset [Loaded image ${assetName} successfully]`
           );
@@ -1017,7 +1063,6 @@ export class AssetService {
         new URL(assetInfo.url, window.location.origin);
       } catch (e) {
         const errorMsg = e instanceof Error ? e.message : String(e);
-
         resolve({
           success: false,
           error: `Malformed URL for '${assetName}': '${assetInfo.url}' - ${errorMsg}`,
