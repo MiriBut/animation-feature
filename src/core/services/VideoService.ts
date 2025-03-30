@@ -18,7 +18,10 @@ import {
   createSuccessMessage,
 } from "../../ui/ErrorModal/MessageModal";
 import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist/SpineGameObject";
-import { SpineState } from "@/types/interfaces/AssetInterfaces";
+import {
+  AssetDisplayProperties,
+  SpineState,
+} from "@/types/interfaces/AssetInterfaces";
 
 export class VideoService {
   private syncSystem: SyncSystem;
@@ -52,7 +55,15 @@ export class VideoService {
     newHeight: number
   ): void {
     console.log(`handleResize in video service`);
-    this.handleResolutionChange();
+    // עדכון הרזולוציה הנוכחית
+    this.currentWidth = newWidth;
+    this.currentHeight = newHeight;
+
+    // שימוש ב-handleResize של AssetService להתאמת הספרייטים
+    this.assetService.handleResize(oldWidth, oldHeight, newWidth, newHeight);
+
+    // התאמת הטיימליין מחדש
+    this.initializeTimelineElements();
   }
 
   private async setupScene(): Promise<void> {
@@ -142,54 +153,66 @@ export class VideoService {
     heightRatio: number
   ): { x: number; y: number } {
     const assetInfo = this.assetService.getAssetInfo(assetName);
-    let aspectRatio = 1; // ברירת מחדל: יחס 1:1
 
-    // בדיקה אם יש aspect_ratio_override
-    if (assetInfo && assetInfo.pivot_override?.aspect_ratio_override) {
-      const { width, height } = assetInfo.pivot_override.aspect_ratio_override;
+    // קבלת ה-Scale הראשוני מ-scale_override או baseScale
+    let adjustedScaleX =
+      (assetInfo?.scale_override?.x ?? baseScaleX) * widthRatio;
+    let adjustedScaleY =
+      (assetInfo?.scale_override?.y ?? baseScaleY) * heightRatio;
+
+    // חישוב Aspect Ratio
+    let aspectRatio = 1;
+    if (assetInfo?.aspect_ratio_override) {
+      const { width, height } = assetInfo.aspect_ratio_override;
       aspectRatio = width / height;
       console.log(
-        `Aspect ratio from override for ${assetName}: ${aspectRatio} (${width}/${height})`
+        `Using aspect_ratio_override for ${assetName}: ${aspectRatio}`
       );
-    } else {
-      // חזרה ליחס ממדים של האסט עצמו כברירת מחדל
-      const sprite = this.assetService.displayAsset(
-        assetName,
-        { x: 0, y: 0, scale: 1 },
-        assetName
+
+      // התאמת ה-Scale ל-Aspect Ratio, תוך שימוש בציר הקטן יותר כבסיס
+      const minScale = Math.min(adjustedScaleX, adjustedScaleY);
+      if (aspectRatio > 1) {
+        adjustedScaleX = minScale * aspectRatio;
+        adjustedScaleY = minScale;
+      } else {
+        adjustedScaleX = minScale;
+        adjustedScaleY = minScale / aspectRatio;
+      }
+      console.log(
+        `Adjusted Scale for ${assetName} with aspect_ratio_override: x=${adjustedScaleX}, y=${adjustedScaleY}`
       );
+    } else if (!assetInfo?.scale_override) {
+      const sprite = this.assetService.getElementSprite(assetName);
       if (
         sprite instanceof Phaser.GameObjects.Sprite ||
         sprite instanceof Phaser.GameObjects.Image
       ) {
         aspectRatio = sprite.width / sprite.height;
         console.log(
-          `Aspect ratio from sprite for ${assetName}: ${aspectRatio} (${sprite.width}/${sprite.height})`
+          `Using sprite aspect ratio for ${assetName}: ${aspectRatio} (${sprite.width}/${sprite.height})`
         );
-        sprite.destroy();
-      } else if (sprite instanceof Phaser.GameObjects.Video) {
-        aspectRatio = sprite.width / sprite.height;
-        console.log(
-          `Aspect ratio from video for ${assetName}: ${aspectRatio} (${sprite.width}/${sprite.height})`
-        );
-        sprite.destroy();
       } else {
-        console.warn(`No aspect ratio info for ${assetName}, using 1:1`);
+        console.warn(
+          `No aspect ratio info for ${assetName}, defaulting to 1:1`
+        );
       }
-    }
 
-    // חישוב סקייל אחיד תוך שמירה על aspect ratio
-    const adjustedScaleX = baseScaleX * widthRatio;
-    const adjustedScaleY = baseScaleY * heightRatio;
-    let uniformScale: number;
-
-    if (adjustedScaleX * aspectRatio > adjustedScaleY) {
-      uniformScale = adjustedScaleY / aspectRatio; // מתאים לפי גובה
+      // התאמה ל-Aspect Ratio של הספרייט רק אם אין scale_override
+      if (aspectRatio > 1) {
+        adjustedScaleX = adjustedScaleY * aspectRatio;
+      } else {
+        adjustedScaleY = adjustedScaleX / aspectRatio;
+      }
     } else {
-      uniformScale = adjustedScaleX; // מתאים לפי רוחב
+      console.log(
+        `Using scale_override for ${assetName} without aspect ratio adjustment: x=${adjustedScaleX}, y=${adjustedScaleY}`
+      );
     }
 
-    return { x: uniformScale, y: uniformScale * aspectRatio };
+    console.log(
+      `Calculated Scale for ${assetName}: x=${adjustedScaleX}, y=${adjustedScaleY}, aspectRatio=${aspectRatio}`
+    );
+    return { x: adjustedScaleX, y: adjustedScaleY };
   }
 
   private convertTimelineToAnimations(
@@ -427,30 +450,39 @@ export class VideoService {
       });
     }
 
-    // Handle scale - השתמש בערכים המותאמים ישירות
+    // Handle scale
     if (timeline?.scale) {
-      const isSupported =
-        targetSprite instanceof Phaser.GameObjects.Sprite ||
-        targetSprite instanceof Phaser.GameObjects.Video ||
-        targetSprite instanceof SpineGameObject ||
-        targetSprite instanceof Phaser.GameObjects.Text;
-
-      if (isSupported) {
-        const scaleAnim = timeline.scale[0]; // Get first animation
-        sequence.push({
-          type: "scale",
-          config: {
-            property: "scale",
-            startValue: scaleAnim.startValue,
-            endValue: scaleAnim.endValue,
-            duration: (scaleAnim.endTime - scaleAnim.startTime) * 1000,
-            easing: scaleAnim.easeIn || "Linear",
-            delay: scaleAnim.startTime * 1000,
-          },
-        });
+      const assetInfo = this.assetService.getAssetInfo(
+        timelineElement.assetName
+      );
+      if (assetInfo?.scale_override) {
         console.log(
-          `Scale for ${timelineElement.elementName}: Start (${scaleAnim.startValue.x}, ${scaleAnim.startValue.y}), End (${scaleAnim.endValue.x}, ${scaleAnim.endValue.y})`
+          `Ignoring timeline scale for ${timelineElement.elementName} due to scale_override: x=${assetInfo.scale_override.x}, y=${assetInfo.scale_override.y}`
         );
+      } else {
+        const isSupported =
+          targetSprite instanceof Phaser.GameObjects.Sprite ||
+          targetSprite instanceof Phaser.GameObjects.Video ||
+          targetSprite instanceof SpineGameObject ||
+          targetSprite instanceof Phaser.GameObjects.Text;
+
+        if (isSupported) {
+          const scaleAnim = timeline.scale[0]; // Get first animation
+          sequence.push({
+            type: "scale",
+            config: {
+              property: "scale",
+              startValue: scaleAnim.startValue,
+              endValue: scaleAnim.endValue,
+              duration: (scaleAnim.endTime - scaleAnim.startTime) * 1000,
+              easing: scaleAnim.easeIn || "Linear",
+              delay: scaleAnim.startTime * 1000,
+            },
+          });
+          console.log(
+            `Scale for ${timelineElement.elementName}: Start (${scaleAnim.startValue.x}, ${scaleAnim.startValue.y}), End (${scaleAnim.endValue.x}, ${scaleAnim.endValue.y})`
+          );
+        }
       }
     }
 
@@ -566,150 +598,67 @@ export class VideoService {
       activeElements.add(element.elementName);
 
       let sprite = this.activeSprites.get(element.elementName);
-      const isExistingSprite = !!sprite;
-
       const widthRatio = this.currentWidth / baseWidth;
       const heightRatio = this.currentHeight / baseHeight;
 
-      const uniformScale = this.calculateUniformScale(
-        element.assetName,
-        element.initialState.scale?.x ?? 1,
-        element.initialState.scale?.y ?? 1,
-        widthRatio,
-        heightRatio
-      );
+      const assetInfo = this.assetService.getAssetInfo(element.assetName);
+      let scaleX: number, scaleY: number;
 
-      const adjustedInitialState = {
-        ...element.initialState,
-        position: element.initialState.position
-          ? {
-              x:
-                element.initialState.position.x !== undefined
-                  ? element.initialState.position.x * widthRatio
-                  : (this.activeSprites.get(element.elementName)?.x ?? 0) *
-                    widthRatio,
-              y:
-                element.initialState.position.y !== undefined
-                  ? element.initialState.position.y * heightRatio
-                  : (this.activeSprites.get(element.elementName)?.y ?? 0) *
-                    heightRatio,
-              z:
-                element.initialState.position.z !== undefined
-                  ? element.initialState.position.z
-                  : 0,
-            }
+      // Check if there's a timeline.scale and no scale_override
+      if (element.timeline?.scale && !assetInfo?.scale_override) {
+        const timelineScale = element.timeline.scale[0]; // Take the first scale animation
+        scaleX = timelineScale.startValue.x;
+        scaleY = timelineScale.startValue.y;
+        console.log(
+          `Using timeline.scale.startValue for ${element.elementName}: x=${scaleX}, y=${scaleY}`
+        );
+      } else {
+        // Fallback to scale_override or uniformScale
+        const uniformScale = this.calculateUniformScale(
+          element.assetName,
+          element.initialState.scale?.x ?? 1,
+          element.initialState.scale?.y ?? 1,
+          widthRatio,
+          heightRatio
+        );
+        scaleX = assetInfo?.scale_override?.x ?? uniformScale.x;
+        scaleY = assetInfo?.scale_override?.y ?? uniformScale.y;
+      }
+
+      const adjustedInitialState: AssetDisplayProperties = {
+        x: element.initialState?.position?.x
+          ? element.initialState.position.x * widthRatio
+          : this.currentWidth / 2,
+        y: element.initialState?.position?.y
+          ? element.initialState.position.y * heightRatio
+          : this.currentHeight / 2,
+        scaleX: scaleX,
+        scaleY: scaleY,
+        alpha: element.initialState?.opacity ?? 1,
+        rotation: element.initialState?.rotation ?? 0,
+        tint: element.initialState?.color
+          ? parseInt(element.initialState.color.replace("#", ""), 16)
           : undefined,
-        scale: uniformScale,
+        ratio: assetInfo?.aspect_ratio_override,
+        assetName: element.assetName,
+        timelineScale: undefined,
       };
 
-      if (element.assetType === "audio") {
-        if (!sprite || !(sprite instanceof Phaser.Sound.WebAudioSound)) {
-          const audioKey = element.assetName || "bg_music";
-          let sound = this.scene.sound.get(audioKey);
-          if (!sound) {
-            sound = this.scene.sound.add(audioKey, {
-              volume: adjustedInitialState.volume || 0.5,
-              loop: adjustedInitialState.loop === true,
-            });
-          }
-          sprite = sound as Phaser.Sound.WebAudioSound;
-          this.activeSprites.set(element.elementName, sprite);
-        }
-      } else if (element.assetType === "text") {
-        if (!sprite || !(sprite instanceof Phaser.GameObjects.Text)) {
-          console.log(
-            `VideoService: Creating text object for ${element.elementName}`
-          );
-
-          // חישוב fontSize מותאם שמוגבל לגודל המסך
-          let fontSize: number;
-          if (typeof adjustedInitialState.fontSize === "string") {
-            fontSize = parseInt(adjustedInitialState.fontSize, 10); // אם יש ערך מוגדר בטיימליין
-          } else {
-            // גודל בסיס של 32px, מותאם לפי היחס הקטן יותר, עם מקסימום
-            const textScaleFactor = Math.min(widthRatio, heightRatio);
-            fontSize = Math.min(32 * textScaleFactor, this.currentHeight * 0.1); // מקסימום 10% מגובה המסך
-          }
-
-          const textObj = this.scene.add.text(
-            adjustedInitialState.position?.x ?? this.currentWidth / 2,
-            adjustedInitialState.position?.y ?? this.currentHeight / 2,
-            typeof adjustedInitialState.text === "string"
-              ? adjustedInitialState.text
-              : "",
-            {
-              fontSize: `${fontSize}px`,
-              fontFamily: "Arial",
-              color:
-                typeof adjustedInitialState.color === "string"
-                  ? adjustedInitialState.color
-                  : "#ffffff",
-              fontStyle: "normal",
-              align: "center",
-            }
-          );
-
-          // התאמת מיקום כדי שהטקסט לא יגלוש מהמסך
-          const textWidth = textObj.displayWidth;
-          const textHeight = textObj.displayHeight;
-          let x = adjustedInitialState.position?.x ?? this.currentWidth / 2;
-          let y = adjustedInitialState.position?.y ?? this.currentHeight / 2;
-
-          // וידוא שהטקסט נשאר בתוך גבולות המסך
-          if (x - textWidth / 2 < 0) x = textWidth / 2;
-          if (x + textWidth / 2 > this.currentWidth)
-            x = this.currentWidth - textWidth / 2;
-          if (y - textHeight / 2 < 0) y = textHeight / 2;
-          if (y + textHeight / 2 > this.currentHeight)
-            y = this.currentHeight - textHeight / 2;
-
-          textObj.setPosition(x, y);
-          textObj.setDepth(adjustedInitialState.position?.z ?? 0);
-          textObj.setAlpha(adjustedInitialState.opacity ?? 1);
-          // לא משתמשים ב-setScale כדי למנוע עיוות כפול
-
-          if (typeof adjustedInitialState.rotation === "number") {
-            textObj.setRotation(adjustedInitialState.rotation);
-          }
-
-          sprite = textObj;
-          this.activeSprites.set(element.elementName, sprite);
-
-          // לוגים מפורטים לבדיקת הגודל והמיקום
-          console.log(
-            `Text ${element.elementName}: fontSize=${fontSize}px, ` +
-              `displayWidth=${textWidth}, displayHeight=${textHeight}, ` +
-              `position=(${x}, ${y}), ` +
-              `screen=(${this.currentWidth}x${this.currentHeight})`
-          );
-        }
-      } else if (!sprite) {
-        const spriteOrContainer = this.assetService.displayAsset(
+      if (!sprite) {
+        sprite = this.assetService.displayAsset(
           element.assetName,
-          {
-            x: adjustedInitialState.position?.x ?? 0,
-            y: adjustedInitialState.position?.y ?? 0,
-            scale: uniformScale.x,
-            alpha: adjustedInitialState.opacity ?? 1,
-            rotation: adjustedInitialState.rotation ?? 0,
-            tint: adjustedInitialState.color
-              ? parseInt(adjustedInitialState.color)
-              : undefined,
-          },
+          adjustedInitialState,
           element.elementName
         );
-
-        sprite = spriteOrContainer;
-        if (
-          sprite instanceof Phaser.GameObjects.Sprite ||
-          sprite instanceof Phaser.GameObjects.Image ||
-          sprite instanceof Phaser.GameObjects.Video ||
-          sprite instanceof SpineGameObject ||
-          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
-        ) {
-          sprite.setVisible(true);
-        }
         this.activeSprites.set(element.elementName, sprite);
+      }
+
+      if (
+        sprite instanceof Phaser.GameObjects.Sprite ||
+        sprite instanceof Phaser.GameObjects.Image
+      ) {
+        sprite.setDepth(element.initialState.position?.z ?? 0);
+        sprite.setVisible(true);
       }
 
       if (element.timeline) {
@@ -732,18 +681,75 @@ export class VideoService {
         }
       }
 
+      if (element.assetType === "audio") {
+        if (!sprite || !(sprite instanceof Phaser.Sound.WebAudioSound)) {
+          sprite = this.assetService.displayAsset(
+            element.assetName,
+            adjustedInitialState,
+            element.elementName
+          );
+          this.activeSprites.set(element.elementName, sprite);
+        }
+      } else if (element.assetType === "text") {
+        // שימוש ב-displayAsset עם adjustedInitialState מלא
+        sprite = this.assetService.displayAsset(
+          element.assetName,
+          {
+            ...adjustedInitialState,
+            text: element.initialState.text ?? "", // ערך ברירת מחדל לטקסט
+            fontSize: adjustedInitialState.fontSize ?? "32px", // ערך ברירת מחדל
+            color: adjustedInitialState.color ?? "#ffffff", // ערך ברירת מחדל
+            fontStyle: adjustedInitialState.fontStyle ?? "normal", // ערך ברירת מחדל
+            fontWeight: adjustedInitialState.fontWeight ?? "normal", // ערך ברירת מחדל
+            textDecoration: adjustedInitialState.textDecoration ?? undefined,
+          },
+          element.elementName
+        );
+        this.activeSprites.set(element.elementName, sprite);
+      } else if (!sprite) {
+        sprite = this.assetService.displayAsset(
+          element.assetName,
+          adjustedInitialState,
+          element.elementName
+        );
+        this.activeSprites.set(element.elementName, sprite);
+      }
+
+      // הגדרת עומק (depth)
       if (
         sprite instanceof Phaser.GameObjects.Sprite ||
         sprite instanceof Phaser.GameObjects.Image ||
         sprite instanceof Phaser.GameObjects.Video ||
-        sprite instanceof Phaser.GameObjects.Container ||
         sprite instanceof SpineGameObject ||
-        sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+        sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
+        sprite instanceof Phaser.GameObjects.Text
       ) {
-        sprite.setDepth(adjustedInitialState.position?.z ?? 0);
+        sprite.setDepth(element.initialState.position?.z ?? 0);
+        sprite.setVisible(true);
+      }
+
+      if (element.timeline) {
+        const adjustedTimeline = this.adjustTimeline(
+          element.timeline,
+          widthRatio,
+          heightRatio,
+          element.assetName,
+          element
+        );
+        const sequence = this.convertTimelineToAnimations({
+          ...element,
+          timeline: adjustedTimeline,
+        });
+        if (sequence.length > 0 && sprite) {
+          syncGroups.push({
+            target: sprite,
+            sequence,
+          });
+        }
       }
     }
 
+    // הסתרת אלמנטים לא פעילים
     for (const [elementName, sprite] of this.activeSprites.entries()) {
       if (!activeElements.has(elementName)) {
         if (
@@ -751,7 +757,8 @@ export class VideoService {
           sprite instanceof Phaser.GameObjects.Image ||
           sprite instanceof Phaser.GameObjects.Video ||
           sprite instanceof SpineGameObject ||
-          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
+          sprite instanceof Phaser.GameObjects.Text
         ) {
           sprite.setVisible(false);
         }
@@ -769,19 +776,18 @@ export class VideoService {
     widthRatio: number,
     heightRatio: number,
     assetName: string,
-    element: any // נעביר את כל ה-element
+    element: TimelineElement
   ): any {
     const adjustedTimeline = { ...timeline };
+    const assetInfo = this.assetService.getAssetInfo(assetName);
 
     if (adjustedTimeline.position) {
-      // נשמור את הערכים ההתחלתיים מה-initialState
       const initialX = element.initialState?.position?.x ?? 0;
       const initialY = element.initialState?.position?.y ?? 0;
       const initialZ = element.initialState?.position?.z ?? 0;
 
       adjustedTimeline.position = adjustedTimeline.position.map(
         (pos: any, index: number) => {
-          // נשמור את הערכים האחרונים מהמיקום הקודם
           const previousX =
             index > 0
               ? adjustedTimeline.position[index - 1].endValue.x
@@ -834,26 +840,35 @@ export class VideoService {
     }
 
     if (adjustedTimeline.scale) {
-      adjustedTimeline.scale = adjustedTimeline.scale.map((scale: any) => {
-        const uniformScale = this.calculateUniformScale(
-          assetName,
-          scale.startValue.x,
-          scale.startValue.y,
-          widthRatio,
-          heightRatio
+      if (assetInfo?.scale_override) {
+        console.log(
+          `Scale override applied for ${assetName}, timeline scale will be ignored`
         );
-        return {
-          ...scale,
-          startValue: uniformScale,
-          endValue: this.calculateUniformScale(
+        delete adjustedTimeline.scale; // Ignore timeline scale if scale_override exists
+      } else {
+        // If timeline.scale is used as initial scale, we might not need to animate it unless it changes
+        adjustedTimeline.scale = adjustedTimeline.scale.map((scale: any) => {
+          const uniformScaleStart = this.calculateUniformScale(
+            assetName,
+            scale.startValue.x,
+            scale.startValue.y,
+            widthRatio,
+            heightRatio
+          );
+          const uniformScaleEnd = this.calculateUniformScale(
             assetName,
             scale.endValue.x,
             scale.endValue.y,
             widthRatio,
             heightRatio
-          ),
-        };
-      });
+          );
+          return {
+            ...scale,
+            startValue: uniformScaleStart,
+            endValue: uniformScaleEnd,
+          };
+        });
+      }
     }
 
     return adjustedTimeline;
@@ -931,7 +946,7 @@ export class VideoService {
   // Add this method to VideoService class
   public async clearAllAssets(): Promise<void> {
     console.log("VideoService: Clearing all video assets");
-
+    await this.assetService.reset(); // נוסף
     // עצור את כל האנימציות הפעילות
     this.stopAllAnimations();
 

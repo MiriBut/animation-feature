@@ -8,7 +8,9 @@ export interface TimelineElement {
     config: ParticleConfig;
   };
   initialState?: {
-    fontWeight: boolean;
+    textDecoration: undefined;
+    fontStyle: undefined;
+    fontWeight: string;
     fontSize: boolean;
     text: undefined;
     animation: string;

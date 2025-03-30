@@ -15,9 +15,13 @@ export interface AssetJson {
 }
 
 export interface AssetDisplayProperties {
+  timelineScale: any;
+  assetName: string;
   x?: number;
   y?: number;
-  scale?: number;
+  scale?: number; // Scale אחיד
+  scaleX?: number; // Scale ספציפי ל-X
+  scaleY?: number; // Scale ספציפי ל-Y
   alpha?: number;
   rotation?: number;
   tint?: number;
@@ -25,13 +29,9 @@ export interface AssetDisplayProperties {
   pivot?: { x: number; y: number };
   ratio?: { width: number; height: number };
   emitterConfig?: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig;
-
-  //for audios
   volume?: number;
   loop?: boolean;
-  play?: boolean; //for imiiate play (is needed?)
-
-  //for text
+  play?: boolean;
   text?: string;
   fontSize?: string | number;
   color?: string;
@@ -51,12 +51,13 @@ export interface BaseAssetInfo {
   pivot_override?: {
     x: number;
     y: number;
-    aspect_ratio_override?: {
-      // שדה חדש
-      width: number;
-      height: number;
-    };
   };
+  aspect_ratio_override?: {
+    // שדה חדש
+    width: number;
+    height: number;
+  };
+  scale_override?: { x: number; y: number }; // חדש: Scale Override
 }
 
 export interface SpineState {
@@ -113,7 +114,7 @@ export interface TextAssetInfo extends BaseAssetInfo {
 }
 export interface AssetElement extends BaseAssetInfo {
   fontFamily: any;
-  initialState: any;
+  initialState: AssetDisplayProperties;
   assetName: string;
   assetUrl:
     | string

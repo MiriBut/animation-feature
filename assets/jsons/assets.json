@@ -31,11 +31,8 @@
         "skeletonType": "binary"
       },
       "assetType": "spine",
-      "scale_override": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "aspect_ratio_ override": {
+
+      "aspect_ratio_override": {
         "width": 1,
         "height": 1
       },
@@ -100,13 +97,14 @@
       "assetUrl": "assets/images/character_image.png",
       "assetType": "image",
       "scale_override": {
-        "x": 1,
-        "y": 1
+        "x": 2,
+        "y": 3
       },
       "aspect_ratio_override": {
-        "width": 16,
-        "height": 9
+        "width": 9,
+        "height": 16
       },
+
       "pivot_override": {
         "x": 0.5,
         "y": 0.5
