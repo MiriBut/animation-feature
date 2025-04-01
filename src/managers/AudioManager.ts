@@ -98,7 +98,6 @@ export class AudioManager {
           ) {
             // גישה ל-AudioNode המתאים
             if (sound.hasOwnProperty("_pan")) {
-              // Phaser 3 גרסה חדשה יותר של
               const panNode = (sound as any)._pan;
               if (panNode && panNode.connect && this.destination) {
                 panNode.connect(this.destination);
@@ -375,11 +374,11 @@ export class AudioManager {
       }
     }
 
-    // עצור רקע מוזיקלי אם קיים
-    if (this.backgroundMusic) {
-      if (typeof this.backgroundMusic.stop === "function") {
-        this.backgroundMusic.stop();
-      }
-    }
+    // // עצור רקע מוזיקלי אם קיים
+    // if (this.backgroundMusic) {
+    //   if (typeof this.backgroundMusic.stop === "function") {
+    //     this.backgroundMusic.stop();
+    //   }
+    // }
   }
 }
