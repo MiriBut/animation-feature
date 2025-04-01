@@ -2,6 +2,7 @@
 import { Scene } from "phaser";
 import { AnimationPropertyType, AnimationConfig, AudioConfig } from "./types";
 import { AnimationManager } from "./AnimationManager";
+import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist";
 
 export interface SequenceItem {
   type: AnimationPropertyType;
@@ -23,52 +24,75 @@ export class SequenceSystem {
    * @param sequence רצף האנימציות להפעלה
    */
   async playSequence(
-    target: Phaser.GameObjects.GameObject | Phaser.Sound.WebAudioSound,
+    target: Phaser.GameObjects.GameObject | Phaser.Sound.BaseSound,
     sequence: SequenceItem[]
   ): Promise<void> {
-    // console.log(
-    //   `[${new Date().toISOString()}] SequenceSystem: Playing sequence with ${
-    //     sequence.length
-    //   } items for ${target.name || "unnamed object"}`
-    // );
-    // לוג מידע על כל אנימציה בסדרה
-    sequence.forEach((item) => {
-      console.log("Playing sequence item:", JSON.stringify(item, null, 2));
+    const trackMap: Map<string, number> = new Map(); // שמירת מסלולים ל-Spine בלבד
+    let nextTrack = 0; // המסלול הבא לשימוש ב-Spine
 
-      const startTimeMs = item.config.delay || 0;
-      const durationMs = item.config.duration || 0;
-      console.log(
-        `SequenceSystem: Animation ${item.type} scheduled to start at ${startTimeMs}ms, duration: ${durationMs}ms`
-      );
-    });
-
-    // הפעל את כל האנימציות במקביל ואסוף את ה-promises
     const promises = sequence.map((item) => {
-      // יצירת עותק של קונפיגורציה כדי לא לשנות את המקור
-      const config = { ...item.config };
-
-      // אנימציה שאמורה להתחיל מאוחר יותר מטופלת באמצעות setTimeout
-      // כך כל האנימציות מופעלות במקביל עם ה-delay המתאים
       return new Promise<void>((resolve) => {
-        const delay = config.delay || 0;
+        const {
+          animationName,
+          loop,
+          delay = 0,
+          duration,
+        } = item.config as AnimationConfig;
 
-        // להמתין delay מילישניות לפני הרצת האנימציה
+        if (!animationName) {
+          console.warn("⚠️ Missing animationName, skipping.");
+          resolve();
+          return;
+        }
+
         setTimeout(async () => {
-          // אחרי ההמתנה, הפעל את האנימציה ללא delay (כבר חיכינו)
-          config.delay = 0;
-
           try {
-            await this.animationManager.animate(target, item.type, config);
+            if (target instanceof SpineGameObject) {
+              // 🎭 **Spine** → ניהול מסלולים דינמי
+              let trackIndex = trackMap.has(animationName)
+                ? trackMap.get(animationName)!
+                : nextTrack;
+              if (!trackMap.has(animationName)) {
+                trackMap.set(animationName, trackIndex);
+                nextTrack++; // שמירת מסלול חדש לשימוש הבא
+              }
+
+              console.log(
+                `Spine: Playing ${animationName} on track ${trackIndex}`
+              );
+              const trackEntry = target.animationState.setAnimation(
+                trackIndex,
+                animationName,
+                loop === "true"
+              );
+
+              if (duration && loop !== "true") {
+                target.scene.time.delayedCall(duration, () => {
+                  target.animationState.setEmptyAnimation(trackIndex, 0);
+                  trackMap.delete(animationName);
+                });
+              }
+            } else if (target instanceof Phaser.GameObjects.Sprite) {
+              // 🎭 **פייזר רגיל** → שימוש באנימציות של sprite
+              console.log(`Sprite: Playing ${animationName}`);
+              target.play(animationName);
+            } else if (target instanceof Phaser.Sound.BaseSound) {
+              // 🎭 **סאונד** → הפעלה של קובץ קול
+              console.log(`Sound: Playing ${animationName}`);
+              target.play();
+            } else {
+              console.warn(`Unknown animation type for ${animationName}`);
+            }
+
             resolve();
           } catch (error) {
-            console.error(`Animation error for ${item.type}:`, error);
-            resolve(); // resolve למרות השגיאה כדי לא לתקוע את האנימציות האחרות
+            console.error(`Animation error for ${animationName}:`, error);
+            resolve();
           }
         }, delay);
       });
     });
 
-    // המתן שכל האנימציות יסתיימו
     await Promise.all(promises);
   }
 

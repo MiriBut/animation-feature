@@ -90,8 +90,8 @@ export class VideoService {
 
       await this.loadTimelineAssets();
 
-      this.countdownTimer = new CountdownTimer(this.scene);
-      await this.countdownTimer.start();
+      // this.countdownTimer = new CountdownTimer(this.scene);
+      // await this.countdownTimer.start();
 
       await this.initializeTimelineElements(); // נעביר את ההתאמות לפונקציה הזו
     } catch (error) {
@@ -254,7 +254,7 @@ export class VideoService {
       timeline?.volume
     ) {
       if (!(sprite instanceof Phaser.Sound.WebAudioSound)) {
-        const audioKey = timelineElement.assetName || "bg_music";
+        const audioKey = timelineElement.assetName;
         let sound = this.scene.sound.get(audioKey);
         if (!sound) {
           sound = this.scene.sound.add(audioKey, {
@@ -277,7 +277,7 @@ export class VideoService {
               easing: "Linear",
               duration: (playConfig.endTime - playConfig.startTime) * 1000,
               delay: playConfig.startTime * 1000,
-              audioKey: timelineElement.assetName || "bg_music",
+              audioKey: timelineElement.assetName,
               loop: playConfig.loop === "true",
               stopOnComplete: playConfig.loop !== "true",
             } as AudioConfig,
@@ -294,7 +294,7 @@ export class VideoService {
               easing: volumeConfig.easeIn || "Linear",
               duration: (volumeConfig.endTime - volumeConfig.startTime) * 1000,
               delay: volumeConfig.startTime * 1000,
-              audioKey: timelineElement.assetName || "bg_music",
+              audioKey: timelineElement.assetName,
               volume: {
                 startValue: volumeConfig.startValue,
                 endValue: volumeConfig.endValue,
@@ -645,7 +645,7 @@ export class VideoService {
       };
 
       if (!sprite) {
-        sprite = this.assetService.displayAsset(
+        sprite = this.assetService.displayElement(
           element.assetName,
           adjustedInitialState,
           element.elementName
@@ -683,7 +683,7 @@ export class VideoService {
 
       if (element.assetType === "audio") {
         if (!sprite || !(sprite instanceof Phaser.Sound.WebAudioSound)) {
-          sprite = this.assetService.displayAsset(
+          sprite = this.assetService.displayElement(
             element.assetName,
             adjustedInitialState,
             element.elementName
@@ -692,7 +692,7 @@ export class VideoService {
         }
       } else if (element.assetType === "text") {
         // שימוש ב-displayAsset עם adjustedInitialState מלא
-        sprite = this.assetService.displayAsset(
+        sprite = this.assetService.displayElement(
           element.assetName,
           {
             ...adjustedInitialState,
@@ -707,7 +707,7 @@ export class VideoService {
         );
         this.activeSprites.set(element.elementName, sprite);
       } else if (!sprite) {
-        sprite = this.assetService.displayAsset(
+        sprite = this.assetService.displayElement(
           element.assetName,
           adjustedInitialState,
           element.elementName
