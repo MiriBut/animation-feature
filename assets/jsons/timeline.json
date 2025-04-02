@@ -20,15 +20,15 @@
       "timeline": {
         "animation": [
           {
-            "animationName": "idle",
+            "animationName": "shoot",
             "startTime": 0,
             "endTime": 10,
             "loop": "true"
           },
           {
             "animationName": "run",
-            "startTime": 11,
-            "endTime": 20,
+            "startTime": 0,
+            "endTime": 10,
             "loop": "true"
           },
           {
@@ -547,13 +547,29 @@
       "timeline": {
         "position": [
           {
-            "startTime": 5,
-            "endTime": 10,
+            "startTime": 0,
+            "endTime": 2,
             "startValue": {
-              "z": 5
+              "x": 200,
+              "y": 200
             },
             "endValue": {
-              "z": -1
+              "x": 200,
+              "y": 400
+            },
+            "easeIn": "Expo.easeIn",
+            "easeOut": "Expo.easeOut"
+          },
+          {
+            "startTime": 3,
+            "endTime": 4,
+            "startValue": {
+              "x": 200,
+              "y": 400
+            },
+            "endValue": {
+              "x": 600,
+              "y": 400
             },
             "easeIn": "Expo.easeIn",
             "easeOut": "Expo.easeOut"

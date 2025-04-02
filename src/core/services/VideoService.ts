@@ -90,8 +90,8 @@ export class VideoService {
 
       await this.loadTimelineAssets();
 
-      this.countdownTimer = new CountdownTimer(this.scene);
-      await this.countdownTimer.start();
+      //this.countdownTimer = new CountdownTimer(this.scene);
+      //await this.countdownTimer.start();
 
       await this.initializeTimelineElements(); // נעביר את ההתאמות לפונקציה הזו
     } catch (error) {

@@ -36,7 +36,7 @@ export class MainScene extends Scene {
   private height!: number;
 
   constructor() {
-    console.log("31.3.25 version 0.1");
+    console.log("02.4.25 version 0.4");
     super({ key: "MainScene" });
   }
 

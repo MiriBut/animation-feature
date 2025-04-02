@@ -2,6 +2,7 @@
 import { Scene } from "phaser";
 import { AnimationPropertyType, AnimationConfig, AudioConfig } from "./types";
 import { AnimationManager } from "./AnimationManager";
+import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist";
 
 export interface SequenceItem {
   type: AnimationPropertyType;
@@ -11,9 +12,16 @@ export interface SequenceItem {
 
 export class SequenceSystem {
   private animationManager: AnimationManager;
+  private activeSpineObjects: Set<SpineGameObject> = new Set();
+  private spineTrackMap: Map<string, number> = new Map();
+  private spineNextTrack: number = 0;
 
   constructor(scene: Scene) {
     this.animationManager = new AnimationManager(scene);
+  }
+
+  private isSpineObject(obj: any): boolean {
+    return obj && obj instanceof SpineGameObject && !!obj.animationState;
   }
 
   /**
@@ -26,11 +34,6 @@ export class SequenceSystem {
     target: Phaser.GameObjects.GameObject | Phaser.Sound.WebAudioSound,
     sequence: SequenceItem[]
   ): Promise<void> {
-    // console.log(
-    //   `[${new Date().toISOString()}] SequenceSystem: Playing sequence with ${
-    //     sequence.length
-    //   } items for ${target.name || "unnamed object"}`
-    // );
     // לוג מידע על כל אנימציה בסדרה
     sequence.forEach((item) => {
       console.log("Playing sequence item:", JSON.stringify(item, null, 2));
@@ -42,40 +45,176 @@ export class SequenceSystem {
       );
     });
 
-    // הפעל את כל האנימציות במקביל ואסוף את ה-promises
-    const promises = sequence.map((item) => {
-      // יצירת עותק של קונפיגורציה כדי לא לשנות את המקור
-      const config = { ...item.config };
+    // אתחול מפת ה-tracks לאנימציות Spine עבור רצף חדש אם מדובר באובייקט Spine
+    if (this.isSpineObject(target)) {
+      this.activeSpineObjects.add(target as SpineGameObject);
+      this.spineTrackMap.clear();
+      this.spineNextTrack = 0;
+    }
 
-      // אנימציה שאמורה להתחיל מאוחר יותר מטופלת באמצעות setTimeout
-      // כך כל האנימציות מופעלות במקביל עם ה-delay המתאים
-      return new Promise<void>((resolve) => {
-        const delay = config.delay || 0;
+    // בדיקה אם יש אנימציות Spine
+    const hasSpineItems =
+      this.isSpineObject(target) &&
+      sequence.some((item) => item.type === "spine");
 
-        // להמתין delay מילישניות לפני הרצת האנימציה
-        setTimeout(async () => {
-          // אחרי ההמתנה, הפעל את האנימציה ללא delay (כבר חיכינו)
-          config.delay = 0;
+    // אם אין אנימציות Spine, נשתמש בקוד המקורי
+    if (!hasSpineItems) {
+      // הפעל את כל האנימציות במקביל ואסוף את ה-promises
+      const promises = sequence.map((item) => {
+        // יצירת עותק של קונפיגורציה כדי לא לשנות את המקור
+        const config = { ...item.config };
 
-          try {
-            await this.animationManager.animate(target, item.type, config);
-            resolve();
-          } catch (error) {
-            console.error(`Animation error for ${item.type}:`, error);
-            resolve(); // resolve למרות השגיאה כדי לא לתקוע את האנימציות האחרות
-          }
-        }, delay);
+        // אנימציה שאמורה להתחיל מאוחר יותר מטופלת באמצעות setTimeout
+        // כך כל האנימציות מופעלות במקביל עם ה-delay המתאים
+        return new Promise<void>((resolve) => {
+          const delay = config.delay || 0;
+
+          // להמתין delay מילישניות לפני הרצת האנימציה
+          setTimeout(async () => {
+            // אחרי ההמתנה, הפעל את האנימציה ללא delay (כבר חיכינו)
+            config.delay = 0;
+
+            try {
+              await this.animationManager.animate(target, item.type, config);
+              resolve();
+            } catch (error) {
+              console.error(`Animation error for ${item.type}:`, error);
+              resolve(); // resolve למרות השגיאה כדי לא לתקוע את האנימציות האחרות
+            }
+          }, delay);
+        });
       });
-    });
 
-    // המתן שכל האנימציות יסתיימו
-    await Promise.all(promises);
+      // המתן שכל האנימציות יסתיימו
+      await Promise.all(promises);
+      return;
+    }
+
+    // אם יש אנימציות Spine, נטפל בהן בנפרד
+    // מיון הפריטים לפי סוג
+    const spineItems = sequence.filter((item) => item.type === "spine");
+    const nonSpineItems = sequence.filter((item) => item.type !== "spine");
+
+    // טיפול באנימציות Spine במקביל
+    if (spineItems.length > 0 && this.isSpineObject(target)) {
+      const spineTarget = target as SpineGameObject;
+      const spinePromises = spineItems.map((item) => {
+        const config = { ...item.config };
+        const animName = (config as AnimationConfig).animationName || "";
+        const delay = item.delay || 0;
+
+        return new Promise<void>((resolve) => {
+          setTimeout(() => {
+            try {
+              if (!animName) {
+                console.warn(
+                  "Spine animation requires animationName, skipping"
+                );
+                resolve();
+                return;
+              }
+
+              // קבל או הקצה מספר track
+              const trackIndex =
+                this.spineTrackMap.get(animName) ?? this.spineNextTrack++;
+              this.spineTrackMap.set(animName, trackIndex);
+
+              const shouldLoop = config.loop === true || config.loop === "true";
+
+              // טיפול במיזוג בין אנימציות
+              if (trackIndex > 0) {
+                const previousAnim = spineTarget.animationState.getCurrent(
+                  trackIndex - 1
+                );
+                if (previousAnim && previousAnim.animation) {
+                  spineTarget.animationStateData.setMix(
+                    previousAnim.animation.name,
+                    animName,
+                    0.2
+                  );
+                }
+              }
+
+              // הפעלת האנימציה
+              spineTarget.animationState.setAnimation(
+                trackIndex,
+                animName,
+                shouldLoop
+              );
+
+              // עצירה לאחר duration אם לא בלולאה
+              if (config.duration && !shouldLoop) {
+                setTimeout(() => {
+                  if (this.activeSpineObjects.has(spineTarget)) {
+                    spineTarget.animationState.setEmptyAnimation(trackIndex, 0);
+                  }
+                }, config.duration);
+              }
+
+              resolve();
+            } catch (error) {
+              console.error(`Spine animation error:`, error);
+              resolve();
+            }
+          }, delay);
+        });
+      });
+
+      // הפעל את אנימציות Spine במקביל
+      await Promise.all(spinePromises);
+    }
+
+    // טיפול בשאר האנימציות בקוד זהה למקורי
+    if (nonSpineItems.length > 0) {
+      const promises = nonSpineItems.map((item) => {
+        // יצירת עותק של קונפיגורציה כדי לא לשנות את המקור
+        const config = { ...item.config };
+
+        // אנימציה שאמורה להתחיל מאוחר יותר מטופלת באמצעות setTimeout
+        // כך כל האנימציות מופעלות במקביל עם ה-delay המתאים
+        return new Promise<void>((resolve) => {
+          const delay = config.delay || 0;
+
+          // להמתין delay מילישניות לפני הרצת האנימציה
+          setTimeout(async () => {
+            // אחרי ההמתנה, הפעל את האנימציה ללא delay (כבר חיכינו)
+            config.delay = 0;
+
+            try {
+              await this.animationManager.animate(target, item.type, config);
+              resolve();
+            } catch (error) {
+              console.error(`Animation error for ${item.type}:`, error);
+              resolve(); // resolve למרות השגיאה כדי לא לתקוע את האנימציות האחרות
+            }
+          }, delay);
+        });
+      });
+
+      // המתן שכל האנימציות שאינן Spine יסתיימו
+      await Promise.all(promises);
+    }
   }
 
   /**
    * עוצר את רצף האנימציות
    */
   stopSequence(target: Phaser.GameObjects.GameObject): void {
+    // עצירת אנימציות Spine
+    if (this.isSpineObject(target)) {
+      const spineObj = target as SpineGameObject;
+      try {
+        // נקה את כל ה-tracks
+        for (let i = 0; i < 10; i++) {
+          spineObj.animationState.setEmptyAnimation(i, 0);
+        }
+        this.activeSpineObjects.delete(spineObj);
+      } catch (err) {
+        console.warn("Error stopping Spine animation:", err);
+      }
+    }
+
+    // עצירת אנימציות רגילות
     this.animationManager.stopAnimations(target);
   }
 
@@ -83,6 +222,16 @@ export class SequenceSystem {
    * משהה את רצף האנימציות
    */
   pauseSequence(target: Phaser.GameObjects.GameObject): void {
+    // השהיית אנימציות Spine
+    if (this.isSpineObject(target)) {
+      try {
+        (target as SpineGameObject).animationState.timeScale = 0;
+      } catch (err) {
+        console.warn("Error pausing Spine animation:", err);
+      }
+    }
+
+    // השהיית אנימציות רגילות
     this.animationManager.pauseAnimations(target);
   }
 
@@ -90,6 +239,16 @@ export class SequenceSystem {
    * ממשיך רצף שהושהה
    */
   resumeSequence(target: Phaser.GameObjects.GameObject): void {
+    // המשך אנימציות Spine
+    if (this.isSpineObject(target)) {
+      try {
+        (target as SpineGameObject).animationState.timeScale = 1;
+      } catch (err) {
+        console.warn("Error resuming Spine animation:", err);
+      }
+    }
+
+    // המשך אנימציות רגילות
     this.animationManager.resumeAnimations(target);
   }
 
@@ -98,13 +257,21 @@ export class SequenceSystem {
    */
   stopAllSequences(): void {
     console.log("SequenceSystem: Stopping all sequences for all objects");
-    // כיוון שאין לנו גישה ישירה לכל האובייקטים,
-    // נסמוך על AnimationManager לעצור את כל האנימציות הפעילות
 
-    // אם יש לך רשימה של אובייקטים פעילים, אתה יכול לעבור עליהם ולעצור את הרצפים:
-    // this.activeTargets.forEach(target => {
-    //   this.stopSequence(target);
-    // });
+    // עצירת כל אנימציות ה-Spine
+    this.activeSpineObjects.forEach((spineObj) => {
+      try {
+        for (let i = 0; i < 10; i++) {
+          spineObj.animationState.setEmptyAnimation(i, 0);
+        }
+      } catch (err) {
+        console.warn("Error stopping Spine animation:", err);
+      }
+    });
+    this.activeSpineObjects.clear();
+
+    // עצירת כל האנימציות הרגילות
+    this.animationManager.stopAll();
   }
 
   /**
@@ -112,9 +279,9 @@ export class SequenceSystem {
    */
   clearAllSequences(): void {
     console.log("SequenceSystem: Clearing all sequences");
-
-    // כאן אפשר לנקות כל מבנה נתונים פנימי שמחזיק מידע על רצפים
-    // לדוגמה, אם יש לך מפה או מערך של רצפים פעילים:
-    // this.activeSequences.clear();
+    this.stopAllSequences();
+    this.activeSpineObjects.clear();
+    this.spineTrackMap.clear();
+    this.spineNextTrack = 0;
   }
 }
