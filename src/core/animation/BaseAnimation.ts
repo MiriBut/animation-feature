@@ -24,6 +24,5 @@ export abstract class BaseAnimation implements IAnimatable {
 
   reset(): void {
     this.currentTween?.stop();
-    // יש להוסיף לוגיקת reset ספציפית בכל מחלקה יורשת
   }
 }

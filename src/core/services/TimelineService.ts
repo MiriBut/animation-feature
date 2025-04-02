@@ -14,29 +14,25 @@ interface AssetValidationResult {
   assetName: string;
   exists: boolean;
   type?: string;
-  loaded?: boolean; // נוסף כדי לעקוב אחרי תוצאות טעינה
+  loaded?: boolean;
 }
 
 export class TimelineService {
   private assetsMap: Map<string, { url: string; type: string }>;
-  private assetService?: AssetService; // אופציונלי: לשילוב עם AssetService
+  private assetService?: AssetService;
 
   constructor(
     assetsMap: Map<string, { url: string; type: string }>,
     assetService?: AssetService
   ) {
     this.assetsMap = assetsMap;
-    this.assetService = assetService; // אם תרצה לטעון נכסים חסרים
+    this.assetService = assetService;
     console.log("TimelineService initialized with assetsMap:", assetsMap.size);
   }
 
   public async handleTimelineJson(file: File): Promise<void> {
     try {
       console.log("Starting to handle timeline JSON file:", file.name);
-
-      // this.showDirectMessage("טוען טיימליין", [
-      //   { type: "info", content: `טוען את קובץ ${file.name}...` },
-      // ]);
 
       const fileContent = await file.text();
       let json: TimelineJson;
@@ -45,9 +41,6 @@ export class TimelineService {
         json = JSON.parse(fileContent) as TimelineJson;
         console.log("Timeline JSON parsed successfully");
       } catch (parseError) {
-        // this.showDirectMessage("שגיאת פענוח JSON", [
-        //   { type: "error", content: "הקובץ אינו בפורמט JSON תקין" },
-        // ]);
         return;
       }
 
@@ -55,23 +48,11 @@ export class TimelineService {
         !json["template video json"] ||
         !Array.isArray(json["template video json"])
       ) {
-        // this.showDirectMessage("מבנה קובץ שגוי", [
-        //   {
-        //     type: "error",
-        //     content: "חסר מפתח 'template video json' או שאינו מערך",
-        //   },
-        // ]);
         return;
       }
 
       const validationErrors = await this.validateTimelineJson(json);
       if (validationErrors.length > 0) {
-        // this.showDirectMessage("בעיות במבנה קובץ הטיימליין", [
-        //   ...validationErrors.map((error) => ({
-        //     type: "error" as MessageType,
-        //     content: error,
-        //   })),
-        // ]);
         return;
       }
 
@@ -81,27 +62,9 @@ export class TimelineService {
       this.displayLoadResults(assetValidationResults);
 
       console.log("Timeline handling process completed");
-    } catch (error) {
-      // const errorMessage =
-      //   error instanceof Error
-      //     ? error.message
-      //     : "שגיאה לא ידועה בטעינת הטיימליין";
-      // this.showDirectMessage("שגיאה בטעינת הטיימליין", [
-      //   { type: "error", content: errorMessage },
-      // ]);
-    }
+    } catch (error) {}
   }
 
-  // private showDirectMessage(title: string, messages: Message[]): void {
-  //   showMessage({
-  //     isOpen: true,
-  //     title: title,
-  //     messages: messages,
-  //     autoClose: false,
-  //   });
-  // }
-
-  // שילוב בדיקה וטעינה של נכסים
   public async validateAndLoadAssets(
     elements: TimelineElement[]
   ): Promise<AssetValidationResult[]> {
@@ -148,38 +111,15 @@ export class TimelineService {
     const messages: any[] = [];
 
     if (successfulAssets.length > 0) {
-      // messages.push(
-      //   createSuccessMessage(
-      //     `${successfulAssets.length} ${
-      //       successfulAssets.length === 1 ? "נכס נטען" : "נכסים נטענו"
-      //     } בהצלחה`
-      //   )
-      // );
-      successfulAssets.forEach((asset) => {
-        // messages.push(
-        //   createInfoMessage(
-        //     `נטען בהצלחה: ${asset.assetName} (סוג: ${asset.type || "לא ידוע"})`
-        //   )
-        // );
-      });
+      successfulAssets.forEach((asset) => {});
     }
 
     if (failedAssets.length > 0) {
-      failedAssets.forEach((asset) => {
-        // messages.push(
-        //   createErrorMessage(`נכשל בטעינה: ${asset.assetName} - לא נמצא במערכת`)
-        // );
-      });
+      failedAssets.forEach((asset) => {});
     }
 
     console.log("Messages prepared:", messages);
-    // showMessage({
-    //   isOpen: true,
-    //   title: "תוצאות טעינת נכסים לטיימליין",
-    //   messages: messages,
-    //   autoClose: successfulAssets.length > 0 && failedAssets.length === 0,
-    //   autoCloseTime: 5000,
-    // });
+
     console.log("displayLoadResults completed");
   }
 

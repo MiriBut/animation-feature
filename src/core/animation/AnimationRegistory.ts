@@ -57,9 +57,9 @@ export class AnimationRegistry {
       }
     }
 
-    // בדיקה אם מדובר באובייקט וידאו
+    // Check if this is a video object
     if (target instanceof Phaser.GameObjects.Video) {
-      // אפשר גם סקיילינג לוידאו, אבל לא רוטציה וצבע
+      // We can do scaling for video, but not rotation or color
       if (type !== "position" && type !== "opacity" && type !== "scale") {
         throw new Error(
           `Animation type ${type} not supported for Video objects`
@@ -75,7 +75,7 @@ export class AnimationRegistry {
       }
     }
 
-    // וידאים אם מדובר באובייקט מונפש
+    // Verify if this is an animatable object
     if (
       !(target instanceof Phaser.GameObjects.Sprite) &&
       !(target instanceof Phaser.GameObjects.Image) &&

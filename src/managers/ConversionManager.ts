@@ -147,7 +147,7 @@ export class ConversionManager {
         "-i",
         "input.webm",
         "-vf",
-        "scale=iw:ih", // שמירה על הרזולוציה המקורית
+        "scale=iw:ih",
         "-c:v",
         "libx264",
         "-preset",

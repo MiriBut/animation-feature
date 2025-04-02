@@ -38,25 +38,25 @@ export class SpineAnimation implements IAnimatable {
       if (this.target.animationState) {
         const isLoop = config.loop === "true";
 
-        // קביעת trackIndex לפי סוג האנימציה
+        // Set trackIndex based on animation type
         let trackIndex = 0;
         if (animationName.includes("arm") || animationName.includes("shoot")) {
-          trackIndex = 1; // אנימציות של ידיים נפרדות מהריצה
+          trackIndex = 1; // Arm animations are separate from running
         }
 
-        // הפעלת האנימציה במסלול המתאים
+        // Start the animation on the appropriate track
         const trackEntry = this.target.animationState.setAnimation(
           trackIndex,
           animationName,
           isLoop
         );
-        this.activeTracks.add(trackIndex); // סימון מסלול כפעיל
+        this.activeTracks.add(trackIndex); // Mark track as active
 
-        // תזמון עצירת האנימציה אם היא לא בלולאה
+        // Schedule animation stop if not looping
         this.scene.time.delayedCall(duration, () => {
           if (!isLoop) {
             this.target.animationState.setEmptyAnimation(trackIndex, 0);
-            this.activeTracks.delete(trackIndex); // שחרור המסלול
+            this.activeTracks.delete(trackIndex); // Release the track
           }
           resolve();
         });
