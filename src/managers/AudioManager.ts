@@ -98,7 +98,6 @@ export class AudioManager {
           ) {
             // גישה ל-AudioNode המתאים
             if (sound.hasOwnProperty("_pan")) {
-              // Phaser 3 גרסה חדשה יותר של
               const panNode = (sound as any)._pan;
               if (panNode && panNode.connect && this.destination) {
                 panNode.connect(this.destination);
@@ -221,37 +220,37 @@ export class AudioManager {
           "No WebAudio sounds were connected. Trying special solutions..."
         );
 
-        // פתרון גיבוי - נסה ליצור קשר ישירות עם הקונטקסט
+        // Backup solution - try to contact the context directly
         if (this.audioContext && this.destination) {
           try {
-            // בדוק אם הסאונד מנג'ר מחזיק ב-master gain
+            // Check if the sound manager has master gain
             const manager = this.mainScene.sound;
             if ((manager as any).masterVolumeNode) {
               (manager as any).masterVolumeNode.connect(this.destination);
               console.log("Connected master volume node to destination");
             }
 
-            // פתרון מתקדם - יצירת OscillatorNode סמוי שיאפשר לנו לחבר את המערכת
+            // Advanced solution - creating a hidden OscillatorNode that will allow us to connect the system
             const dummyOscillator = this.audioContext.createOscillator();
             const dummyGain = this.audioContext.createGain();
-            dummyGain.gain.value = 0; // העוצמה אפס כדי שלא יישמע
 
-            // בנה מעקף חיבור למערכת הסאונד
+            // Volume is zero so it won't be heard
+            dummyGain.gain.value = 0;
+
+            // Build a bypass connection to the sound system
             if ((manager as any).destination) {
-              // הזרם הקלט של המנג'ר
               const managerDestination = (manager as any).destination;
 
-              // חבר את האוסילטור לגיין ולאחר מכן הן ליעד המקורי והן ליעד ההקלטה
               dummyOscillator.connect(dummyGain);
               dummyGain.connect(managerDestination);
               dummyGain.connect(this.destination);
 
-              // הפעל את האוסילטור
+              // Start the oscillator
               dummyOscillator.start();
 
               console.log("Set up audio routing bypass system");
 
-              // לניקוי מאוחר יותר
+              // for later cleanup
               setTimeout(() => {
                 dummyOscillator.stop();
                 dummyOscillator.disconnect();
@@ -259,18 +258,16 @@ export class AudioManager {
               }, 10000);
             }
 
-            // גישה מתקדמת נוספת - ניסיון לתפוס את הסאונדים ישירות מהקונטקסט
+            // For later cleanup // Another advanced approach - trying to grab the sounds directly from the context
             const contextAny = this.audioContext as any;
             if (contextAny && contextAny.destination) {
-              // נסה לגשת למאפיינים פנימיים של הקונטקסט
+              // Try to access internal properties of the context
               console.log("Attempting to access context internal nodes");
               const contextDestination = contextAny.destination;
 
-              // יצירת מעקף
               const bypassGain = this.audioContext.createGain();
               bypassGain.gain.value = 1.0;
 
-              // נסה למצוא את כל ה-nodes שאפשר לחבר
               for (const prop in contextAny) {
                 if (
                   contextAny[prop] &&
@@ -281,12 +278,12 @@ export class AudioManager {
                     contextAny[prop].connect(bypassGain);
                     console.log(`Connected context.${prop} to bypass gain`);
                   } catch (e) {
-                    // התעלם משגיאות חיבור
+                    // Ignore connection errors
                   }
                 }
               }
 
-              // חבר את ה-bypass gain ליעד ההקלטה
+              // Connect the bypass gain to the recording destination
               bypassGain.connect(this.destination);
               console.log("Set up context-level audio routing");
             }
@@ -295,18 +292,19 @@ export class AudioManager {
           }
         }
 
-        // בכל מקרה, מומלץ ליצור סאונד חדש כדי לוודא שיש משהו ב-stream
+        // In any case, it is recommended to create a new sound to make sure there is something in the stream
         try {
           const syntheticSound = this.audioContext.createOscillator();
           const synthGain = this.audioContext.createGain();
-          synthGain.gain.value = 0.01; // כמעט לא נשמע, אבל מספיק כדי ליצור stream
+          synthGain.gain.value = 0.01;
+          // Almost inaudible, but enough to create a stream
 
           syntheticSound.connect(synthGain);
           synthGain.connect(this.destination!);
 
           syntheticSound.start();
 
-          // עצור אחרי זמן קצר
+          // Stop after a short time
           setTimeout(() => {
             syntheticSound.stop();
             syntheticSound.disconnect();
@@ -354,11 +352,10 @@ export class AudioManager {
   }
 
   // Add this method to AudioManager class (if not already present)
-  // תיקון ל-AudioManager.stopAllAudio
   public stopAllAudio(): void {
     console.log("AudioManager: Stopping all audio");
 
-    // בדוק אם sound קיים לפני הגישה אליו
+    // Check if sound exists before accessing it
     if (this.sound && typeof this.sound.stopAll === "function") {
       this.sound.stopAll();
     } else {
@@ -366,19 +363,11 @@ export class AudioManager {
         "AudioManager: sound object is undefined or doesn't have stopAll method"
       );
 
-      // ניסיון גישה ישירה ל-sound של הסצנה
       if (
         this.mainScene.sound &&
         typeof this.mainScene.sound.stopAll === "function"
       ) {
         this.mainScene.sound.stopAll();
-      }
-    }
-
-    // עצור רקע מוזיקלי אם קיים
-    if (this.backgroundMusic) {
-      if (typeof this.backgroundMusic.stop === "function") {
-        this.backgroundMusic.stop();
       }
     }
   }

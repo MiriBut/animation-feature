@@ -1,0 +1,11 @@
+skeleton.png
+size:577,473
+filter:Linear,Linear
+pma:true
+chest
+bounds:2,2,469,514
+offsets:69,43,600,600
+rotate:90
+simple_coin
+bounds:518,414,57,57
+offsets:4,3,64,64

@@ -1,4 +1,4 @@
-// הוסף את הקוד הזה בתחילת ExportManager.ts
+// Add this code at the beginning of ExportManager.ts
 import { PhaserAudioRecorder } from "./PhaserAudioRecorder";
 
 import { Scene } from "phaser";
@@ -8,8 +8,6 @@ import {
   LoadingModal,
   LoadingModalProps,
 } from "../ui/LoadingModal/LoadingModal";
-
-// שנה את המחלקה ExportManager לפי הקוד הבא:
 
 export class ExportManager {
   private scene: Scene;
@@ -22,14 +20,12 @@ export class ExportManager {
   private initializationAttempts: number = 0;
   private readonly MAX_INIT_ATTEMPTS = 3;
 
-  // הוסף שדה חדש לרקורדר האודיו שלנו
   private audioRecorder: PhaserAudioRecorder;
 
   constructor(scene: Scene, audioManager: AudioManager) {
     this.scene = scene;
     this.audioManager = audioManager;
     this.conversionManager = new ConversionManager();
-    // יצירת מופע של הרקורדר החדש
     this.audioRecorder = new PhaserAudioRecorder(scene);
   }
 
@@ -41,16 +37,16 @@ export class ExportManager {
     try {
       this.initializationAttempts++;
 
-      // אתחול מערכת האודיו הרגילה
+      // Initialize the regular audio system
       await this.audioManager.ensureAudioContext();
       if (!this.audioManager.isAudioReady()) {
         console.log("Audio not ready, waiting...");
         await new Promise((resolve) => setTimeout(resolve, 500));
-        return await this.ensureAudioInitialized(); // נסה שוב
+        return await this.ensureAudioInitialized(); // Retry
       }
       console.log("Audio initialized successfully");
 
-      // אתחול מערכת הרקורדר החדשה
+      // Initialize the new recorder system
       const recorderInitialized = await this.audioRecorder.initialize();
       if (!recorderInitialized) {
         console.warn(
@@ -60,7 +56,7 @@ export class ExportManager {
         console.log("Advanced audio recorder initialized successfully");
       }
 
-      // בדיקת האודיו סטרים (גם מהמערכת הרגילה וגם מהרקורדר המתקדם)
+      // Check the audio stream (both from the standard system and the advanced recorder)
       const audioStream = await this.getOptimalAudioStream();
       if (!audioStream || audioStream.getAudioTracks().length === 0) {
         throw new Error("No audio tracks available in any audio system");
@@ -73,16 +69,16 @@ export class ExportManager {
     }
   }
 
-  // מתודה חדשה לבחירת סטרים האודיו הטוב ביותר
+  // New method to select the best audio stream
   private async getOptimalAudioStream(): Promise<MediaStream | undefined> {
-    // קודם נסה להשיג סטרים מהרקורדר המתקדם
+    // First, try to get a stream from the advanced recorder
     const advancedStream = this.audioRecorder.getAudioStream();
     if (advancedStream && advancedStream.getAudioTracks().length > 0) {
       console.log("Using advanced audio recorder stream");
       return advancedStream;
     }
 
-    // אם לא הצליח, נפנה למערכת הרגילה
+    // If that fails, fall back to the standard system
     console.log("Falling back to standard audio manager");
     return await this.audioManager.getAudioStream();
   }
@@ -94,7 +90,7 @@ export class ExportManager {
     }
 
     try {
-      // אתחול מערכות האודיו לפני תחילת ההקלטה
+      // Initialize audio systems before starting recording
       const isAudioReady = await this.ensureAudioInitialized();
       if (!isAudioReady) {
         throw new Error(
@@ -105,7 +101,7 @@ export class ExportManager {
       const canvas = this.scene.game.canvas;
       const videoStream = canvas.captureStream(30);
 
-      // השג סטרים אודיו עם מנגנון ניסיון חוזר
+      // Get an audio stream with a retry mechanism
       const audioStream = await this.retryGetAudioStream();
       if (!audioStream) {
         throw new Error("Failed to initialize audio stream");
@@ -118,7 +114,7 @@ export class ExportManager {
       audioTracks.forEach((track) => {
         if (track.enabled === false || track.muted) {
           console.warn("Audio track is muted or disabled:", track);
-          // נסה להפעיל את הטרק
+          // Try enabling the track
           track.enabled = true;
         }
       });
@@ -155,7 +151,7 @@ export class ExportManager {
   ): Promise<MediaStream | undefined> {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        // נסה להשיג סטרים אודיו מהמערכת האופטימלית
+        // Try to get an audio stream from the optimal system
         const stream = await this.getOptimalAudioStream();
         if (!stream || stream.getAudioTracks().length === 0) {
           console.log(`Attempt ${attempt}: No audio tracks, retrying...`);

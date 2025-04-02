@@ -2,7 +2,6 @@ import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist";
 import { AudioAnimation, SpineAnimation } from "./animations";
 import { AnimatableGameObject } from "./types";
 
-// utils.ts - פונקציית isAnimatable משופרת
 export function isAnimatable(obj: unknown): obj is AnimatableGameObject {
   return (
     obj !== null &&

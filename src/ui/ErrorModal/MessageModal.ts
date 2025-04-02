@@ -412,15 +412,4 @@ export function showMessage(props: MessageModalProps): void {
   MessageModal.getInstance().show(props);
 }
 
-/* Usage example:
-showMessage({
-  isOpen: true,
-  title: "תוצאות טעינת קבצים",
-  messages: [
-    formatErrorMessage("image.png", "קובץ פגום"),
-    formatSuccessMessage(5),
-    formatInfoMessage("העיבוד ימשיך ברקע")
-  ],
-  autoClose: false
-});
-*/
+

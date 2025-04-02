@@ -191,7 +191,7 @@ export class AssetService {
           };
 
           // הצגת האלמנט
-          this.displayAsset(assetName, properties, elementName);
+          this.displayElement(assetName, properties, elementName);
           console.log(
             `AssetService: Displayed ${elementName} with asset ${assetName}`
           );
@@ -288,7 +288,7 @@ export class AssetService {
 
   // === Display Methods ===
 
-  public displayAsset(
+  public displayElement(
     assetName: string,
     properties: AssetDisplayProperties,
     elementName: string
@@ -306,29 +306,29 @@ export class AssetService {
 
     this.cleanupExistingSprite(assetInfo);
 
-    const spriteOrAudio = this.createSprite(assetName, assetInfo, properties);
+    const element = this.createElement(assetName, assetInfo, properties);
 
-    if (spriteOrAudio instanceof Phaser.Sound.WebAudioSound) {
-      this.applyAudioProperties(spriteOrAudio, properties);
+    if (element instanceof Phaser.Sound.WebAudioSound) {
+      this.applyAudioProperties(element, properties);
     } else if (
-      spriteOrAudio instanceof Phaser.GameObjects.Video ||
-      spriteOrAudio instanceof Phaser.GameObjects.Sprite ||
-      spriteOrAudio instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
-      spriteOrAudio instanceof SpineGameObject
+      element instanceof Phaser.GameObjects.Video ||
+      element instanceof Phaser.GameObjects.Sprite ||
+      element instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
+      element instanceof SpineGameObject
     ) {
-      spriteOrAudio.name = elementName;
+      element.name = elementName;
       properties.pivot = this.getAssetPivot(assetName);
-      this.applyBasicProperties(spriteOrAudio, properties, assetName);
-      if (spriteOrAudio instanceof Phaser.GameObjects.Sprite) {
+      this.applyBasicProperties(element, properties, assetName);
+      if (element instanceof Phaser.GameObjects.Sprite) {
         // העברת aspect_ratio_override ל-applyAdvancedProperties
-        this.applyAdvancedProperties(spriteOrAudio, {
+        this.applyAdvancedProperties(element, {
           ...properties,
           ratio: assetInfo.aspect_ratio_override || properties.ratio,
         });
       }
-    } else if (spriteOrAudio instanceof Phaser.GameObjects.Text) {
-      spriteOrAudio.name = elementName;
-      this.applyBasicProperties(spriteOrAudio, properties, assetName);
+    } else if (element instanceof Phaser.GameObjects.Text) {
+      element.name = elementName;
+      this.applyBasicProperties(element, properties, assetName);
     }
 
     // חישוב ושמירת מיקום יחסי מקורי
@@ -342,7 +342,7 @@ export class AssetService {
 
     this.elementsMap.set(elementName, {
       assetName: assetName,
-      sprite: spriteOrAudio,
+      sprite: element,
       originalScale: originalScale,
       originalRelativeX: originalRelativeX,
       originalRelativeY: originalRelativeY,
@@ -352,7 +352,7 @@ export class AssetService {
       `displayAsset [Displayed ${assetName} as ${elementName} (${assetInfo.type}) on scene]`
     );
 
-    return spriteOrAudio;
+    return element;
   }
 
   private cleanupExistingSprite(assetInfo: AssetInfo): void {
@@ -379,7 +379,7 @@ export class AssetService {
     );
   }
 
-  private createSprite(
+  private createElement(
     assetName: string,
     assetInfo: AssetInfo,
     properties: AssetDisplayProperties

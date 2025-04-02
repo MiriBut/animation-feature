@@ -5,6 +5,7 @@ import { AnimatableGameObject, AnimationConfig, IAnimatable } from "../types";
 export class SpineAnimation implements IAnimatable {
   private scene: Scene;
   private target: SpineGameObject;
+  private activeTracks: Set<number> = new Set(); // Tracks currently in use
 
   constructor(scene: Scene, target: AnimatableGameObject) {
     this.scene = scene;
@@ -25,8 +26,8 @@ export class SpineAnimation implements IAnimatable {
       const animationNames = this.target.skeleton.data.animations.map(
         (a) => a.name
       );
-      //console.log("Available animations:", animationNames);
-      console.log("acive animation for spine " + animationName);
+      console.log("Available animations:", animationNames);
+      console.log("Active animation for spine: " + animationName);
 
       if (!animationNames.includes(animationName)) {
         console.warn(`Animation ${animationName} not found, skipping.`);
@@ -35,11 +36,28 @@ export class SpineAnimation implements IAnimatable {
       }
 
       if (this.target.animationState) {
-        const isLoop = config.loop == "true" ? true : false;
-        this.target.animationState.setAnimation(0, animationName, isLoop);
+        const isLoop = config.loop === "true";
 
+        // Set trackIndex based on animation type
+        let trackIndex = 0;
+        if (animationName.includes("arm") || animationName.includes("shoot")) {
+          trackIndex = 1; // Arm animations are separate from running
+        }
+
+        // Start the animation on the appropriate track
+        const trackEntry = this.target.animationState.setAnimation(
+          trackIndex,
+          animationName,
+          isLoop
+        );
+        this.activeTracks.add(trackIndex); // Mark track as active
+
+        // Schedule animation stop if not looping
         this.scene.time.delayedCall(duration, () => {
-          this.target.animationState.setEmptyAnimation(0, 0);
+          if (!isLoop) {
+            this.target.animationState.setEmptyAnimation(trackIndex, 0);
+            this.activeTracks.delete(trackIndex); // Release the track
+          }
           resolve();
         });
       } else {
@@ -63,7 +81,11 @@ export class SpineAnimation implements IAnimatable {
 
   stop(): void {
     if (this.target.animationState) {
-      this.target.animationState.setEmptyAnimation(0, 0);
+      // Stop all active tracks
+      this.activeTracks.forEach((trackIndex) => {
+        this.target.animationState.setEmptyAnimation(trackIndex, 0);
+      });
+      this.activeTracks.clear();
     }
   }
 

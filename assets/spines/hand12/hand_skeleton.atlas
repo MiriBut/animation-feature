@@ -1,0 +1,7 @@
+hand_skeleton.png
+size:845,896
+filter:Linear,Linear
+pma:true
+hand_cleaned
+bounds:2,2,841,892
+offsets:168,56,1024,1024
