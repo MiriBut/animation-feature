@@ -140,7 +140,7 @@ export class SequenceSystem {
           "first loop " + ("loop" in config ? config.loop : "undefined")
         );
 
-        if (!safeAnimName && item.type !== "audio") {
+        if (!safeAnimName && item.type == "spine") {
           if (target instanceof Phaser.Sound.BaseSound) {
             console.log("Audio item without animationName - continuing");
           } else {
