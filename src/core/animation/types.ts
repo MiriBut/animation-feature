@@ -13,7 +13,7 @@ export type AnimationPropertyType =
 
 export interface AnimationConfig {
   property: AnimationPropertyType;
-  startValue?: any; // שינוי לאופציונלי
+  startValue?: any;
   endValue?: any;
   duration: number;
   easing: string;

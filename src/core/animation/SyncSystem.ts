@@ -28,7 +28,7 @@ export class SyncSystem {
   async playSync(groups: SyncGroup[]): Promise<void> {
     console.log("playSync");
     const promises = groups.map((group) => {
-      // מקרה 1: אם האודיו מגיע כאובייקט AudioConfig בודד
+      // Case 1: If audio comes as a single AudioConfig object
       if (
         !Array.isArray(group.sequence) &&
         typeof group.sequence === "object" &&
@@ -47,11 +47,11 @@ export class SyncSystem {
         ];
         return this.sequenceSystem.playSequence(group.target, audioSequence);
       }
-      // מקרה 2: אם זה מערך שמכיל אנימציית אודיו
+      // Case 2: If it's an array containing audio animation
       else if (Array.isArray(group.sequence)) {
         console.log("Checking sequence array for audio items...");
 
-        // בדוק אם יש פריטי אודיו במערך
+        // Check if there are audio items in the array
         const audioItems = group.sequence.filter(
           (item) => item.type === "audio"
         );
@@ -73,7 +73,7 @@ export class SyncSystem {
   }
 
   /**
-   * מריץ אנימציה בודדת על מספר אובייקטים בו-זמנית
+   * Runs a single animation on multiple objects simultaneously
    */
   async animateMultiple(
     targets: Phaser.GameObjects.GameObject[],
@@ -137,17 +137,17 @@ export class SyncSystem {
   private stopAllAnimations(): void {
     console.log("SyncSystem: Stopping all active animations");
 
-    // עצירת כל האנימציות במנהל האנימציות
+    // Stop all animations in the animation manager
     this.animationManager.stopAll();
 
-    // עצירת כל רצפי האנימציות במערכת הרצפים
+    // Stop all animation sequences in the sequence system
     this.sequenceSystem.stopAllSequences();
   }
 
   private clearTimeline(): void {
     console.log("SyncSystem: Clearing animation timeline data");
 
-    // איפוס או ניקוי נתוני טיימליין (אם יש)
+    // Reset or clear timeline data (if any)
     this.sequenceSystem.clearAllSequences();
   }
 

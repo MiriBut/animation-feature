@@ -1,18 +1,15 @@
 import { TimelineAnimation } from "../../types/interfaces/TimelineInterfaces";
 import { showMessage } from "../../ui/ErrorModal/MessageModal";
-import { TimelineJson } from "../../types/interfaces/TimelineInterfaces"; // וודא את הנתיב הנכון
+import { TimelineJson } from "../../types/interfaces/TimelineInterfaces"; // Ensure the correct path
 
 export class Helpers {
-  /**
-   * בודק אם נכס קיים בשרת
-   */
   static async checkAssetExists(url: string): Promise<boolean> {
     try {
-      // נסה מספר אסטרטגיות לבדיקת נכס
+      // Try multiple strategies to check the asset
       const fullUrls = [
-        url, // הנתיב המקורי
-        `/assets/images/${url}`, // נסה עם תחילית סטטית
-        `${window.location.origin}/assets/images/${url}`, // נסה עם מקור מלא
+        url, // Original path
+        `/assets/images/${url}`, // Try with a static prefix
+        `${window.location.origin}/assets/images/${url}`, // Try with full origin
       ];
 
       for (const fullUrl of fullUrls) {
@@ -31,21 +28,21 @@ export class Helpers {
   }
 
   /**
-   * מאמת ומפרסר קובץ JSON
+   * Validates and parses a JSON file
    */
   static async validateAndParseJson(file: File): Promise<any> {
     try {
       const text = await file.text();
       const json = JSON.parse(text);
 
-      // הוסף לוגים מפורטים יותר
+      // Add more detailed logs
       console.log("Parsed JSON structure:", Object.keys(json));
 
       if (!json || typeof json !== "object") {
         throw new Error("Invalid JSON structure: Root must be an object");
       }
 
-      // הגדל את הבדיקות
+      // Enhance validation
       const isTemplate = json["template video json"] !== undefined;
       const isAsset = json.assets !== undefined;
 
@@ -56,7 +53,7 @@ export class Helpers {
 
       return json;
     } catch (error) {
-      // הוסף לוג מפורט יותר לשגיאות
+      // Add more detailed error logging
       console.error("JSON parsing error:", error);
 
       if (error instanceof Error) {
@@ -72,7 +69,7 @@ export class Helpers {
         const exists = await this.checkAssetExists(item.assetName);
         if (!exists) {
           console.warn(`Asset not found: ${item.assetName}`);
-          // אופציונלי: זרוק שגיאה אם חסר נכס קריטי
+          // Optional: Throw an error if a critical asset is missing
           // throw new Error(`Missing asset: ${item.assetName}`);
         }
       }
@@ -82,7 +79,7 @@ export class Helpers {
   }
 
   /**
-   * בודק אם טווחי זמן חופפים
+   * Checks if time ranges overlap
    */
   static isTimeRangeOverlapping(
     anim1: TimelineAnimation,
@@ -92,7 +89,7 @@ export class Helpers {
   }
 
   /**
-   * מטפל בשגיאות בצורה אחידה
+   * Handles errors uniformly
    */
   static handleError(error: unknown, title: string = "Unexpected Error"): void {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -106,7 +103,7 @@ export class Helpers {
   }
 
   /**
-   * ממיר צבע מפורמט CSS לפורמט Phaser
+   * Converts a CSS color format to Phaser color format
    */
   static cssColorToPhaserColor(cssColor: string): number {
     if (cssColor.startsWith("#")) {
@@ -115,11 +112,11 @@ export class Helpers {
     if (cssColor.startsWith("0x")) {
       return parseInt(cssColor, 16);
     }
-    return 0xffffff; // ברירת מחדל - לבן
+    return 0xffffff; // Default - white
   }
 
   /**
-   * מעגל מספר לדיוק מוגדר
+   * Rounds a number to a defined precision
    */
   static roundToDecimalPlaces(num: number, decimals: number = 2): number {
     const factor = Math.pow(10, decimals);
@@ -127,7 +124,7 @@ export class Helpers {
   }
 
   /**
-   * בודק אם שני אובייקטים שווים (שימושי להשוואת מצבים)
+   * Checks if two objects are equal (useful for state comparisons)
    */
   static areObjectsEqual(obj1: any, obj2: any): boolean {
     if (obj1 === obj2) return true;
@@ -148,14 +145,14 @@ export class Helpers {
   }
 
   /**
-   * יוצר מזהה ייחודי
+   * Generates a unique identifier
    */
   static generateUniqueId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**
-   * ממיר מילישניות לפורמט זמן קריא
+   * Converts milliseconds to a readable time format
    */
   static formatTime(ms: number): string {
     const seconds = Math.floor(ms / 1000);

@@ -29,7 +29,6 @@ export class SceneUI {
     this.assetService = assetService;
     this.mainScene = mainScene;
 
-    // שמירת המידות ההתחלתיות של הסצנה
     this.currentWidth = assetService["scene"].scale.width; // גישה ישירה לscene
     this.currentHeight = assetService["scene"].scale.height;
 
@@ -177,9 +176,6 @@ export class SceneUI {
     };
 
     this.container.appendChild(resolutionSelect);
-    // this.container.appendChild(bgButton);
-    //this.container.appendChild(musicButton);
-    //this.container.appendChild(characterButton);
     this.container.appendChild(assetJsonButton);
     this.container.appendChild(timelineJsonButton);
     this.container.appendChild(exportButton);

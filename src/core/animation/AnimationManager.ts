@@ -17,7 +17,7 @@ export interface AnimationQueueItem {
 
 export class AnimationManager {
   private registry: AnimationRegistry;
-  // מיפוי אובייקט -> סוג אנימציה -> אנימציה פעילה
+  // Mapping: object -> animation type -> active animation
   private activeAnimations: Map<string, Map<string, IAnimatable>> = new Map();
   private animationQueue: Map<string, AnimationQueueItem[]> = new Map();
 
@@ -26,7 +26,7 @@ export class AnimationManager {
     //console.log(`[${new Date().toISOString()}] AnimationManager: Initialized`);
   }
 
-  // מתחיל אנימציה חדשה על אובייקט
+  // Starts a new animation on an object
   async animate(
     target: Phaser.GameObjects.GameObject | any,
     type: AnimationPropertyType,
@@ -36,7 +36,7 @@ export class AnimationManager {
 
     const objectAnimations = this.activeAnimations.get(objectId) || new Map();
 
-    // אם יש אנימציה קיימת מאותו סוג, עצור אותה
+    // If there's an existing animation of the same type, stop it
     if (objectAnimations.has(type)) {
       console.log(
         `AnimationManager: Stopping previous ${type} animation for ${objectId}`
@@ -49,10 +49,10 @@ export class AnimationManager {
     }
 
     try {
-      // יצירת האנימציה
+      // Create the animation
       const animation = this.registry.createAnimation(type, this.scene, target);
 
-      // שמירת האנימציה במיפוי
+      // Store the animation in the mapping
       if (!this.activeAnimations.has(objectId)) {
         this.activeAnimations.set(objectId, new Map());
       }
@@ -64,17 +64,17 @@ export class AnimationManager {
         `AnimationManager: Animation ${type} for ${objectId} actual start at ${actualStartTime}`
       );
 
-      // הפעלת האנימציה
+      // Start the animation
       await animation.play(config);
 
-      // אחרי שהאנימציה הסתיימה
+      // After the animation is complete
       console.log(
         `AnimationManager: Animation ${type} for ${objectId} completed after ${
           Date.now() - actualStartTime
         }ms`
       );
 
-      // הסרה מהמיפוי
+      // Remove from mapping
       this.activeAnimations.get(objectId)?.delete(type);
       if (this.activeAnimations.get(objectId)?.size === 0) {
         this.activeAnimations.delete(objectId);
@@ -92,14 +92,14 @@ export class AnimationManager {
     }
   }
 
-  // עוצר את כל האנימציות על אובייקט
+  // Stops all animations on an object
   stopAnimations(target: Phaser.GameObjects.GameObject): void {
     const objectId = this.getObjectId(target);
     console.log(`AnimationManager: Stopping all animations for ${objectId}`);
 
     const objectAnimations = this.activeAnimations.get(objectId);
     if (objectAnimations) {
-      // עצור את כל האנימציות
+      // Stop all animations
       objectAnimations.forEach((animation, type) => {
         console.log(
           `AnimationManager: Stopping ${type} animation for ${objectId}`
@@ -109,18 +109,18 @@ export class AnimationManager {
       this.activeAnimations.delete(objectId);
     }
 
-    // ניקוי התור
+    // Clear the queue
     this.animationQueue.delete(objectId);
   }
 
-  // משהה את כל האנימציות על אובייקט
+  // Pauses all animations on an object
   pauseAnimations(target: Phaser.GameObjects.GameObject): void {
     const objectId = this.getObjectId(target);
     console.log(`AnimationManager: Pausing all animations for ${objectId}`);
 
     const objectAnimations = this.activeAnimations.get(objectId);
     if (objectAnimations) {
-      // השהה את כל האנימציות
+      // Pause all animations
       objectAnimations.forEach((animation, type) => {
         console.log(
           `AnimationManager: Pausing ${type} animation for ${objectId}`
@@ -130,14 +130,14 @@ export class AnimationManager {
     }
   }
 
-  // ממשיך אנימציות שהושהו
+  // Resumes paused animations
   resumeAnimations(target: Phaser.GameObjects.GameObject): void {
     const objectId = this.getObjectId(target);
     console.log(`AnimationManager: Resuming all animations for ${objectId}`);
 
     const objectAnimations = this.activeAnimations.get(objectId);
     if (objectAnimations) {
-      // המשך את כל האנימציות
+      // Resume all animations
       objectAnimations.forEach((animation, type) => {
         console.log(
           `AnimationManager: Resuming ${type} animation for ${objectId}`
@@ -147,14 +147,14 @@ export class AnimationManager {
     }
   }
 
-  // מאפס את כל האנימציות לאובייקט
+  // Resets all animations for an object
   resetAnimations(target: Phaser.GameObjects.GameObject): void {
     const objectId = this.getObjectId(target);
     console.log(`AnimationManager: Resetting all animations for ${objectId}`);
 
     const objectAnimations = this.activeAnimations.get(objectId);
     if (objectAnimations) {
-      // אפס את כל האנימציות
+      // Reset all animations
       objectAnimations.forEach((animation, type) => {
         console.log(
           `AnimationManager: Resetting ${type} animation for ${objectId}`
@@ -164,11 +164,11 @@ export class AnimationManager {
       this.activeAnimations.delete(objectId);
     }
 
-    // ניקוי התור
+    // Clear the queue
     this.animationQueue.delete(objectId);
   }
 
-  // בודק אם יש אנימציה פעילה על אובייקט
+  // Checks if there is an active animation on an object
   hasActiveAnimation(
     target: Phaser.GameObjects.GameObject,
     type?: AnimationPropertyType
@@ -180,23 +180,23 @@ export class AnimationManager {
       return false;
     }
 
-    // אם סוג ספציפי הוגדר, בדוק רק אותו
+    // If a specific type is defined, check only that one
     if (type) {
       return objectAnimations.has(type);
     }
 
-    // אחרת, בדוק אם יש אנימציות פעילות בכלל
+    // Otherwise, check if there are any active animations at all
     return objectAnimations.size > 0;
   }
 
-  // מקבל את כל האנימציות בתור לאובייקט
+  // Gets all animations in the queue for an object
   getQueuedAnimations(
     target: Phaser.GameObjects.GameObject
   ): AnimationQueueItem[] {
     return this.animationQueue.get(this.getObjectId(target)) || [];
   }
 
-  // מקבל את כל האנימציות הפעילות לאובייקט
+  // Gets all active animations for an object
   getActiveAnimationTypes(
     target: Phaser.GameObjects.GameObject
   ): AnimationPropertyType[] {
@@ -250,16 +250,16 @@ export class AnimationManager {
   }
 
   /**
-   * עוצר את כל האנימציות על כל האובייקטים
+   * Stops all animations on all objects
    */
   stopAll(): void {
     console.log("AnimationManager: Stopping all animations for all objects");
 
-    // עבור על כל האובייקטים עם אנימציות פעילות ועצור אותן
+    // Go through all objects with active animations and stop them
     this.activeAnimations.forEach((animations, objectId) => {
       console.log(`AnimationManager: Stopping all animations for ${objectId}`);
 
-      // עצור את כל האנימציות לאובייקט
+      // Stop all animations for the object
       animations.forEach((animation, type) => {
         console.log(
           `AnimationManager: Stopping ${type} animation for ${objectId}`
@@ -268,10 +268,10 @@ export class AnimationManager {
       });
     });
 
-    // נקה את המיפוי של האנימציות הפעילות
+    // Clear the active animations mapping
     this.activeAnimations.clear();
 
-    // נקה את תור האנימציות
+    // Clear the animation queue
     this.animationQueue.clear();
   }
 }

@@ -7,7 +7,7 @@ import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist";
 export interface SequenceItem {
   type: AnimationPropertyType;
   config: AnimationConfig | AudioConfig;
-  delay?: number; // עיכוב לפני הפעלת האנימציה
+  delay?: number; // Delay before starting the animation
 }
 
 export class SequenceSystem {
@@ -18,17 +18,17 @@ export class SequenceSystem {
   }
 
   /**
-   * מפעיל רצף אנימציות על אובייקט מטרה
+   * Plays a sequence of animations on a target object
    *
-   * @param target האובייקט עליו יופעלו האנימציות
-   * @param sequence רצף האנימציות להפעלה
+   * @param target The object to apply animations to
+   * @param sequence The sequence of animations to play
    */
   async playSequence(
     target: Phaser.GameObjects.GameObject | Phaser.Sound.BaseSound,
     sequence: SequenceItem[]
   ): Promise<void> {
-    const trackMap: Map<string, number> = new Map(); // שמירת מסלולים ל-Spine בלבד
-    let nextTrack = 0; // המסלול הבא לשימוש ב-Spine
+    const trackMap: Map<string, number> = new Map(); // Store tracks for Spine only
+    let nextTrack = 0; // Next track to use for Spine
 
     const promises = sequence.map((item) => {
       return new Promise<void>((resolve) => {
@@ -48,13 +48,13 @@ export class SequenceSystem {
         setTimeout(async () => {
           try {
             if (target instanceof SpineGameObject) {
-              // 🎭 **Spine** → ניהול מסלולים דינמי
+              // 🎭 **Spine** → Dynamic track management
               let trackIndex = trackMap.has(animationName)
                 ? trackMap.get(animationName)!
                 : nextTrack;
               if (!trackMap.has(animationName)) {
                 trackMap.set(animationName, trackIndex);
-                nextTrack++; // שמירת מסלול חדש לשימוש הבא
+                nextTrack++; // Save new track for next use
               }
 
               console.log(
@@ -73,11 +73,11 @@ export class SequenceSystem {
                 });
               }
             } else if (target instanceof Phaser.GameObjects.Sprite) {
-              // 🎭 **פייזר רגיל** → שימוש באנימציות של sprite
+              // 🎭 **Regular Phaser** → Use sprite animations
               console.log(`Sprite: Playing ${animationName}`);
               target.play(animationName);
             } else if (target instanceof Phaser.Sound.BaseSound) {
-              // 🎭 **סאונד** → הפעלה של קובץ קול
+              // 🎭 **Sound** → Play audio file
               console.log(`Sound: Playing ${animationName}`);
               target.play();
             } else {
@@ -97,48 +97,48 @@ export class SequenceSystem {
   }
 
   /**
-   * עוצר את רצף האנימציות
+   * Stops the animation sequence
    */
   stopSequence(target: Phaser.GameObjects.GameObject): void {
     this.animationManager.stopAnimations(target);
   }
 
   /**
-   * משהה את רצף האנימציות
+   * Pauses the animation sequence
    */
   pauseSequence(target: Phaser.GameObjects.GameObject): void {
     this.animationManager.pauseAnimations(target);
   }
 
   /**
-   * ממשיך רצף שהושהה
+   * Resumes a paused sequence
    */
   resumeSequence(target: Phaser.GameObjects.GameObject): void {
     this.animationManager.resumeAnimations(target);
   }
 
   /**
-   * עוצר את כל רצפי האנימציות לכל האובייקטים
+   * Stops all animation sequences for all objects
    */
   stopAllSequences(): void {
     console.log("SequenceSystem: Stopping all sequences for all objects");
-    // כיוון שאין לנו גישה ישירה לכל האובייקטים,
-    // נסמוך על AnimationManager לעצור את כל האנימציות הפעילות
+    // Since we don't have direct access to all objects,
+    // we rely on AnimationManager to stop all active animations
 
-    // אם יש לך רשימה של אובייקטים פעילים, אתה יכול לעבור עליהם ולעצור את הרצפים:
+    // If you have a list of active targets, you can iterate and stop sequences:
     // this.activeTargets.forEach(target => {
     //   this.stopSequence(target);
     // });
   }
 
   /**
-   * מנקה את כל הרצפים מהמערכת
+   * Clears all sequences from the system
    */
   clearAllSequences(): void {
     console.log("SequenceSystem: Clearing all sequences");
 
-    // כאן אפשר לנקות כל מבנה נתונים פנימי שמחזיק מידע על רצפים
-    // לדוגמה, אם יש לך מפה או מערך של רצפים פעילים:
+    // Here you can clear any internal data structures holding sequence information
+    // For example, if you have a map or array of active sequences:
     // this.activeSequences.clear();
   }
 }

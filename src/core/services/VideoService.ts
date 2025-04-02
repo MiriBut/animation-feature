@@ -38,13 +38,13 @@ export class VideoService {
   > = new Map();
   private countdownTimer: CountdownTimer | null = null;
   testSpine: SpineGameObject | null | undefined;
-  private currentWidth: number; // משתנה חדש לרזולוציה הנוכחית
-  private currentHeight: number; // משתנה חדש לרזולוציה הנוכחית
+  private currentWidth: number; // New variable for current resolution
+  private currentHeight: number; // New variable for current resolution
 
   constructor(private scene: Scene, private assetService: AssetService) {
     this.syncSystem = new SyncSystem(scene);
-    this.currentWidth = scene.scale.width; // אתחול ראשוני
-    this.currentHeight = scene.scale.height; // אתחול ראשוני
+    this.currentWidth = scene.scale.width; // Initial setup
+    this.currentHeight = scene.scale.height; // Initial setup
     this.setupScene();
   }
 
@@ -55,14 +55,14 @@ export class VideoService {
     newHeight: number
   ): void {
     console.log(`handleResize in video service`);
-    // עדכון הרזולוציה הנוכחית
+    // Update current resolution
     this.currentWidth = newWidth;
     this.currentHeight = newHeight;
 
-    // שימוש ב-handleResize של AssetService להתאמת הספרייטים
+    // Use AssetService's handleResize to adjust sprites
     this.assetService.handleResize(oldWidth, oldHeight, newWidth, newHeight);
 
-    // התאמת הטיימליין מחדש
+    // Readjust the timeline
     this.initializeTimelineElements();
   }
 
@@ -81,7 +81,7 @@ export class VideoService {
 
       this.timelineData = timeline;
 
-      // עדכון הרזולוציה הנוכחית לפני הטעינה
+      // Update current resolution before loading
       this.currentWidth = this.scene.scale.width;
       this.currentHeight = this.scene.scale.height;
       console.log(
@@ -93,7 +93,7 @@ export class VideoService {
       // this.countdownTimer = new CountdownTimer(this.scene);
       // await this.countdownTimer.start();
 
-      await this.initializeTimelineElements(); // נעביר את ההתאמות לפונקציה הזו
+      await this.initializeTimelineElements(); // We'll pass the adjustments to this function
     } catch (error) {
       showMessage({
         isOpen: true,
@@ -133,7 +133,6 @@ export class VideoService {
     const failedAssets = loadResults.filter(({ result }) => !result.success);
     if (failedAssets.length > 0) {
       console.error("VideoService: Failed assets:", failedAssets);
-      // כאן אפשר גם להציג התראה למשתמש על אסטים שנכשלו
     }
 
     const allLoaded = loadResults.every(({ result }) => result.success);
@@ -154,13 +153,13 @@ export class VideoService {
   ): { x: number; y: number } {
     const assetInfo = this.assetService.getAssetInfo(assetName);
 
-    // קבלת ה-Scale הראשוני מ-scale_override או baseScale
+    // Get initial Scale from scale_override or baseScale
     let adjustedScaleX =
       (assetInfo?.scale_override?.x ?? baseScaleX) * widthRatio;
     let adjustedScaleY =
       (assetInfo?.scale_override?.y ?? baseScaleY) * heightRatio;
 
-    // חישוב Aspect Ratio
+    // Calculate Aspect Ratio
     let aspectRatio = 1;
     if (assetInfo?.aspect_ratio_override) {
       const { width, height } = assetInfo.aspect_ratio_override;
@@ -169,7 +168,7 @@ export class VideoService {
         `Using aspect_ratio_override for ${assetName}: ${aspectRatio}`
       );
 
-      // התאמת ה-Scale ל-Aspect Ratio, תוך שימוש בציר הקטן יותר כבסיס
+      // Adjust the Scale to the Aspect Ratio, using the smaller axis as the base
       const minScale = Math.min(adjustedScaleX, adjustedScaleY);
       if (aspectRatio > 1) {
         adjustedScaleX = minScale * aspectRatio;
@@ -197,7 +196,7 @@ export class VideoService {
         );
       }
 
-      // התאמה ל-Aspect Ratio של הספרייט רק אם אין scale_override
+      // Adjust to sprite's Aspect Ratio only if there is no scale_override
       if (aspectRatio > 1) {
         adjustedScaleX = adjustedScaleY * aspectRatio;
       } else {
@@ -238,11 +237,11 @@ export class VideoService {
         | SpineGameObject;
     }
 
-    // שימוש ברזולוציה הנוכחית שנשמרה
+    // Use the current resolution that was saved
     const screenWidth = this.currentWidth;
     const screenHeight = this.currentHeight;
 
-    // לוג לבדיקת הערכים
+    // Log to check values
     console.log(
       `Converting timeline for ${timelineElement.elementName} with resolution ${screenWidth}x${screenHeight}`
     );
@@ -399,7 +398,7 @@ export class VideoService {
       }
     }
 
-    // Handle position - השתמש בערכים המותאמים ישירות
+    // Handle position - use adjusted values directly
     if (timeline?.position) {
       // Loop through all position animations
       timeline.position.forEach((positionAnim) => {
@@ -539,7 +538,7 @@ export class VideoService {
   public async handleResolutionChange(): Promise<void> {
     console.log("VideoService: Handling resolution change - clearing assets");
 
-    // סינון ה-GameObjects שיכולים להישלח ל-stopAll
+    // Filter GameObjects that can be sent to stopAll
     const gameObjects = [...this.activeSprites.values()].filter(
       (sprite) =>
         sprite instanceof Phaser.GameObjects.Sprite ||
@@ -549,12 +548,12 @@ export class VideoService {
         sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
     ) as Phaser.GameObjects.GameObject[];
 
-    // עצירת כל האנימציות עבור GameObjects
+    // Stop all animations for GameObjects
     if (gameObjects.length > 0) {
       this.syncSystem.stopAll(gameObjects);
     }
 
-    // הרס כל האסטים (ספרייטים, סאונד וכו')
+    // Destroy all assets (sprites, sound etc.)
     this.activeSprites.forEach((sprite) => {
       if (sprite instanceof Phaser.Sound.WebAudioSound) {
         sprite.stop();
@@ -565,14 +564,14 @@ export class VideoService {
     });
     this.activeSprites.clear();
 
-    // ניקוי הטיימליין והטיימר בלבד, בלי לאפס את ה-syncSystem או הסצנה
+    // Clear the timeline and timer only, without resetting the syncSystem or scene
     this.timelineData = null;
     if (this.countdownTimer) {
       this.countdownTimer.destroy();
       this.countdownTimer = null;
     }
 
-    // עדכון הרזולוציה הנוכחית
+    // Update current resolution
     this.currentWidth = this.scene.scale.width;
     this.currentHeight = this.scene.scale.height;
 
@@ -691,16 +690,16 @@ export class VideoService {
           this.activeSprites.set(element.elementName, sprite);
         }
       } else if (element.assetType === "text") {
-        // שימוש ב-displayAsset עם adjustedInitialState מלא
+        // Use displayAsset with full adjustedInitialState
         sprite = this.assetService.displayElement(
           element.assetName,
           {
             ...adjustedInitialState,
-            text: element.initialState.text ?? "", // ערך ברירת מחדל לטקסט
-            fontSize: adjustedInitialState.fontSize ?? "32px", // ערך ברירת מחדל
-            color: adjustedInitialState.color ?? "#ffffff", // ערך ברירת מחדל
-            fontStyle: adjustedInitialState.fontStyle ?? "normal", // ערך ברירת מחדל
-            fontWeight: adjustedInitialState.fontWeight ?? "normal", // ערך ברירת מחדל
+            text: element.initialState.text ?? "", // Default value for text
+            fontSize: adjustedInitialState.fontSize ?? "32px", // Default value
+            color: adjustedInitialState.color ?? "#ffffff", // Default value
+            fontStyle: adjustedInitialState.fontStyle ?? "normal", // Default value
+            fontWeight: adjustedInitialState.fontWeight ?? "normal", // Default value
             textDecoration: adjustedInitialState.textDecoration ?? undefined,
           },
           element.elementName
@@ -715,7 +714,7 @@ export class VideoService {
         this.activeSprites.set(element.elementName, sprite);
       }
 
-      // הגדרת עומק (depth)
+      // Set depth
       if (
         sprite instanceof Phaser.GameObjects.Sprite ||
         sprite instanceof Phaser.GameObjects.Image ||
@@ -749,7 +748,7 @@ export class VideoService {
       }
     }
 
-    // הסתרת אלמנטים לא פעילים
+    // Hide inactive elements
     for (const [elementName, sprite] of this.activeSprites.entries()) {
       if (!activeElements.has(elementName)) {
         if (
@@ -770,7 +769,7 @@ export class VideoService {
     }
   }
 
-  // פונקציה חדשה להתאמת הטיימליין לרזולוציה
+  // New function to adjust timeline to resolution
   private adjustTimeline(
     timeline: any,
     widthRatio: number,
@@ -883,7 +882,7 @@ export class VideoService {
         sprite instanceof Phaser.GameObjects.Container ||
         sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
       ) {
-        this.syncSystem.pauseAll([sprite]); // או resumeAll/stopAll
+        this.syncSystem.pauseAll([sprite]);
       }
     });
   }
@@ -947,13 +946,10 @@ export class VideoService {
   public async clearAllAssets(): Promise<void> {
     console.log("VideoService: Clearing all video assets");
     await this.assetService.reset(); // נוסף
-    // עצור את כל האנימציות הפעילות
     this.stopAllAnimations();
 
-    // עצור וידאו
     this.stopAllVideos();
 
-    // הרס כל הספרייטים הפעילים
     this.activeSprites.forEach((sprite, elementName) => {
       try {
         console.log(`VideoService: Destroying sprite ${elementName}`);
@@ -962,15 +958,12 @@ export class VideoService {
           sprite.stop();
           sprite.destroy();
         } else if (sprite instanceof Phaser.GameObjects.Container) {
-          // נקה את כל האובייקטים בקונטיינר קודם
           sprite.removeAll(true);
           sprite.destroy();
         } else {
-          // ניסיון להסיר את האובייקט מהסצנה
           if (sprite.destroy) {
             sprite.destroy();
           } else {
-            // גיבוי למקרה שאין מתודת destroy
             this.scene.children.remove(sprite);
           }
         }
@@ -979,13 +972,10 @@ export class VideoService {
       }
     });
 
-    // נקה את מפת הספרייטים הפעילים
     this.activeSprites.clear();
 
-    // איפוס נתוני הטיימליין
     this.timelineData = null;
 
-    // ניקוי הטיימר אם קיים
     if (this.countdownTimer) {
       this.countdownTimer.destroy();
       this.countdownTimer = null;
@@ -998,15 +988,12 @@ export class VideoService {
   private stopAllVideos(): void {
     console.log("VideoService: Stopping all active videos");
 
-    // מעבר על כל האסטים במפה ועצירת וידאו
     this.activeSprites.forEach((sprite, elementName) => {
-      // עצירת וידאו אם זהו אובייקט וידאו
       if (sprite instanceof Phaser.GameObjects.Video) {
         sprite.stop();
         console.log(`Stopped video: ${elementName}`);
       }
 
-      // אם זה מכיל וידאו בתוך קונטיינר
       if (sprite instanceof Phaser.GameObjects.Container) {
         const children = sprite.getAll();
         children.forEach((child) => {
@@ -1022,40 +1009,8 @@ export class VideoService {
   private clearCache(): void {
     console.log("VideoService: Clearing video cache");
 
-    // אם יש נתוני טיימליין, נאפס אותם
     this.timelineData = null;
 
-    // בשלב זה, נוותר על מחיקת טקסטורות כדי למנוע שגיאות
-    // נשמור את הקוד הקודם כפי שהוא, אבל נסמן אותו כבהערה כרגע
-
-    /*
-    // ניקוי קאש טקסטורות עבור וידאו - הקוד שהיה קודם
-    const textures = this.scene.textures;
-    const protectedTextures = ['__DEFAULT', '__MISSING'];
-    
-    // איסוף שמות של טקסטורות שקשורות לוידאו כדי למחוק אותן
-    const videoTextureKeys: string[] = [];
-    this.activeSprites.forEach((sprite, elementName) => {
-      if (sprite instanceof Phaser.GameObjects.Video || 
-          sprite instanceof Phaser.GameObjects.Sprite) {
-        // שמור את מפתח הטקסטורה אם הוא קיים
-        const textureKey = sprite.texture?.key;
-        if (textureKey && !protectedTextures.includes(textureKey)) {
-          videoTextureKeys.push(textureKey);
-        }
-      }
-    });
-    
-    // מחיקת הטקסטורות ששמרנו
-    videoTextureKeys.forEach(key => {
-      if (textures.exists(key)) {
-        textures.remove(key);
-        console.log(`Removed texture from cache: ${key}`);
-      }
-    });
-    */
-
-    // במקום זאת, רק נרשום לוג שאנחנו מדלגים על ניקוי הטקסטורות כדי להימנע משגיאות
     console.log(
       "VideoService: Skipping texture cache clearing to avoid errors"
     );
@@ -1064,13 +1019,11 @@ export class VideoService {
   private resetState(): void {
     console.log("VideoService: Resetting internal state");
 
-    // איפוס משתנים פנימיים
     if (this.countdownTimer) {
       this.countdownTimer.destroy();
       this.countdownTimer = null;
     }
 
-    // ניקוי המפה של הספרייטים הפעילים
     this.activeSprites.clear();
   }
 }
