@@ -7,7 +7,7 @@ import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist";
 export interface SequenceItem {
   type: AnimationPropertyType;
   config: AnimationConfig | AudioConfig;
-  delay?: number;
+  delay?: number; // עיכוב לפני הפעלת האנימציה
 }
 
 export class SequenceSystem {
@@ -31,7 +31,7 @@ export class SequenceSystem {
    * @param sequence רצף האנימציות להפעלה
    */
   async playSequence(
-    target: Phaser.GameObjects.GameObject | Phaser.Sound.BaseSound,
+    target: Phaser.GameObjects.GameObject | Phaser.Sound.WebAudioSound,
     sequence: SequenceItem[]
   ): Promise<void> {
     // לוג מידע על כל אנימציה בסדרה
@@ -196,17 +196,9 @@ export class SequenceSystem {
     }
   }
 
-  private safelyStopSpineAnimation(spineObj: SpineGameObject): void {
-    if (!this.isValidSpineObject(spineObj)) return;
-    try {
-      for (let i = 0; i < 10; i++) {
-        spineObj.animationState.setEmptyAnimation(i, 0);
-      }
-    } catch (err) {
-      console.warn("Error stopping Spine animation:", err);
-    }
-  }
-
+  /**
+   * עוצר את רצף האנימציות
+   */
   stopSequence(target: Phaser.GameObjects.GameObject): void {
     // עצירת אנימציות Spine
     if (this.isSpineObject(target)) {
@@ -226,6 +218,9 @@ export class SequenceSystem {
     this.animationManager.stopAnimations(target);
   }
 
+  /**
+   * משהה את רצף האנימציות
+   */
   pauseSequence(target: Phaser.GameObjects.GameObject): void {
     // השהיית אנימציות Spine
     if (this.isSpineObject(target)) {
@@ -240,6 +235,9 @@ export class SequenceSystem {
     this.animationManager.pauseAnimations(target);
   }
 
+  /**
+   * ממשיך רצף שהושהה
+   */
   resumeSequence(target: Phaser.GameObjects.GameObject): void {
     // המשך אנימציות Spine
     if (this.isSpineObject(target)) {
@@ -254,31 +252,9 @@ export class SequenceSystem {
     this.animationManager.resumeAnimations(target);
   }
 
-  private cancelAllDelayedCalls(): void {
-    const delayedCallsToRemove = Array.from(this.activeDelayedCalls);
-    for (const timerEvent of delayedCallsToRemove) {
-      try {
-        if (
-          timerEvent &&
-          timerEvent.getProgress &&
-          timerEvent.getProgress() < 1
-        ) {
-          timerEvent.remove(false);
-        }
-      } catch (err) {
-        console.warn("Error removing delayed call:", err);
-      }
-    }
-    this.activeDelayedCalls.clear();
-    try {
-      if (this.scene && this.scene.time) {
-        this.scene.time.removeAllEvents();
-      }
-    } catch (err) {
-      console.warn("Error removing all time events:", err);
-    }
-  }
-
+  /**
+   * עוצר את כל רצפי האנימציות לכל האובייקטים
+   */
   stopAllSequences(): void {
     console.log("SequenceSystem: Stopping all sequences for all objects");
 
