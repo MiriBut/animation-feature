@@ -271,14 +271,11 @@ export class VideoService {
             type: "audio",
             config: {
               property: "audio",
-              startValue: undefined,
-              endValue: undefined,
-              easing: "Linear",
+              easing: playConfig.easeIn || "Linear",
               duration: (playConfig.endTime - playConfig.startTime) * 1000,
               delay: playConfig.startTime * 1000,
               audioKey: timelineElement.assetName,
               loop: playConfig.loop === "true",
-              stopOnComplete: playConfig.loop !== "true",
             } as AudioConfig,
           });
         });
@@ -298,7 +295,6 @@ export class VideoService {
                 startValue: volumeConfig.startValue,
                 endValue: volumeConfig.endValue,
               },
-              stopOnComplete: false,
             } as AudioConfig,
           });
         });
@@ -398,9 +394,8 @@ export class VideoService {
       }
     }
 
-    // Handle position - use adjusted values directly
+    // Handle position
     if (timeline?.position) {
-      // Loop through all position animations
       timeline.position.forEach((positionAnim) => {
         const startZ =
           positionAnim.startValue.z ??
@@ -435,7 +430,7 @@ export class VideoService {
 
     // Handle opacity
     if (timeline?.opacity) {
-      const opacityAnim = timeline.opacity[0]; // Get first animation
+      const opacityAnim = timeline.opacity[0];
       sequence.push({
         type: "opacity",
         config: {
@@ -466,7 +461,7 @@ export class VideoService {
           targetSprite instanceof Phaser.GameObjects.Text;
 
         if (isSupported) {
-          const scaleAnim = timeline.scale[0]; // Get first animation
+          const scaleAnim = timeline.scale[0];
           sequence.push({
             type: "scale",
             config: {

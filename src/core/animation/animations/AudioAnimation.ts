@@ -20,6 +20,7 @@ export class AudioAnimation implements IAnimatable {
     }
   }
 
+  // AudioAnimation.ts
   async play(config: AnimationConfig | AudioConfig): Promise<void> {
     if (config.property !== "audio") return;
     const audioConfig = config as AudioConfig;
@@ -76,7 +77,6 @@ export class AudioAnimation implements IAnimatable {
             `AudioAnimation: Playing ${audioConfig.audioKey} at ${this.scene.time.now}ms`
           );
 
-          // Check if sound is already playing
           if (this.sound?.isPlaying) {
             console.log(
               `AudioAnimation: Sound ${audioConfig.audioKey} is already playing, stopping before replay`
@@ -84,12 +84,10 @@ export class AudioAnimation implements IAnimatable {
             this.sound.stop();
           }
 
-          // Parse loop value
           const shouldLoop =
             audioConfig.loop === true || audioConfig.loop === "true";
           console.log(`AudioAnimation: Setting loop to ${shouldLoop}`);
 
-          // Play the sound
           this.sound?.play({
             loop: shouldLoop,
             volume:
@@ -98,7 +96,7 @@ export class AudioAnimation implements IAnimatable {
                 : this.sound.volume,
           });
 
-          // Always set a timer to stop after duration (regardless of loop setting)
+          // Always set stop timer if duration is provided, regardless of loop
           if (audioConfig.duration) {
             console.log(
               `AudioAnimation: Setting stop timer for ${audioConfig.duration}ms`
@@ -114,7 +112,7 @@ export class AudioAnimation implements IAnimatable {
               }
             );
           } else {
-            // No duration defined, resolve promise immediately
+            // Resolve immediately if no duration
             resolve();
           }
         }
