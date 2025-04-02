@@ -95,7 +95,6 @@ export class SequenceSystem {
     target: Phaser.GameObjects.GameObject | Phaser.Sound.BaseSound,
     sequence: SequenceItem[]
   ): Promise<void> {
-    // Early return if system is in resetting state or destroyed
     if (this.isResetting || this.isDestroyed) {
       console.warn(
         "SequenceSystem: System is resetting or destroyed, ignoring sequence request"
@@ -103,7 +102,6 @@ export class SequenceSystem {
       return;
     }
 
-    // Check if target is valid
     if (!target) {
       console.warn(
         "SequenceSystem: Invalid target provided (null or undefined)"
@@ -111,7 +109,6 @@ export class SequenceSystem {
       return;
     }
 
-    // Track Spine objects
     if (target instanceof SpineGameObject) {
       if (!this.isValidSpineObject(target)) {
         console.warn("SequenceSystem: Invalid Spine object provided");
@@ -125,123 +122,196 @@ export class SequenceSystem {
 
     const promises = sequence.map((item) => {
       return new Promise<void>((resolve) => {
-        const {
-          animationName,
-          loop,
-          delay = 0,
-          duration,
-        } = item.config as AnimationConfig;
+        // Destructure only common properties first
+        const { delay = 0, duration, easing } = item.config;
 
-        if (!animationName) {
-          console.warn("⚠️ Missing animationName, skipping.");
-          resolve();
-          return;
+        // Type-specific properties will be accessed later with type checking
+        const config = item.config as AnimationConfig | AudioConfig;
+        const safeAudioKey = (config as AudioConfig).audioKey || "";
+        const displayName = safeAudioKey || "audio";
+
+        // Check animationName only where needed
+        let safeAnimName = "";
+        if ("animationName" in config) {
+          safeAnimName = (config as AnimationConfig).animationName || "";
         }
 
-        // Create unique ID for this animation request
-        const animId = `${animationName}_${Date.now()}_${Math.random()
+        console.log(
+          "first loop " + ("loop" in config ? config.loop : "undefined")
+        );
+
+        if (!safeAnimName && item.type !== "audio") {
+          if (target instanceof Phaser.Sound.BaseSound) {
+            console.log("Audio item without animationName - continuing");
+          } else {
+            console.warn("⚠️ Missing animationName, skipping.");
+            resolve();
+            return;
+          }
+        }
+
+        const animId = `${displayName}_${Date.now()}_${Math.random()
           .toString(36)
           .substr(2, 9)}`;
         this.pendingAnimations.set(animId, true);
 
-        // Create and track delayed call
         const delayedCall = this.scene.time.delayedCall(delay, () => {
-          // Safety checks
           if (this.isResetting || this.isDestroyed) {
             this.pendingAnimations.delete(animId);
             resolve();
             return;
           }
 
-          // Remove this from pending animations when done
           this.pendingAnimations.delete(animId);
 
           try {
-            // Double check target is still valid - this is critical
             if (target instanceof SpineGameObject) {
               if (!this.isValidSpineObject(target)) {
                 console.warn(
-                  `Animation target for ${animationName} is no longer valid, skipping`
+                  `Animation target for ${displayName} is no longer valid, skipping`
                 );
                 resolve();
                 return;
               }
-
-              // Handle Spine animation
-              let trackIndex = trackMap.get(animationName) ?? nextTrack++;
-              trackMap.set(animationName, trackIndex);
-
-              // Only attempt to play if the object is still valid
+              if (!safeAnimName) {
+                console.warn(
+                  `Spine animation requires animationName, skipping`
+                );
+                resolve();
+                return;
+              }
+              let trackIndex = trackMap.get(safeAnimName) ?? nextTrack++;
+              trackMap.set(safeAnimName, trackIndex);
               try {
+                const shouldLoop =
+                  "loop" in config &&
+                  (config.loop === "true" || config.loop === true);
                 const trackEntry = target.animationState.setAnimation(
                   trackIndex,
-                  animationName,
-                  loop === "true"
+                  safeAnimName,
+                  shouldLoop
                 );
-
-                if (duration && loop !== "true") {
+                if (duration && !shouldLoop) {
                   const durationCall = this.scene.time.delayedCall(
                     duration,
                     () => {
-                      // Check again if target is still valid
                       if (this.isValidSpineObject(target)) {
                         target.animationState.setEmptyAnimation(trackIndex, 0);
                       }
                     }
                   );
-
                   this.activeDelayedCalls.add(durationCall);
                 }
               } catch (err) {
                 console.warn(
-                  `Failed to set animation ${animationName} on track ${trackIndex}`,
+                  `Failed to set animation ${safeAnimName} on track ${trackIndex}`,
                   err
                 );
               }
             } else if (target instanceof Phaser.GameObjects.Sprite) {
-              // Handle Sprite animation
-              if (!this.isValidGameObject(target)) {
+              if (!safeAnimName) {
                 console.warn(
-                  `Sprite for ${animationName} is no longer valid, skipping`
+                  `Sprite animation requires animationName, skipping`
                 );
                 resolve();
                 return;
               }
-
+              if (!this.isValidGameObject(target)) {
+                console.warn(
+                  `Sprite for ${safeAnimName} is no longer valid, skipping`
+                );
+                resolve();
+                return;
+              }
               try {
-                target.play(animationName, true);
+                target.play(safeAnimName, true);
               } catch (err) {
                 console.warn(
-                  `Failed to play sprite animation ${animationName}`,
+                  `Failed to play sprite animation ${safeAnimName}`,
                   err
                 );
               }
             } else if (target instanceof Phaser.Sound.BaseSound) {
-              // Handle audio playback
               try {
-                if (!target.isPlaying) {
-                  target.play();
+                const shouldLoop =
+                  "loop" in config &&
+                  (config.loop === "true" || config.loop === true);
+                const durationMs = duration || 0;
+                const volume = (config as AudioConfig).volume;
+
+                // Handle playback for 'play' items
+                if (!volume) {
+                  if (target.isPlaying) {
+                    console.log(
+                      `Stopping sound ${safeAudioKey} before replaying`
+                    );
+                    target.stop();
+                  }
+                  console.log(
+                    `Playing sound${
+                      safeAudioKey ? ": " + safeAudioKey : ""
+                    } with loop: ${shouldLoop}, duration: ${durationMs}ms`
+                  );
+                  target.play({
+                    loop: shouldLoop,
+                  });
+
+                  if (durationMs > 0) {
+                    const stopCall = this.scene.time.delayedCall(
+                      durationMs,
+                      () => {
+                        if (target.isPlaying) {
+                          console.log(
+                            `Stopping sound ${safeAudioKey} after duration ${durationMs}ms`
+                          );
+                          target.stop();
+                        }
+                      }
+                    );
+                    this.activeDelayedCalls.add(stopCall);
+                  }
+                }
+                // Handle volume changes for 'volume' items
+                else if (
+                  typeof volume === "object" &&
+                  "startValue" in volume &&
+                  "endValue" in volume
+                ) {
+                  console.log(
+                    `Adjusting volume for ${safeAudioKey} from ${volume.startValue} to ${volume.endValue}`
+                  );
+                  this.scene.tweens.add({
+                    targets: target,
+                    volume: {
+                      from: volume.startValue,
+                      to: volume.endValue,
+                    },
+                    duration: durationMs,
+                    ease: easing || "Linear",
+                    onComplete: () => {
+                      console.log(
+                        `Volume change completed for ${safeAudioKey}`
+                      );
+                    },
+                  });
                 }
               } catch (err) {
-                console.warn(`Failed to play sound ${animationName}`, err);
+                console.warn(`Failed to process sound ${safeAudioKey}`, err);
               }
             } else {
-              // This is where the "Unknown animation type" message comes from
-              // Only log if we're not resetting and target still exists
               if (!this.isResetting && target) {
                 console.warn(
-                  `Unknown or invalid animation target for ${animationName}`
+                  `Unknown or invalid animation target for ${displayName}`
                 );
               }
             }
           } catch (error) {
-            console.error(`Animation error for ${animationName}:`, error);
+            console.error(`Animation error for ${displayName}:`, error);
           }
 
           resolve();
         });
 
-        // Track delayed call
         this.activeDelayedCalls.add(delayedCall);
       });
     });
