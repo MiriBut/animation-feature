@@ -1,6 +1,29 @@
 {
   "assets": [
     {
+      "assetName": "title_text",
+      "assetType": "text",
+      "fontFamily": "myfont1",
+      "assetUrl": "assets/fonts/devil-summoner-italic.ttf"
+    },
+    {
+      "assetName": "title_text1",
+      "assetType": "text",
+      "fontFamily": "myfont2",
+      "assetUrl": "assets/fonts/V5PRC___.TTF"
+    },
+    {
+      "assetName": "title_text2",
+      "assetType": "text",
+      "fontFamily": "Arial",
+      "assetUrl": "none"
+    },
+    {
+      "assetName": "kick",
+      "assetUrl": "assets/audio/kick_h_08-224057.mp3",
+      "assetType": "audio"
+    },
+    {
       "assetName": "character_spine",
       "assetUrl": {
         "atlasUrl": "assets/spines/skelSpineBoy/spineboy-pma.atlas",
@@ -8,10 +31,132 @@
         "skeletonType": "binary"
       },
       "assetType": "spine",
-
+      "scale_override": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "aspect_ratio_ override": {
+        "width": 1,
+        "height": 1
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "sparkle_particle",
+      "assetUrl": "assets/images/sparkle.png",
+      "assetType": "particle",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 32,
+        "height": 32
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "magic_video",
+      "assetUrl": "assets/videos/Magic.mp4",
+      "assetType": "video",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "assetName": "background_image",
+      "assetUrl": "assets/images/background_image.jpg",
+      "assetType": "image",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "character_image",
+      "assetUrl": "assets/images/character_image.png",
+      "assetType": "image",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "logo_image",
+      "assetUrl": "assets/images/logo_image.png",
+      "assetType": "image",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 4,
+        "height": 4
+      },
+      "pivot_override": {
+        "x": 0,
+        "y": -1
+      }
+    },
+    {
+      "assetName": "icon_image",
+      "assetUrl": "assets/images/icon_image.png",
+      "assetType": "image",
+      "scale_override": {
+        "x": 0.5,
+        "y": 0.5
+      },
       "aspect_ratio_override": {
         "width": 1,
         "height": 1
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "Banner_image",
+      "assetUrl": "assets/images/Banner_Image.webp",
+      "assetType": "image",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
       },
       "pivot_override": {
         "x": 0.5,

@@ -648,8 +648,8 @@
           "y": 1
         },
         "opacity": 0.5,
-        "text": "Welcome!",
-        "fontSize": "100",
+        "text": "miri!",
+        "fontSize": "20",
         "color": "#ffffff",
         "fontWeight": "normal",
         "fontStyle": "normal",
@@ -684,7 +684,7 @@
           {
             "startTime": 0,
             "endTime": 5,
-            "value": "Welcome!",
+            "value": "miri!",
             "fontSize": {
               "startValue": "100",
               "endValue": "100"

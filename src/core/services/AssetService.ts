@@ -529,6 +529,9 @@ export class AssetService {
       if (properties.color !== undefined) {
         sprite.setColor(properties.color);
       }
+
+      sprite.setPadding(5, 30, 5, 5); // הוסף padding גדול יותר למעלה
+      sprite.y += 30; // הזז את הטקסט למטה
       if (
         properties.fontStyle !== undefined ||
         properties.fontWeight !== undefined ||
