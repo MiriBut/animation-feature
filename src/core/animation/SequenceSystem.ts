@@ -24,174 +24,164 @@ export class SequenceSystem {
     return obj && obj instanceof SpineGameObject && !!obj.animationState;
   }
 
-  /**
-   * מפעיל רצף אנימציות על אובייקט מטרה
-   *
-   * @param target האובייקט עליו יופעלו האנימציות
-   * @param sequence רצף האנימציות להפעלה
-   */
   async playSequence(
     target: Phaser.GameObjects.GameObject | Phaser.Sound.WebAudioSound,
     sequence: SequenceItem[]
   ): Promise<void> {
-    // לוג מידע על כל אנימציה בסדרה
+    // Log sequence details for debugging
     sequence.forEach((item) => {
       console.log("Playing sequence item:", JSON.stringify(item, null, 2));
-
-      const startTimeMs = item.config.delay || 0;
-      const durationMs = item.config.duration || 0;
-      console.log(
-        `SequenceSystem: Animation ${item.type} scheduled to start at ${startTimeMs}ms, duration: ${durationMs}ms`
-      );
     });
 
-    // אתחול מפת ה-tracks לאנימציות Spine עבור רצף חדש אם מדובר באובייקט Spine
+    // Handle Spine object initialization
     if (this.isSpineObject(target)) {
       this.activeSpineObjects.add(target as SpineGameObject);
       this.spineTrackMap.clear();
       this.spineNextTrack = 0;
     }
 
-    // בדיקה אם יש אנימציות Spine
     const hasSpineItems =
       this.isSpineObject(target) &&
       sequence.some((item) => item.type === "spine");
 
-    // אם אין אנימציות Spine, נשתמש בקוד המקורי
     if (!hasSpineItems) {
-      // הפעל את כל האנימציות במקביל ואסוף את ה-promises
+      // Handle non-Spine animations (unchanged)
       const promises = sequence.map((item) => {
-        // יצירת עותק של קונפיגורציה כדי לא לשנות את המקור
         const config = { ...item.config };
-
-        // אנימציה שאמורה להתחיל מאוחר יותר מטופלת באמצעות setTimeout
-        // כך כל האנימציות מופעלות במקביל עם ה-delay המתאים
         return new Promise<void>((resolve) => {
-          const delay = config.delay || 0;
-
-          // להמתין delay מילישניות לפני הרצת האנימציה
+          const delay = item.delay || config.delay || 0;
           setTimeout(async () => {
-            // אחרי ההמתנה, הפעל את האנימציה ללא delay (כבר חיכינו)
             config.delay = 0;
-
             try {
               await this.animationManager.animate(target, item.type, config);
               resolve();
             } catch (error) {
               console.error(`Animation error for ${item.type}:`, error);
-              resolve(); // resolve למרות השגיאה כדי לא לתקוע את האנימציות האחרות
+              resolve();
             }
           }, delay);
         });
       });
-
-      // המתן שכל האנימציות יסתיימו
       await Promise.all(promises);
       return;
     }
 
-    // אם יש אנימציות Spine, נטפל בהן בנפרד
-    // מיון הפריטים לפי סוג
-    const spineItems = sequence.filter((item) => item.type === "spine");
-    const nonSpineItems = sequence.filter((item) => item.type !== "spine");
-
-    // טיפול באנימציות Spine במקביל
-    if (spineItems.length > 0 && this.isSpineObject(target)) {
+    // Handle Spine animations with timeline
+    if (hasSpineItems && this.isSpineObject(target)) {
       const spineTarget = target as SpineGameObject;
-      const spinePromises = spineItems.map((item) => {
-        const config = { ...item.config };
-        const animName = (config as AnimationConfig).animationName || "";
-        const delay = item.delay || 0;
+      const spinePromises: Promise<void>[] = [];
 
-        return new Promise<void>((resolve) => {
-          setTimeout(() => {
-            try {
-              if (!animName) {
-                console.warn(
-                  "Spine animation requires animationName, skipping"
-                );
-                resolve();
-                return;
-              }
+      sequence
+        .filter((item) => item.type === "spine")
+        .forEach((item) => {
+          const config = { ...item.config } as AnimationConfig & {
+            startTime?: number;
+            endTime?: number;
+          };
+          const animName = config.animationName || "";
+          const startTime = item.delay ?? config.delay ?? config.startTime ?? 0; // Use delay or startTime
+          const endTime = config.endTime ?? Infinity; // Default to Infinity if not provided
+          const shouldLoop = config.loop === "true";
 
-              // קבל או הקצה מספר track
-              const trackIndex =
-                this.spineTrackMap.get(animName) ?? this.spineNextTrack++;
-              this.spineTrackMap.set(animName, trackIndex);
+          if (!animName) {
+            console.error("Spine animation requires a valid animationName");
+            return;
+          }
 
-              const shouldLoop = config.loop === true || config.loop === "true";
+          // Calculate duration from endTime - startTime if both are provided
+          const calculatedDuration =
+            endTime !== Infinity && endTime > startTime
+              ? endTime - startTime
+              : config.duration;
 
-              // טיפול במיזוג בין אנימציות
-              if (trackIndex > 0) {
-                const previousAnim = spineTarget.animationState.getCurrent(
-                  trackIndex - 1
-                );
-                if (previousAnim && previousAnim.animation) {
-                  spineTarget.animationStateData.setMix(
-                    previousAnim.animation.name,
-                    animName,
-                    0.2
+          const promise = new Promise<void>((resolve) => {
+            setTimeout(() => {
+              try {
+                if (!spineTarget.animationState) {
+                  console.error(
+                    "Spine object has no animationState:",
+                    spineTarget
                   );
+                  resolve();
+                  return;
                 }
-              }
 
-              // הפעלת האנימציה
-              spineTarget.animationState.setAnimation(
-                trackIndex,
-                animName,
-                shouldLoop
-              );
+                const trackIndex = this.spineNextTrack++;
+                this.spineTrackMap.set(animName, trackIndex);
 
-              // עצירה לאחר duration אם לא בלולאה
-              if (config.duration && !shouldLoop) {
-                setTimeout(() => {
-                  if (this.activeSpineObjects.has(spineTarget)) {
-                    spineTarget.animationState.setEmptyAnimation(trackIndex, 0);
+                // Check for overlap with previous animation for blending
+                if (trackIndex > 0) {
+                  const previousAnim = spineTarget.animationState.getCurrent(
+                    trackIndex - 1
+                  );
+                  if (
+                    previousAnim?.animation &&
+                    previousAnim.animationEnd * 1000 > startTime // Convert to milliseconds
+                  ) {
+                    spineTarget.animationStateData.setMix(
+                      previousAnim.animation.name,
+                      animName,
+                      0.2
+                    );
                   }
-                }, config.duration);
+                }
+
+                // Play the animation
+                spineTarget.animationState.setAnimation(
+                  trackIndex,
+                  animName,
+                  shouldLoop
+                );
+
+                // Stop animation at calculated end time if defined
+                if (calculatedDuration) {
+                  setTimeout(() => {
+                    if (
+                      this.activeSpineObjects.has(spineTarget) &&
+                      spineTarget.animationState
+                    ) {
+                      spineTarget.animationState.setEmptyAnimation(
+                        trackIndex,
+                        0
+                      );
+                    }
+                    resolve();
+                  }, calculatedDuration);
+                } else {
+                  resolve(); // Resolve immediately if no end time
+                }
+              } catch (error) {
+                console.error(`Spine animation error for ${animName}:`, error);
+                resolve();
               }
+            }, startTime);
+          });
 
-              resolve();
-            } catch (error) {
-              console.error(`Spine animation error:`, error);
-              resolve();
-            }
-          }, delay);
+          spinePromises.push(promise);
         });
-      });
 
-      // הפעל את אנימציות Spine במקביל
       await Promise.all(spinePromises);
     }
 
-    // טיפול בשאר האנימציות בקוד זהה למקורי
+    // Handle non-Spine animations (unchanged)
+    const nonSpineItems = sequence.filter((item) => item.type !== "spine");
     if (nonSpineItems.length > 0) {
       const promises = nonSpineItems.map((item) => {
-        // יצירת עותק של קונפיגורציה כדי לא לשנות את המקור
         const config = { ...item.config };
-
-        // אנימציה שאמורה להתחיל מאוחר יותר מטופלת באמצעות setTimeout
-        // כך כל האנימציות מופעלות במקביל עם ה-delay המתאים
         return new Promise<void>((resolve) => {
-          const delay = config.delay || 0;
-
-          // להמתין delay מילישניות לפני הרצת האנימציה
+          const delay = item.delay || config.delay || 0;
           setTimeout(async () => {
-            // אחרי ההמתנה, הפעל את האנימציה ללא delay (כבר חיכינו)
             config.delay = 0;
-
             try {
               await this.animationManager.animate(target, item.type, config);
               resolve();
             } catch (error) {
               console.error(`Animation error for ${item.type}:`, error);
-              resolve(); // resolve למרות השגיאה כדי לא לתקוע את האנימציות האחרות
+              resolve();
             }
           }, delay);
         });
       });
-
-      // המתן שכל האנימציות שאינן Spine יסתיימו
       await Promise.all(promises);
     }
   }

@@ -22,98 +22,14 @@
           {
             "animationName": "shoot",
             "startTime": 0,
+            "endTime": 5,
+            "loop": "false"
+          },
+          {
+            "animationName": "run",
+            "startTime": 2,
             "endTime": 10,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 0,
-            "endTime": 10,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 6,
-            "endTime": 10,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 11,
-            "endTime": 13,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 14,
-            "endTime": 20,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 21,
-            "endTime": 23,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 24,
-            "endTime": 26,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 28,
-            "endTime": 32,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 34,
-            "endTime": 39,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 40,
-            "endTime": 41,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 42,
-            "endTime": 45,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 46,
-            "endTime": 50,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 52,
-            "endTime": 56,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 57,
-            "endTime": 60,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 61,
-            "endTime": 64,
-            "loop": "true"
-          },
-          {
-            "animationName": "jump",
-            "startTime": 65,
-            "endTime": 100,
-            "loop": "true"
+            "loop": "false"
           }
         ],
         "position": [
@@ -130,94 +46,63 @@
             },
             "easeIn": "Linear",
             "easeOut": "Linear"
-          }
-        ],
-        "scale": [
-          {
-            "startTime": 2,
-            "endTime": 4,
-            "startValue": {
-              "x": -1,
-              "y": 1
-            },
-            "endValue": {
-              "x": -0.5,
-              "y": 0.5
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
           }
         ]
       }
     },
     {
-      "elementName": "characterSpine01",
+      "elementName": "penguin_spine",
       "assetType": "spine",
-      "assetName": "character_spine",
+      "assetName": "penguin_spine",
       "initialState": {
         "position": {
           "x": 500,
-          "y": 540,
+          "y": 400,
           "z": 2
         },
         "scale": {
-          "x": 0.5,
-          "y": 0.5
+          "x": 0.1,
+          "y": 0.1
         },
-        "opacity": 1,
-        "rotation": 0
+        "opacity": 1
       },
       "timeline": {
         "animation": [
           {
-            "animationName": "run",
+            "animationName": "Walking",
             "startTime": 0,
-            "endTime": 10,
-            "loop": "true"
+            "endTime": 1,
+            "loop": false
           },
           {
-            "animationName": "run",
-            "startTime": 11,
-            "endTime": 20,
-            "loop": "true"
-          },
-          {
-            "animationName": "shoot",
-            "startTime": 0,
-            "endTime": 30,
-            "loop": "true"
-          }
-        ],
-        "position": [
-          {
-            "startTime": 0,
-            "endTime": 5,
-            "startValue": {
-              "x": 500,
-              "y": 540
-            },
-            "endValue": {
-              "x": 500,
-              "y": 540
-            },
-            "easeIn": "Linear",
-            "easeOut": "Linear"
-          }
-        ],
-        "scale": [
-          {
+            "animationName": "Jump",
             "startTime": 2,
-            "endTime": 4,
-            "startValue": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "endValue": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
+            "endTime": 3,
+            "loop": false
+          },
+          {
+            "animationName": "Jump",
+            "startTime": 6,
+            "endTime": 7,
+            "loop": false
+          },
+          {
+            "animationName": "Jump",
+            "startTime": 12,
+            "endTime": 13,
+            "loop": false
+          },
+          {
+            "animationName": "Jump",
+            "startTime": 22,
+            "endTime": 23,
+            "loop": false
+          },
+          {
+            "animationName": "Jump",
+            "startTime": 28,
+            "endTime": 29,
+            "loop": false
           }
         ]
       }
