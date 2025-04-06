@@ -26,8 +26,8 @@ export class SpineAnimation implements IAnimatable {
       const animationNames = this.target.skeleton.data.animations.map(
         (a) => a.name
       );
-      console.log("Available animations:", animationNames);
-      console.log("Active animation for spine: " + animationName);
+      //if ypu want to check animations registered to  spine
+      //console.log("Available animations:", animationNames);
 
       if (!animationNames.includes(animationName)) {
         console.warn(`Animation ${animationName} not found, skipping.`);
@@ -44,15 +44,13 @@ export class SpineAnimation implements IAnimatable {
           trackIndex = 1; // Arm animations are separate from running
         }
 
-        // Start the animation on the appropriate track
         const trackEntry = this.target.animationState.setAnimation(
           trackIndex,
           animationName,
           isLoop
         );
-        this.activeTracks.add(trackIndex); // Mark track as active
+        this.activeTracks.add(trackIndex);
 
-        // Schedule animation stop if not looping
         this.scene.time.delayedCall(duration, () => {
           if (!isLoop) {
             this.target.animationState.setEmptyAnimation(trackIndex, 0);
@@ -81,7 +79,6 @@ export class SpineAnimation implements IAnimatable {
 
   stop(): void {
     if (this.target.animationState) {
-      // Stop all active tracks
       this.activeTracks.forEach((trackIndex) => {
         this.target.animationState.setEmptyAnimation(trackIndex, 0);
       });

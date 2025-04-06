@@ -20,10 +20,10 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   callbacks: {
     preBoot: (game) => {
-      console.log("Game is pre-booting");
+      // console.log("Game is pre-booting");
     },
     postBoot: (game) => {
-      console.log("Game has booted successfully");
+      // console.log("Game has booted successfully");
     },
   },
 

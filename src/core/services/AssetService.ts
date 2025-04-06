@@ -73,13 +73,10 @@ export class AssetService {
 
   // Get the font family for a given assetName
   public getFontFamily(assetName: string): string | undefined {
-    console.log("in get fnt family");
     const assetInfo = this.assetsMap.get(assetName);
     if (assetInfo && assetInfo.type === "text") {
       const textInfo = assetInfo as TextAssetInfo;
-      console.log(
-        `AssetService: getFontFamily for ${assetName} returned ${textInfo.fontFamily}`
-      );
+
       return textInfo.fontFamily; // Return the fontFamily from the registered asset
     }
     console.log(`AssetService: No text asset found for ${assetName}`);
@@ -98,10 +95,10 @@ export class AssetService {
 
   public getAssetInfo(assetName: string): AssetInfo | undefined {
     const assetInfo = this.assetsMap.get(assetName);
-    console.log(
-      `AssetService: getAssetInfo result for ${assetName}:`,
-      assetInfo
-    );
+    // console.log(
+    //   `AssetService: getAssetInfo result for ${assetName}:`,
+    //   assetInfo
+    // );
     return assetInfo;
   }
 
@@ -119,9 +116,6 @@ export class AssetService {
     }
 
     const result = this.systemFonts.includes(fontFamily);
-    console.log(`Checking if "${fontFamily}" is a system font: ${result}`);
-    // console.log(`Available system fonts:`, this.systemFonts);
-
     return result;
   }
 
@@ -197,7 +191,6 @@ export class AssetService {
           );
         });
       } else {
-        console.log("AssetService: No elements found in JSON to display");
       }
     } catch (error) {
       const errorMessage =
@@ -227,14 +220,16 @@ export class AssetService {
             url: isSystemFont ? "" : (asset.assetUrl as string),
             fontFamily: fontFamily,
             isSystemFont: isSystemFont,
+            aspect_ratio_override: asset.aspect_ratio_override,
+            scale_override: asset.scale_override,
           } as TextAssetInfo;
           break;
         case "image":
           newAssetInfo = {
             type: "image",
             url: asset.assetUrl as string,
-            aspect_ratio_override: asset.aspect_ratio_override, // שמירת aspect_ratio_override
-            scale_override: asset.scale_override, // שמירת scale_override
+            aspect_ratio_override: asset.aspect_ratio_override,
+            scale_override: asset.scale_override,
           } as ImageAssetInfo;
           break;
         case "audio":
@@ -254,12 +249,16 @@ export class AssetService {
             atlasUrl: spineUrl.atlasUrl,
             skeletonUrl: spineUrl.skeletonUrl,
             skeletonType: spineUrl.skeletonType || "json",
+            aspect_ratio_override: asset.aspect_ratio_override,
+            scale_override: asset.scale_override,
           } as SpineAssetInfo;
           break;
         case "video":
           newAssetInfo = {
             type: "video",
             url: asset.assetUrl as string,
+            aspect_ratio_override: asset.aspect_ratio_override, // שמירת aspect_ratio_override גם בברירת מחדל
+            scale_override: asset.scale_override,
           } as VideoAssetInfo;
           break;
         case "particle":
@@ -282,7 +281,7 @@ export class AssetService {
         newAssetInfo.pivot_override = asset.pivot_override;
       }
       this.assetsMap.set(assetName, newAssetInfo);
-      console.log(`Registered asset ${assetName} with info:`, newAssetInfo); // לוג לבדיקה
+      //console.log(`Registered asset ${assetName} with info:`, newAssetInfo); // לוג לבדיקה
     });
   }
 
@@ -398,21 +397,14 @@ export class AssetService {
       // Apply scale_override immediately if it exists
       if (assetInfo.scale_override) {
         spine.setScale(assetInfo.scale_override.x, assetInfo.scale_override.y);
-        console.log(
-          `Applied scale_override to ${assetName} on creation: x=${assetInfo.scale_override.x}, y=${assetInfo.scale_override.y}`
-        );
       } else if (properties.scaleX && properties.scaleY) {
         spine.setScale(properties.scaleX, properties.scaleY);
-        console.log(
-          `Applied initial scale to ${assetName}: x=${properties.scaleX}, y=${properties.scaleY}`
-        );
       }
       return spine;
     }
 
     if (assetInfo.type === "text") {
       const textInfo = assetInfo as TextAssetInfo;
-      console.log(`Creating text with font family: ${textInfo.fontFamily}`);
 
       const style: Phaser.Types.GameObjects.Text.TextStyle & {
         fontWeight?: string;
@@ -424,11 +416,7 @@ export class AssetService {
         fontWeight: properties.fontWeight || "normal",
       };
 
-      console.log(`Text style being applied:`, style);
-
       const text = this.scene.add.text(x, y, properties.text || "", style);
-      console.log(`Text object created:`, text);
-      // ...
 
       if (properties.textDecoration === "underline") {
         const underline = this.scene.add.graphics();
@@ -470,7 +458,7 @@ export class AssetService {
         particleManager.createEmitter(); ///properties.emitterConfig);
       }
       particleManager.setPosition(x, y);
-      return particleManager; // נשאר ללא שינוי
+      return particleManager;
     }
 
     const sprite = this.scene.add.sprite(x, y, assetName);
@@ -481,7 +469,6 @@ export class AssetService {
     audio: Phaser.Sound.BaseSound,
     properties: AssetDisplayProperties
   ): void {
-    // אנחנו משתמשים ב-type assertion כדי לעקוף את בדיקת הטיפוסים
     const audioObj = audio as any;
 
     if (properties.volume !== undefined) {
@@ -530,8 +517,8 @@ export class AssetService {
         sprite.setColor(properties.color);
       }
 
-      sprite.setPadding(5, 30, 5, 5); // הוסף padding גדול יותר למעלה
-      sprite.y += 30; // הזז את הטקסט למטה
+      sprite.setPadding(5, 30, 5, 5);
+      sprite.y += 30;
       if (
         properties.fontStyle !== undefined ||
         properties.fontWeight !== undefined ||
@@ -545,7 +532,6 @@ export class AssetService {
         if (properties.fontWeight) style.fontWeight = properties.fontWeight;
         sprite.setStyle(style);
 
-        // עדכון קו תחתון
         const underline = sprite.getData(
           "underline"
         ) as Phaser.GameObjects.Graphics;
@@ -609,19 +595,12 @@ export class AssetService {
     let scaleX: number;
     let scaleY: number;
 
-    // תעדוף Scale מה-properties (מ-VideoService) על פני scale_override
     if (properties.scaleX !== undefined && properties.scaleY !== undefined) {
       scaleX = properties.scaleX;
       scaleY = properties.scaleY;
-      console.log(
-        `Using scale from properties for ${sprite.name}: ScaleX=${scaleX}, ScaleY=${scaleY}`
-      );
     } else if (assetInfo?.scale_override) {
       scaleX = assetInfo.scale_override.x ?? properties.scale ?? 1;
       scaleY = assetInfo.scale_override.y ?? properties.scale ?? 1;
-      console.log(
-        `Applied Scale Override for ${sprite.name}: ScaleX=${scaleX}, ScaleY=${scaleY}`
-      );
     } else {
       scaleX = properties.scaleX ?? properties.scale ?? 1;
       scaleY = properties.scaleY ?? properties.scale ?? 1;
@@ -632,17 +611,9 @@ export class AssetService {
     // Log size for debugging
     const texture = sprite.texture;
     const sourceImage = texture.getSourceImage();
-    console.log(
-      `Original size of ${sprite.name}: ${sourceImage.width}x${sourceImage.height}`
-    );
-    console.log(
-      `Scaled size of ${sprite.name}: ${sprite.displayWidth}x${sprite.displayHeight}`
-    );
 
     const effectiveRatio = assetInfo?.aspect_ratio_override || properties.ratio;
     if (effectiveRatio) {
-      console.log(`Effective Ratio for ${sprite.name}:`, effectiveRatio);
-      console.log(`Applying Aspect Ratio for ${sprite.name}`);
       this.applyAspectRatio(sprite, {
         ...properties,
         scaleX: scaleX,
@@ -724,9 +695,6 @@ export class AssetService {
     }
 
     sprite.setScale(scaleX, scaleY);
-    console.log(
-      `Applied Aspect Ratio for ${sprite.name}: ScaleX=${scaleX}, ScaleY=${scaleY}`
-    );
   }
 
   // === Cleanup Methods ===
@@ -822,25 +790,13 @@ export class AssetService {
   ): Promise<{ success: boolean; error?: string }> {
     // Check if the requested font is a system font
     if (this.isSystemFont(assetInfo.fontFamily)) {
-      console.log(`Attempting to load font with key: ${assetName}`); // Log the font key
-      console.log(`Font family assigned: ${assetInfo.fontFamily}`); // Log the font family
-      console.log(
-        `Font ${assetInfo.fontFamily} is a system font, using it directly`
-      );
       this.loadedAssets.add(assetName);
       this.assetsMap.set(assetName, { ...assetInfo });
-      console.log(
-        `Font load status: ${
-          this.loadedAssets.has(assetName) ? "Loaded" : "Not loaded yet"
-        }`
-      ); // Check if added to loadedAssets
       return { success: true };
     }
 
     // For non-system fonts, continue with the existing font loading logic
     return new Promise((resolve) => {
-      console.log(`Attempting to load font with key: ${assetName}`); // Log the font key
-      console.log(`Font family assigned: ${assetInfo.fontFamily}`); // Log the font family
       const fontFace = new FontFace(
         assetInfo.fontFamily!,
         `url(${assetInfo.url})`
@@ -854,22 +810,12 @@ export class AssetService {
           document.fonts.ready.then(() => {
             this.loadedAssets.add(assetName);
             this.assetsMap.set(assetName, { ...assetInfo });
-            console.log(`Font ${assetName} loaded successfully`);
-            console.log(
-              `Font load status: ${
-                this.loadedAssets.has(assetName) ? "Loaded" : "Not loaded yet"
-              }`
-            ); // Check if added to loadedAssets
+
             resolve({ success: true });
           });
         })
         .catch((error) => {
           console.error(`Failed to load font ${assetName}: ${error}`);
-          console.log(
-            `Font load status: ${
-              this.loadedAssets.has(assetName) ? "Loaded" : "Not loaded yet"
-            }`
-          ); // Check status on failure
           resolve({
             success: false,
             error: `Failed to load font ${assetName}: ${error.message}`,
@@ -896,9 +842,6 @@ export class AssetService {
         });
       }
 
-      console.log(
-        `Starting accessibility check for ${assetName} at: ${assetInfo.url}`
-      );
       fetch(assetInfo.url, { method: "HEAD" })
         .then((response) => {
           if (!response.ok) {
@@ -911,15 +854,9 @@ export class AssetService {
             });
           }
 
-          console.log(
-            `File ${assetName} is accessible, starting load into Phaser`
-          );
           this.scene.load.audio(assetName, assetInfo.url);
 
           this.scene.load.once("complete", () => {
-            console.log(
-              `Loading ${assetName} completed, registering in sound manager`
-            );
             const sound = this.scene.sound.add(assetName); // רישום ידני
             if (!sound) {
               console.error(
@@ -933,9 +870,7 @@ export class AssetService {
             }
             this.loadedAssets.add(assetName);
             this.assetsMap.set(assetName, { ...assetInfo });
-            console.log(
-              `Success: Audio ${assetName} loaded and registered successfully`
-            );
+
             resolve({ success: true });
           });
 
@@ -947,9 +882,7 @@ export class AssetService {
             });
           });
 
-          console.log(`Starting loading process for ${assetName}`);
           this.scene.load.start();
-          console.log(`Loaded audio with key: ${assetName}`);
         })
         .catch((error) => {
           console.error(`Error accessing file ${assetName}: ${error}`);
@@ -1104,9 +1037,7 @@ export class AssetService {
         try {
           this.loadedAssets.add(assetName);
           this.assetsMap.set(assetName, { ...assetInfo, sprite: undefined });
-          console.log(
-            `AssetService: Spine asset ${assetName} loaded successfully`
-          );
+
           resolve({ success: true });
         } catch (error) {
           console.error(
@@ -1430,17 +1361,18 @@ export class AssetService {
       }
     });
 
-    console.log(
-      "AssetService: validateAssetStructure completed with errors:",
-      errors
-    );
+    if (errors.length > 0) {
+      console.log(
+        "AssetService: validateAssetStructure completed with errors:",
+        errors
+      );
+    }
     return errors;
   }
 
   public getAssetPivot(assetName: string): { x: number; y: number } {
     const assetInfo = this.assetsMap.get(assetName);
 
-    // אם הנכס לא נמצא, מחזירים ערכי ברירת מחדל
     if (!assetInfo) {
       console.warn(
         `AssetService: No asset found for ${assetName}, returning default pivot (0.5, 0.5)`
@@ -1448,22 +1380,15 @@ export class AssetService {
       return { x: 0.5, y: 0.5 };
     }
 
-    // בדיקה אם קיים pivot_override ב-assetInfo
     if (assetInfo.pivot_override) {
       const pivot = assetInfo.pivot_override;
 
-      // וידוא שהערכים הם מספרים תקינים, אחרת שימוש בברירת מחדל
       const x = typeof pivot.x === "number" && !isNaN(pivot.x) ? pivot.x : 0.5;
       const y = typeof pivot.y === "number" && !isNaN(pivot.y) ? pivot.y : 0.5;
 
-      console.log(`AssetService: Found pivot for ${assetName}: x=${x}, y=${y}`);
       return { x, y };
     }
 
-    // אם אין pivot_override, מחזירים ערכי ברירת מחדל
-    console.log(
-      `AssetService: No pivot override for ${assetName}, using default (0.5, 0.5)`
-    );
     return { x: 0.5, y: 0.5 };
   }
 
@@ -1487,9 +1412,9 @@ export class AssetService {
         asset.fontFamily &&
         this.isSystemFont(asset.fontFamily)
       ) {
-        console.log(
-          `AssetService: ${assetPrefix} - Skipping URL check for system font ${asset.fontFamily}`
-        );
+        // console.log(
+        //   `AssetService: ${assetPrefix} - Skipping URL check for system font ${asset.fontFamily}`
+        // );
         continue;
       }
 
@@ -1497,9 +1422,19 @@ export class AssetService {
       let urlToCheck = asset.assetUrl as string;
 
       if (typeof urlToCheck !== "string" || !urlToCheck.trim()) {
-        console.log(
-          `-AssetService: ${assetPrefix} - Skipping due to invalid or empty URL`
-        );
+        // i dont want the warning of skipping on spine, becouse it is fine
+        if (
+          !(
+            typeof urlToCheck === "object" &&
+            urlToCheck &&
+            "atlasUrl" in urlToCheck &&
+            "skeletonUrl" in urlToCheck
+          )
+        ) {
+          console.log(
+            `-AssetService: ${assetPrefix} - Skipping due to invalid or empty URL`
+          );
+        }
         continue;
       }
 
@@ -1531,10 +1466,12 @@ export class AssetService {
       }
     }
 
-    console.log(
-      "AssetService: checkAssetsExistence completed with errors:",
-      errors
-    );
+    if (errors.length > 0) {
+      console.log(
+        "AssetService: checkAssetsExistence completed with errors:",
+        errors
+      );
+    }
     return errors;
   }
   /**
@@ -1543,10 +1480,6 @@ export class AssetService {
   private displayLoadResults(
     results: { assetName: string; success: boolean; error?: string }[]
   ): void {
-    console.log(
-      "AssetService: displayLoadResults called with results:",
-      results
-    );
     const successfulAssets = results.filter((result) => result.success);
     const failedAssets = results.filter((result) => !result.success);
     const messages: any[] = [];
@@ -1594,7 +1527,6 @@ export class AssetService {
       autoClose: failedAssets.length === 0,
       autoCloseTime: 7000,
     });
-    console.log("AssetService: displayLoadResults completed");
   }
 
   //this function doesnt working yet, for future use

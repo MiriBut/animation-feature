@@ -11,9 +11,7 @@ export class ConversionManager {
   private lastProgress: number = 0;
   private currentProgressCallback?: (progress: ConversionProgress) => void;
 
-  constructor() {
-    console.log("Initializing ConversionManager");
-  }
+  constructor() {}
 
   private updateProgress(progress: number, step: string) {
     const estimatedTimeLeft = this.calculateEstimatedTime(progress);

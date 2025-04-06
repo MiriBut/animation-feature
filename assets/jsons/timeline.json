@@ -23,13 +23,13 @@
             "animationName": "shoot",
             "startTime": 0,
             "endTime": 5,
-            "loop": "false"
+            "loop": "true"
           },
           {
             "animationName": "run",
             "startTime": 2,
             "endTime": 10,
-            "loop": "false"
+            "loop": "true"
           }
         ],
         "position": [
@@ -41,11 +41,66 @@
               "y": 540
             },
             "endValue": {
-              "x": 1000,
+              "x": 1600,
               "y": 540
             },
             "easeIn": "Linear",
             "easeOut": "Linear"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 0,
+            "endTime": 5,
+            "startValue": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "endValue": {
+              "x": 1,
+              "y": 1
+            },
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "kic1",
+      "assetType": "audio",
+      "assetName": "kick",
+      "initialState": {
+        "volume": 0.5,
+        "loop": true
+      },
+      "timeline": {
+        "play": [
+          {
+            "startTime": 1,
+            "endTime": 5,
+            "loop": "true"
+          },
+          {
+            "startTime": 10,
+            "endTime": 25,
+            "loop": "true"
+          }
+        ],
+        "volume": [
+          {
+            "startTime": 1,
+            "endTime": 5,
+            "startValue": 0,
+            "endValue": 1,
+            "easeIn": "Linear"
+          },
+          {
+            "startTime": 10,
+            "endTime": 25,
+            "startValue": 0,
+            "endValue": 1,
+            "easeIn": "Linear"
           }
         ]
       }
@@ -61,8 +116,8 @@
           "z": 2
         },
         "scale": {
-          "x": 0.1,
-          "y": 0.1
+          "x": 2,
+          "y": 15
         },
         "opacity": 1
       },
@@ -72,13 +127,13 @@
             "animationName": "Walking",
             "startTime": 0,
             "endTime": 1,
-            "loop": false
+            "loop": true
           },
           {
             "animationName": "Jump",
-            "startTime": 2,
+            "startTime": 0,
             "endTime": 3,
-            "loop": false
+            "loop": true
           },
           {
             "animationName": "Jump",
@@ -376,6 +431,20 @@
             },
             "endValue": {
               "x": 600,
+              "y": 400
+            },
+            "easeIn": "Expo.easeIn",
+            "easeOut": "Expo.easeOut"
+          },
+          {
+            "startTime": 5,
+            "endTime": 10,
+            "startValue": {
+              "x": 600,
+              "y": 400
+            },
+            "endValue": {
+              "x": 900,
               "y": 400
             },
             "easeIn": "Expo.easeIn",

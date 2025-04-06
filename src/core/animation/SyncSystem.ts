@@ -26,9 +26,7 @@ export class SyncSystem {
   }
 
   async playSync(groups: SyncGroup[]): Promise<void> {
-    console.log("playSync");
     const promises = groups.map((group) => {
-      // Case 1: If audio comes as a single AudioConfig object
       if (
         !Array.isArray(group.sequence) &&
         typeof group.sequence === "object" &&
@@ -37,7 +35,6 @@ export class SyncSystem {
           group.sequence.property === "audio") ||
           "audioKey" in group.sequence)
       ) {
-        console.log("Audio config detected directly");
         const audioSequence: SequenceItem[] = [
           {
             type: "audio" as AnimationPropertyType,
@@ -46,25 +43,16 @@ export class SyncSystem {
           },
         ];
         return this.sequenceSystem.playSequence(group.target, audioSequence);
-      }
-      // Case 2: If it's an array containing audio animation
-      else if (Array.isArray(group.sequence)) {
-        console.log("Checking sequence array for audio items...");
-
-        // Check if there are audio items in the array
+      } else if (Array.isArray(group.sequence)) {
         const audioItems = group.sequence.filter(
           (item) => item.type === "audio"
         );
-        if (audioItems.length > 0) {
-          console.log(`Found ${audioItems.length} audio items in sequence`);
-        }
 
         return this.sequenceSystem.playSequence(
           group.target,
           group.sequence as SequenceItem[]
         );
       } else {
-        console.log("Unknown sequence format:", group.sequence);
         return Promise.resolve();
       }
     });
@@ -72,9 +60,6 @@ export class SyncSystem {
     await Promise.all(promises);
   }
 
-  /**
-   * Runs a single animation on multiple objects simultaneously
-   */
   async animateMultiple(
     targets: Phaser.GameObjects.GameObject[],
     type: AnimationPropertyType,
@@ -119,39 +104,19 @@ export class SyncSystem {
     });
   }
 
-  // Add this method to SyncSystem class
   public reset(): void {
-    console.log("SyncSystem: Resetting timeline and animations");
-
-    // Stop all current animations
     this.stopAllAnimations();
-
-    // Clear timeline
     this.clearTimeline();
-
-    // Reset internal state
     this.resetState();
   }
 
-  // Helper methods that might be needed
   private stopAllAnimations(): void {
-    console.log("SyncSystem: Stopping all active animations");
-
-    // Stop all animations in the animation manager
-    this.animationManager.stopAll();
-
-    // Stop all animation sequences in the sequence system
     this.sequenceSystem.stopAllSequences();
   }
 
   private clearTimeline(): void {
-    console.log("SyncSystem: Clearing animation timeline data");
-
-    // Reset or clear timeline data (if any)
     this.sequenceSystem.clearAllSequences();
   }
 
-  private resetState(): void {
-    // Implementation to reset internal state
-  }
+  private resetState(): void {}
 }

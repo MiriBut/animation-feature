@@ -1,4 +1,3 @@
-// AudioAnimation.ts - Updated version
 import { Scene } from "phaser";
 import {
   AnimationConfig,
@@ -20,7 +19,6 @@ export class AudioAnimation implements IAnimatable {
     }
   }
 
-  // AudioAnimation.ts
   async play(config: AnimationConfig | AudioConfig): Promise<void> {
     if (config.property !== "audio") return;
     const audioConfig = config as AudioConfig;
@@ -45,17 +43,9 @@ export class AudioAnimation implements IAnimatable {
       ) as Phaser.Sound.WebAudioSound;
     }
 
-    console.log(
-      `AudioAnimation: Scheduling ${audioConfig.audioKey} - delay: ${audioConfig.delay}ms, duration: ${audioConfig.duration}ms, loop: ${audioConfig.loop}`
-    );
-
     return new Promise((resolve) => {
       this.scene.time.delayedCall(audioConfig.delay || 0, () => {
         if (audioConfig.volume && typeof audioConfig.volume === "object") {
-          // Handle volume change
-          console.log(
-            `AudioAnimation: Adjusting volume for ${audioConfig.audioKey} from ${audioConfig.volume.startValue} to ${audioConfig.volume.endValue}`
-          );
           this.currentTween = this.scene.tweens.add({
             targets: this.sound,
             volume: {
@@ -65,29 +55,18 @@ export class AudioAnimation implements IAnimatable {
             duration: audioConfig.duration,
             ease: audioConfig.easing || "Linear",
             onComplete: () => {
-              console.log(
-                `AudioAnimation: Volume change completed for ${audioConfig.audioKey}`
-              );
               resolve();
             },
           });
         } else {
           // Handle sound playback
-          console.log(
-            `AudioAnimation: Playing ${audioConfig.audioKey} at ${this.scene.time.now}ms`
-          );
 
           if (this.sound?.isPlaying) {
-            console.log(
-              `AudioAnimation: Sound ${audioConfig.audioKey} is already playing, stopping before replay`
-            );
             this.sound.stop();
           }
 
           const shouldLoop =
             audioConfig.loop === true || audioConfig.loop === "true";
-          console.log(`AudioAnimation: Setting loop to ${shouldLoop}`);
-
           this.sound?.play({
             loop: shouldLoop,
             volume:
@@ -98,15 +77,9 @@ export class AudioAnimation implements IAnimatable {
 
           // Always set stop timer if duration is provided, regardless of loop
           if (audioConfig.duration) {
-            console.log(
-              `AudioAnimation: Setting stop timer for ${audioConfig.duration}ms`
-            );
             this.stopTimer = this.scene.time.delayedCall(
               audioConfig.duration,
               () => {
-                console.log(
-                  `AudioAnimation: Duration complete (${audioConfig.duration}ms), stopping ${audioConfig.audioKey}`
-                );
                 this.sound?.stop();
                 resolve();
               }

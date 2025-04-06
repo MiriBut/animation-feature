@@ -25,19 +25,16 @@ export class TextAnimation {
     this.target = target as Phaser.GameObjects.Text;
 
     const rawFontSize = this.target.style.fontSize;
-    console.log("Raw fontSize from target:", rawFontSize);
     this.currentFontSize =
       rawFontSize && /\d+/.test(String(rawFontSize))
         ? parseInt(String(rawFontSize), 10)
         : 32;
-    console.log("Final currentFontSize:", this.currentFontSize);
 
     const styleColor = this.target.style.color;
     this.currentColor = typeof styleColor === "string" ? styleColor : "#ffffff";
 
     this.currentStyle = { ...this.target.style };
 
-    // Add support for text decoration from initial state
     if (this.target.getData("textDecoration") === "underline") {
       this.applyUnderline();
     }
@@ -46,13 +43,12 @@ export class TextAnimation {
   async play(config: AnimationConfig): Promise<void> {
     if (this.isDestroyed) return Promise.resolve();
 
-    // Check if the target text object is destroyed or inactive
     if (!this.target || !this.target.active) {
-      // Recreate the text object with initial properties
       this.target = this.scene.add.text(
-        this.target?.x || 0, // Use last known position or default to 0
+        this.target?.x || 0,
+
         this.target?.y || 0,
-        config.textValue || "", // Use provided text or empty string
+        config.textValue || "",
         {
           fontFamily: this.currentStyle.fontFamily || "Arial",
           fontSize: `${this.currentFontSize || 32}px`,
@@ -60,19 +56,10 @@ export class TextAnimation {
           fontStyle: this.currentStyle.fontStyle || "normal",
         }
       );
-      console.log("Text object recreated:", this.target.text);
     }
 
     if (config.property !== "text") return Promise.resolve();
 
-    console.log(
-      `Text animation play for ${this.target.name || "text"}:`,
-      JSON.stringify(config, null, 2)
-    );
-    console.log(`Current fontSize:`, this.target.style.fontSize);
-    console.log(`Current fontStyle:`, this.target.style.fontStyle);
-
-    // Rest of your existing play method continues here...
     if (config.textValue) {
       this.target.setText(config.textValue);
     }
@@ -84,19 +71,14 @@ export class TextAnimation {
       ease: config.easing || "Linear",
     };
 
-    // Add easeIn animation handling
     if (config.easing) {
-      // Set initial alpha to 0 (completely transparent)
       this.target.setAlpha(0);
 
-      // Add alpha animation to tweenConfig
       tweenConfig.alpha = { from: 0, to: 1 };
 
-      // Make sure the underline also starts as transparent if it exists
       if (this.underlineGraphics) {
         this.underlineGraphics.setAlpha(0);
 
-        // Create a separate tween for the underline with the same easing
         this.scene.tweens.add({
           targets: this.underlineGraphics,
           alpha: { from: 0, to: 1 },
@@ -115,7 +97,7 @@ export class TextAnimation {
       const endValue = parseInt(String(config.fontSize.endValue), 10);
       tweenConfig.progress = { from: 0, to: 1 };
       tweenConfig.onUpdate = (tween: Phaser.Tweens.Tween) => {
-        if (!this.target.active) return; // Stop updating if the text is destroyed
+        if (!this.target.active) return;
         const progress = tween.getValue() as number;
         const currentSize = Math.round(
           startValue + (endValue - startValue) * progress
@@ -134,7 +116,7 @@ export class TextAnimation {
       const endColor = parseInt(config.color.endValue.replace("#", ""), 16);
       tweenConfig.colorBlend = { from: 0, to: 1 };
       tweenConfig.onUpdate = (tween: Phaser.Tweens.Tween) => {
-        if (!this.target.active) return; // Stop updating if the text is destroyed
+        if (!this.target.active) return;
         const value = tween.getValue() as number;
         const blendedColor = this.blendColors(startColor, endColor, value);
         this.target.setTint(blendedColor);
@@ -145,24 +127,17 @@ export class TextAnimation {
       };
     }
 
-    // Store the tween and start it
     this.tween = this.scene.tweens.add(tweenConfig);
 
-    // Add a timer to destroy the text and underline at the endTime
     this.scene.time.addEvent({
       delay: config.duration + (config.delay || 0),
       callback: () => {
         if (this.tween) {
-          this.tween.stop(); // Stop the tween before destroying the text
+          this.tween.stop();
           this.tween = undefined;
         }
         this.target.destroy();
         this.removeUnderline();
-        console.log(
-          `Text and underline destroyed at ${
-            config.duration + (config.delay || 0)
-          }ms for ${this.target.name || "text"}`
-        );
       },
       callbackScope: this,
       loop: false,
@@ -171,7 +146,6 @@ export class TextAnimation {
     return Promise.resolve();
   }
 
-  // Helper method to blend two hex colors
   private blendColors(
     startColor: number,
     endColor: number,
@@ -201,11 +175,9 @@ export class TextAnimation {
       );
       return;
     }
-    // Add safety check to ensure target is still active
 
     const newStyle: any = { ...this.target.style };
 
-    // Determine font size
     let fontSizeValue: number;
     if (typeof config.fontSize === "string") {
       fontSizeValue = parseInt(config.fontSize, 10);
@@ -216,40 +188,18 @@ export class TextAnimation {
     }
     this.currentFontSize = fontSizeValue;
 
-    // Handle font weight and style combination
     let fontStyleValue = config.fontStyle || "normal";
 
-    // If fontWeight is 'bold', modify fontStyle accordingly
     if (config.fontWeight === "bold") {
       fontStyleValue = fontStyleValue === "italic" ? "bold italic" : "bold";
     }
 
-    // Set individual style properties explicitly
-    newStyle.fontFamily = config.fontName || "Arial"; // Set fontFamily directly
-    newStyle.fontSize = `${fontSizeValue}px`; // Set fontSize directly
-    newStyle.fontStyle = fontStyleValue; // Combined fontStyle with potential bold
+    newStyle.fontFamily = config.fontName || "Arial";
+    newStyle.fontSize = `${fontSizeValue}px`;
+    newStyle.fontStyle = fontStyleValue;
 
-    // Record fontWeight for our own tracking (even though Phaser doesn't use it directly)
     this.currentFontWeight = config.fontWeight || "normal";
 
-    console.log(
-      `**font_setup_${config.assetName}** Font family set to:`,
-      newStyle.fontFamily
-    );
-    console.log(
-      `**font_setup_${config.assetName}** Font size set to:`,
-      newStyle.fontSize
-    );
-    console.log(
-      `**font_setup_${config.assetName}** Font style set to:`,
-      newStyle.fontStyle
-    );
-    console.log(
-      `**font_setup_${config.assetName}** Font weight used:`,
-      this.currentFontWeight
-    );
-
-    // Handle text decoration
     if (config.textDecoration) {
       this.currentStyle.textDecoration = config.textDecoration;
       this.target.setData("textDecoration", config.textDecoration);
@@ -260,27 +210,16 @@ export class TextAnimation {
       }
     }
 
-    // Apply the new style to the text object
     this.target.setStyle(newStyle);
-    console.log(
-      `**font_result_${config.assetName}** Final style applied to text:`,
-      this.target.style
-    );
-    // We can't check fontWeight directly as it's not in TextStyle
-    console.log(
-      `**font_validation_${config.assetName}** Applied font style:`,
-      this.target.style.fontStyle
-    );
   }
 
   private applyUnderline(): void {
     this.removeUnderline();
 
     this.underlineGraphics = this.scene.add.graphics();
-    console.log("Underline graphics created for:", this.target.text);
 
     this.updateUnderlineCallback = () => {
-      if (!this.target.active) return; // מפסיק לעדכן אם הטקסט נהרס
+      if (!this.target.active) return;
       this.updateUnderline();
     };
 
@@ -298,9 +237,7 @@ export class TextAnimation {
     this.underlineGraphics.clear();
 
     const textBounds = this.target.getBounds();
-    // console.log("Text bounds:", textBounds); // לוג לבדיקה
 
-    // Get text color - if it has a tint, use that instead
     let colorNum = 0xffffff; // Default white
     if (this.target.tintTopLeft !== 0xffffff) {
       colorNum = this.target.tintTopLeft;
@@ -313,7 +250,6 @@ export class TextAnimation {
       colorNum = parseInt(this.target.style.color.replace("#", ""), 16);
     }
 
-    // Draw the underline
     this.underlineGraphics.lineStyle(
       Math.max(2, this.currentFontSize! / 20),
       colorNum,
@@ -325,16 +261,10 @@ export class TextAnimation {
       textBounds.right,
       textBounds.bottom + 4
     );
-    // console.log(
-    //   `Drawing underline from (${textBounds.left}, ${
-    //     textBounds.bottom + 4
-    //   }) to (${textBounds.right}, ${textBounds.bottom + 4})`
-    // ); // לוג לבדיקה
 
-    // Make sure underline is at the same depth as text or slightly above
-    this.underlineGraphics.setDepth(this.target.depth + 1); // שינוי לעומק גבוה יותר מהטקסט
+    this.underlineGraphics.setDepth(this.target.depth + 1);
   }
-  // Method to remove underline
+
   private removeUnderline(): void {
     if (this.underlineGraphics) {
       this.underlineGraphics.destroy();
@@ -351,35 +281,28 @@ export class TextAnimation {
   }
 
   pause(): void {
-    // Pause all tweens affecting this text object
     const tweens = this.scene.tweens.getTweensOf(this.target);
     tweens.forEach((tween) => tween.pause());
   }
 
   resume(): void {
-    // Resume all tweens affecting this text object
     const tweens = this.scene.tweens.getTweensOf(this.target);
     tweens.forEach((tween) => tween.resume());
   }
 
   reset(): void {
     this.stop();
-    // Reset text to initial state if needed
     this.removeUnderline();
   }
 
-  // Add this method to the TextAnimation class
   public destroy(): void {
-    // Stop any active tweens
     if (this.tween) {
       this.tween.stop();
       this.tween = undefined;
     }
 
-    // Remove underline if it exists
     this.removeUnderline();
 
-    // Remove any event listeners
     if (this.updateUnderlineCallback) {
       this.scene.events.off("postupdate", this.updateUnderlineCallback);
       this.updateUnderlineCallback = undefined;

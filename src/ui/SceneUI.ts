@@ -24,7 +24,6 @@ export class SceneUI {
     assetService: AssetService,
     mainScene: MainScene
   ) {
-    console.log("scene ui starts");
     this.container = this.createContainer();
     this.assetService = assetService;
     this.mainScene = mainScene;
