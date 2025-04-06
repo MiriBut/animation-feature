@@ -1,6 +1,5 @@
 import { IAnimatable } from "../Ianimatable";
 import { AnimatableGameObject, AnimationConfig } from "../types";
-import { AudioAnimation } from "./AudioAnimation";
 
 export class OpacityAnimation implements IAnimatable {
   private currentTween?: Phaser.Tweens.Tween;

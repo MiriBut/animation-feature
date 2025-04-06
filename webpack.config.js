@@ -26,7 +26,7 @@ module.exports = {
         test: /\.wasm$/,
         type: "asset/resource",
       },
-      // הוספת חוק חדש עבור worker modules
+
       {
         test: /\.worker\.(js|ts)$/,
         use: {
@@ -90,6 +90,10 @@ module.exports = {
           to: path.resolve(__dirname, "dist/ffmpeg-core.js"),
         },
         {
+          from: "assets/favicon.ico",
+          to: "favicon.ico",
+        },
+        {
           from: path.resolve(
             __dirname,
             "node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.wasm"
@@ -105,7 +109,6 @@ module.exports = {
   experiments: {
     asyncWebAssembly: true,
   },
-  // הוספת התעלמות מהאזהרה
   ignoreWarnings: [
     {
       module: /@ffmpeg\/ffmpeg/,

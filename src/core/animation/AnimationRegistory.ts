@@ -1,4 +1,3 @@
-// src/core/animation/AnimationRegistry.ts
 import { Scene } from "phaser";
 import {
   AnimationPropertyType,

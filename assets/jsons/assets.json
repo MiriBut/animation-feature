@@ -4,19 +4,31 @@
       "assetName": "title_text",
       "assetType": "text",
       "fontFamily": "myfont1",
-      "assetUrl": "assets/fonts/devil-summoner-italic.ttf"
+      "assetUrl": "assets/fonts/devil-summoner-italic.ttf",
+      "aspect_ratio_override": {
+        "width": 6,
+        "height": 8
+      }
     },
     {
       "assetName": "title_text1",
       "assetType": "text",
       "fontFamily": "myfont2",
-      "assetUrl": "assets/fonts/V5PRC___.TTF"
+      "assetUrl": "assets/fonts/V5PRC___.TTF",
+      "aspect_ratio_override": {
+        "width": 6,
+        "height": 8
+      }
     },
     {
       "assetName": "title_text2",
       "assetType": "text",
       "fontFamily": "Arial",
-      "assetUrl": "none"
+      "assetUrl": "none",
+      "aspect_ratio_override": {
+        "width": 6,
+        "height": 8
+      }
     },
     {
       "assetName": "kick",
@@ -31,13 +43,10 @@
         "skeletonType": "binary"
       },
       "assetType": "spine",
-      "scale_override": {
-        "x": 0.5,
-        "y": 0.5
-      },
-      "aspect_ratio_ override": {
-        "width": 1,
-        "height": 1
+
+      "aspect_ratio_override": {
+        "width": 6,
+        "height": 8
       },
       "pivot_override": {
         "x": 0.5,
@@ -53,11 +62,11 @@
       },
       "assetType": "spine",
       "scale_override": {
-        "x": 0.5,
-        "y": 0.5
+        "x": 0.1,
+        "y": 0.8
       },
-      "aspect_ratio_ override": {
-        "width": 1,
+      "aspect_ratio_override": {
+        "width": 0.6,
         "height": 1
       },
       "pivot_override": {
@@ -95,8 +104,8 @@
         "height": 9
       },
       "pivot_override": {
-        "x": 0,
-        "y": 0
+        "x": 0.5,
+        "y": 0.5
       }
     },
     {
@@ -104,8 +113,8 @@
       "assetUrl": "assets/images/background_image.jpg",
       "assetType": "image",
       "scale_override": {
-        "x": 1,
-        "y": 1
+        "x": 2,
+        "y": 2
       },
       "aspect_ratio_override": {
         "width": 16,

@@ -84,9 +84,6 @@ export class VideoService {
       // Update current resolution before loading
       this.currentWidth = this.scene.scale.width;
       this.currentHeight = this.scene.scale.height;
-      console.log(
-        `VideoService: Loading timeline with resolution ${this.currentWidth}x${this.currentHeight}`
-      );
 
       await this.loadTimelineAssets();
 
@@ -149,68 +146,88 @@ export class VideoService {
     baseScaleX: number,
     baseScaleY: number,
     widthRatio: number,
-    heightRatio: number
+    heightRatio: number,
+    sprite: any // Add sprite as a parameter
   ): { x: number; y: number } {
     const assetInfo = this.assetService.getAssetInfo(assetName);
 
-    // Get initial Scale from scale_override or baseScale
-    let adjustedScaleX =
+    // Get initial scale from scale_override or baseScale
+    let initialScaleX =
       (assetInfo?.scale_override?.x ?? baseScaleX) * widthRatio;
-    let adjustedScaleY =
+    let initialScaleY =
       (assetInfo?.scale_override?.y ?? baseScaleY) * heightRatio;
 
-    // Calculate Aspect Ratio
-    let aspectRatio = 1;
+    let adjustedScaleX: number;
+    let adjustedScaleY: number;
+
+    // Handle aspect_ratio_override to enforce its proportions
     if (assetInfo?.aspect_ratio_override) {
       const { width, height } = assetInfo.aspect_ratio_override;
-      aspectRatio = width / height;
-      console.log(
-        `Using aspect_ratio_override for ${assetName}: ${aspectRatio}`
-      );
+      const aspectRatio = width / height;
 
-      // Adjust the Scale to the Aspect Ratio, using the smaller axis as the base
-      const minScale = Math.min(adjustedScaleX, adjustedScaleY);
-      if (aspectRatio > 1) {
-        adjustedScaleX = minScale * aspectRatio;
-        adjustedScaleY = minScale;
-      } else {
-        adjustedScaleX = minScale;
-        adjustedScaleY = minScale / aspectRatio;
-      }
-      console.log(
-        `Adjusted Scale for ${assetName} with aspect_ratio_override: x=${adjustedScaleX}, y=${adjustedScaleY}`
-      );
-    } else if (!assetInfo?.scale_override) {
-      const sprite = this.assetService.getElementSprite(assetName);
-      if (
-        sprite instanceof Phaser.GameObjects.Sprite ||
-        sprite instanceof Phaser.GameObjects.Image
-      ) {
-        aspectRatio = sprite.width / sprite.height;
-        console.log(
-          `Using sprite aspect ratio for ${assetName}: ${aspectRatio} (${sprite.width}/${sprite.height})`
-        );
-      } else {
-        console.warn(
-          `No aspect ratio info for ${assetName}, defaulting to 1:1`
-        );
-      }
+      // Determine the baseScale using absolute values
+      const absX = Math.abs(initialScaleX);
+      const absY = Math.abs(initialScaleY);
+      const baseScaleAbs = Math.min(absX, absY);
 
-      // Adjust to sprite's Aspect Ratio only if there is no scale_override
+      // Preserve the original signs
+      const signX = initialScaleX >= 0 ? 1 : -1;
+      const signY = initialScaleY >= 0 ? 1 : -1;
+
       if (aspectRatio > 1) {
-        adjustedScaleX = adjustedScaleY * aspectRatio;
+        adjustedScaleX = signX * baseScaleAbs * aspectRatio; // Apply sign of x
+        adjustedScaleY = signY * baseScaleAbs; // Apply sign of y
       } else {
-        adjustedScaleY = adjustedScaleX / aspectRatio;
+        adjustedScaleX = signX * baseScaleAbs; // Apply sign of x
+        adjustedScaleY = (signY * baseScaleAbs) / aspectRatio; // Apply sign of y
       }
     } else {
-      console.log(
-        `Using scale_override for ${assetName} without aspect ratio adjustment: x=${adjustedScaleX}, y=${adjustedScaleY}`
-      );
+      // No aspect_ratio_override, use scale_override or base scales directly
+      adjustedScaleX = initialScaleX;
+      adjustedScaleY = initialScaleY;
+
+      // If no scale_override, adjust based on sprite aspect ratio if available
+      if (!assetInfo?.scale_override && sprite) {
+        let aspectRatio = 1;
+
+        if (
+          sprite instanceof Phaser.GameObjects.Video ||
+          sprite instanceof Phaser.GameObjects.Sprite ||
+          sprite instanceof Phaser.GameObjects.Text ||
+          sprite instanceof Phaser.GameObjects.Container
+        ) {
+          aspectRatio = sprite.width / sprite.height;
+        } else if (sprite instanceof SpineGameObject) {
+          const skeleton = sprite.skeleton;
+          const spineWidth = skeleton?.data?.width || 1;
+          const spineHeight = skeleton?.data?.height || 1;
+          aspectRatio = spineWidth / spineHeight;
+        } else if (
+          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+        ) {
+          aspectRatio = 1;
+          console.warn(
+            `No direct aspect ratio for ParticleEmitter ${assetName}, defaulting to 1:1`
+          );
+        } else {
+          aspectRatio = 1;
+          console.warn(
+            `No aspect ratio info for ${assetName}, defaulting to 1:1`
+          );
+        }
+
+        // Adjust scale based on sprite aspect ratio
+        const minScale = Math.min(adjustedScaleX, adjustedScaleY);
+        if (aspectRatio > 1) {
+          adjustedScaleX = minScale * aspectRatio;
+          adjustedScaleY = minScale;
+        } else {
+          adjustedScaleX = minScale;
+          adjustedScaleY = minScale / aspectRatio;
+        }
+      }
     }
 
-    console.log(
-      `Calculated Scale for ${assetName}: x=${adjustedScaleX}, y=${adjustedScaleY}, aspectRatio=${aspectRatio}`
-    );
     return { x: adjustedScaleX, y: adjustedScaleY };
   }
 
@@ -240,11 +257,6 @@ export class VideoService {
     // Use the current resolution that was saved
     const screenWidth = this.currentWidth;
     const screenHeight = this.currentHeight;
-
-    // Log to check values
-    console.log(
-      `Converting timeline for ${timelineElement.elementName} with resolution ${screenWidth}x${screenHeight}`
-    );
 
     // Handle audio
     if (
@@ -422,9 +434,6 @@ export class VideoService {
             delay: positionAnim.startTime * 1000,
           },
         });
-        console.log(
-          `Position for ${timelineElement.elementName}: Start (${positionAnim.startValue.x}, ${positionAnim.startValue.y}, z:${startZ}), End (${positionAnim.endValue.x}, ${positionAnim.endValue.y}, z:${endZ}), Time: ${positionAnim.startTime}-${positionAnim.endTime}`
-        );
       });
     }
 
@@ -450,9 +459,6 @@ export class VideoService {
         timelineElement.assetName
       );
       if (assetInfo?.scale_override) {
-        console.log(
-          `Ignoring timeline scale for ${timelineElement.elementName} due to scale_override: x=${assetInfo.scale_override.x}, y=${assetInfo.scale_override.y}`
-        );
       } else {
         const isSupported =
           targetSprite instanceof Phaser.GameObjects.Sprite ||
@@ -473,9 +479,6 @@ export class VideoService {
               delay: scaleAnim.startTime * 1000,
             },
           });
-          console.log(
-            `Scale for ${timelineElement.elementName}: Start (${scaleAnim.startValue.x}, ${scaleAnim.startValue.y}), End (${scaleAnim.endValue.x}, ${scaleAnim.endValue.y})`
-          );
         }
       }
     }
@@ -576,69 +579,87 @@ export class VideoService {
   }
 
   private async initializeTimelineElements(): Promise<void> {
-    if (!this.timelineData) {
-      return;
-    }
+    if (!this.timelineData) return;
+
     const syncGroups: SyncGroup[] = [];
     const activeElements = new Set<string>();
     const baseWidth = 1920;
     const baseHeight = 1080;
 
     for (const element of this.timelineData["template video json"]) {
-      if (!element.initialState) {
-        continue;
-      }
+      if (!element.initialState) continue;
 
       activeElements.add(element.elementName);
-
       let sprite = this.activeSprites.get(element.elementName);
       const widthRatio = this.currentWidth / baseWidth;
       const heightRatio = this.currentHeight / baseHeight;
-
       const assetInfo = this.assetService.getAssetInfo(element.assetName);
-      let scaleX: number, scaleY: number;
 
-      // Check if there's a timeline.scale and no scale_override
-      if (element.timeline?.scale && !assetInfo?.scale_override) {
-        const timelineScale = element.timeline.scale[0]; // Take the first scale animation
-        scaleX = timelineScale.startValue.x;
-        scaleY = timelineScale.startValue.y;
-        console.log(
-          `Using timeline.scale.startValue for ${element.elementName}: x=${scaleX}, y=${scaleY}`
-        );
-      } else {
-        // Fallback to scale_override or uniformScale
-        const uniformScale = this.calculateUniformScale(
-          element.assetName,
-          element.initialState.scale?.x ?? 1,
-          element.initialState.scale?.y ?? 1,
-          widthRatio,
-          heightRatio
-        );
-        scaleX = assetInfo?.scale_override?.x ?? uniformScale.x;
-        scaleY = assetInfo?.scale_override?.y ?? uniformScale.y;
-      }
+      // Calculate uniform scale first, ensuring aspect_ratio_override takes precedence
+      const uniformScale = this.calculateUniformScale(
+        element.assetName,
+        element.initialState.scale?.x ?? 1,
+        element.initialState.scale?.y ?? 1,
+        widthRatio,
+        heightRatio,
+        sprite
+      );
 
-      const adjustedInitialState: AssetDisplayProperties = {
-        x: element.initialState?.position?.x
-          ? element.initialState.position.x * widthRatio
-          : this.currentWidth / 2,
-        y: element.initialState?.position?.y
-          ? element.initialState.position.y * heightRatio
-          : this.currentHeight / 2,
-        scaleX: scaleX,
-        scaleY: scaleY,
-        alpha: element.initialState?.opacity ?? 1,
-        rotation: element.initialState?.rotation ?? 0,
-        tint: element.initialState?.color
-          ? parseInt(element.initialState.color.replace("#", ""), 16)
-          : undefined,
-        ratio: assetInfo?.aspect_ratio_override,
-        assetName: element.assetName,
-        timelineScale: undefined,
-      };
+      // Use uniformScale directly if aspect_ratio_override exists, otherwise fallback to scale_override or initial state
+      const scaleX = assetInfo?.aspect_ratio_override
+        ? uniformScale.x
+        : assetInfo?.scale_override?.x ?? uniformScale.x;
+      const scaleY = assetInfo?.aspect_ratio_override
+        ? uniformScale.y
+        : assetInfo?.scale_override?.y ?? uniformScale.y;
 
       if (!sprite) {
+        const initialState: AssetDisplayProperties = {
+          x: element.initialState?.position?.x
+            ? element.initialState.position.x * widthRatio
+            : this.currentWidth / 2,
+          y: element.initialState?.position?.y
+            ? element.initialState.position.y * heightRatio
+            : this.currentHeight / 2,
+          scaleX: scaleX,
+          scaleY: scaleY,
+          alpha: element.initialState?.opacity ?? 1,
+          rotation: element.initialState?.rotation ?? 0,
+          tint: element.initialState?.color
+            ? parseInt(element.initialState.color.replace("#", ""), 16)
+            : undefined,
+          ratio: assetInfo?.aspect_ratio_override,
+          assetName: element.assetName,
+          timelineScale: undefined,
+        };
+
+        sprite = this.assetService.displayElement(
+          element.assetName,
+          initialState,
+          element.elementName
+        );
+        this.activeSprites.set(element.elementName, sprite);
+      } else {
+        // Update existing sprite with the correct scale
+        const adjustedInitialState: AssetDisplayProperties = {
+          x: element.initialState?.position?.x
+            ? element.initialState.position.x * widthRatio
+            : this.currentWidth / 2,
+          y: element.initialState?.position?.y
+            ? element.initialState.position.y * heightRatio
+            : this.currentHeight / 2,
+          scaleX: scaleX,
+          scaleY: scaleY,
+          alpha: element.initialState?.opacity ?? 1,
+          rotation: element.initialState?.rotation ?? 0,
+          tint: element.initialState?.color
+            ? parseInt(element.initialState.color.replace("#", ""), 16)
+            : undefined,
+          ratio: assetInfo?.aspect_ratio_override,
+          assetName: element.assetName,
+          timelineScale: undefined,
+        };
+
         sprite = this.assetService.displayElement(
           element.assetName,
           adjustedInitialState,
@@ -647,69 +668,44 @@ export class VideoService {
         this.activeSprites.set(element.elementName, sprite);
       }
 
+      // Apply pivot_override only to supported types
+      if (assetInfo?.pivot_override) {
+        if (
+          sprite instanceof Phaser.GameObjects.Sprite ||
+          sprite instanceof Phaser.GameObjects.Image ||
+          sprite instanceof Phaser.GameObjects.Video ||
+          sprite instanceof SpineGameObject ||
+          sprite instanceof Phaser.GameObjects.Text
+        ) {
+          sprite.setOrigin(
+            assetInfo.pivot_override.x,
+            assetInfo.pivot_override.y
+          );
+        } else if (
+          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+        ) {
+          // console.warn(
+          //   `pivot_override not supported for ParticleEmitter: ${element.elementName}`
+          // );
+        } else if (sprite instanceof Phaser.Sound.WebAudioSound) {
+          console.warn(
+            `pivot_override not supported for WebAudioSound: ${element.elementName}`
+          );
+        }
+      }
+
+      // Verify applied scale
       if (
         sprite instanceof Phaser.GameObjects.Sprite ||
-        sprite instanceof Phaser.GameObjects.Image
+        sprite instanceof Phaser.GameObjects.Image ||
+        sprite instanceof Phaser.GameObjects.Video ||
+        sprite instanceof SpineGameObject ||
+        sprite instanceof Phaser.GameObjects.Text
       ) {
-        sprite.setDepth(element.initialState.position?.z ?? 0);
-        sprite.setVisible(true);
+        sprite.setScale(scaleX, scaleY); // Explicitly enforce the scale
       }
 
-      if (element.timeline) {
-        const adjustedTimeline = this.adjustTimeline(
-          element.timeline,
-          widthRatio,
-          heightRatio,
-          element.assetName,
-          element
-        );
-        const sequence = this.convertTimelineToAnimations({
-          ...element,
-          timeline: adjustedTimeline,
-        });
-        if (sequence.length > 0 && sprite) {
-          syncGroups.push({
-            target: sprite,
-            sequence,
-          });
-        }
-      }
-
-      if (element.assetType === "audio") {
-        if (!sprite || !(sprite instanceof Phaser.Sound.WebAudioSound)) {
-          sprite = this.assetService.displayElement(
-            element.assetName,
-            adjustedInitialState,
-            element.elementName
-          );
-          this.activeSprites.set(element.elementName, sprite);
-        }
-      } else if (element.assetType === "text") {
-        // Use displayAsset with full adjustedInitialState
-        sprite = this.assetService.displayElement(
-          element.assetName,
-          {
-            ...adjustedInitialState,
-            text: element.initialState.text ?? "", // Default value for text
-            fontSize: adjustedInitialState.fontSize ?? "32px", // Default value
-            color: adjustedInitialState.color ?? "#ffffff", // Default value
-            fontStyle: adjustedInitialState.fontStyle ?? "normal", // Default value
-            fontWeight: adjustedInitialState.fontWeight ?? "normal", // Default value
-            textDecoration: adjustedInitialState.textDecoration ?? undefined,
-          },
-          element.elementName
-        );
-        this.activeSprites.set(element.elementName, sprite);
-      } else if (!sprite) {
-        sprite = this.assetService.displayElement(
-          element.assetName,
-          adjustedInitialState,
-          element.elementName
-        );
-        this.activeSprites.set(element.elementName, sprite);
-      }
-
-      // Set depth
+      // Set depth and visibility
       if (
         sprite instanceof Phaser.GameObjects.Sprite ||
         sprite instanceof Phaser.GameObjects.Image ||
@@ -722,6 +718,7 @@ export class VideoService {
         sprite.setVisible(true);
       }
 
+      // Process timeline animations
       if (element.timeline) {
         const adjustedTimeline = this.adjustTimeline(
           element.timeline,
@@ -735,10 +732,7 @@ export class VideoService {
           timeline: adjustedTimeline,
         });
         if (sequence.length > 0 && sprite) {
-          syncGroups.push({
-            target: sprite,
-            sequence,
-          });
+          syncGroups.push({ target: sprite, sequence });
         }
       }
     }
@@ -835,9 +829,6 @@ export class VideoService {
 
     if (adjustedTimeline.scale) {
       if (assetInfo?.scale_override) {
-        console.log(
-          `Scale override applied for ${assetName}, timeline scale will be ignored`
-        );
         delete adjustedTimeline.scale; // Ignore timeline scale if scale_override exists
       } else {
         // If timeline.scale is used as initial scale, we might not need to animate it unless it changes
@@ -847,14 +838,16 @@ export class VideoService {
             scale.startValue.x,
             scale.startValue.y,
             widthRatio,
-            heightRatio
+            heightRatio,
+            element
           );
           const uniformScaleEnd = this.calculateUniformScale(
             assetName,
             scale.endValue.x,
             scale.endValue.y,
             widthRatio,
-            heightRatio
+            heightRatio,
+            element
           );
           return {
             ...scale,

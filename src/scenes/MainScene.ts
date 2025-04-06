@@ -1,7 +1,5 @@
 import { Scene } from "phaser";
-//import { BackgroundManager } from "../managers/BackgroundManager";
 import { AudioManager } from "../managers/AudioManager";
-//import { CharacterManager } from "../managers/CharacterManager";
 import { ExportManager } from "../managers/ExportManager";
 import { AssetService } from "../core/services/AssetService";
 import { VideoService } from "../core/services/VideoService";
@@ -13,7 +11,6 @@ import "../core/animation/animations";
 export class MainScene extends Scene {
   private ui?: SceneUI;
   private isResizing: boolean = false;
-  private currentBackground: File | null = null;
 
   // Services
   private assetService!: AssetService;
@@ -21,8 +18,6 @@ export class MainScene extends Scene {
   private syncSystem!: SyncSystem;
 
   // Managers
-  //private backgroundManager!: BackgroundManager;
-  //private characterManager!: CharacterManager;
   private audioManager!: AudioManager;
   private exportManager!: ExportManager;
 
@@ -41,16 +36,11 @@ export class MainScene extends Scene {
   }
 
   init(): void {
-    console.log("Scene initialization started");
-
     // Initialize services first
     this.assetService = new AssetService(this);
     this.videoService = new VideoService(this, this.assetService);
     this.syncSystem = new SyncSystem(this);
 
-    // Initialize managers
-    // this.backgroundManager = new BackgroundManager(this);
-    //this.characterManager = new CharacterManager(this);
     this.audioManager = new AudioManager(this);
     this.exportManager = new ExportManager(this, this.audioManager);
 
@@ -61,19 +51,9 @@ export class MainScene extends Scene {
   preload(): void {}
 
   async create(): Promise<void> {
-    console.log(
-      "MainScene create started with dimensions:",
-      this.scale.width,
-      this.scale.height
-    );
     this.initializeScene();
 
     this.audioManager = new AudioManager(this);
-
-    // Make sure background reloads if we're resizing
-    if (this.currentBackground) {
-      await this.reloadBackground();
-    }
 
     if (!this.ui) {
       this.ui = new SceneUI(
@@ -89,19 +69,15 @@ export class MainScene extends Scene {
 
     // Ensure camera is properly configured
     this.cameras.main.setBounds(0, 0, this.scale.width, this.scale.height);
-    console.log("MainScene create completed");
   }
 
   private async cleanupAssetsAndTweens(): Promise<void> {
     try {
-      console.log("Cleaning up assets and tweens before resolution change");
-
       // Stop all running tweens
       this.tweens.killAll();
 
       // Clear all animations in progress
       this.anims.pauseAll();
-      //this.anims.stop();
 
       // Notify VideoService to clear assets
       await this.videoService.clearAllAssets();
@@ -112,42 +88,31 @@ export class MainScene extends Scene {
       // Clear the sync system timeline
       this.syncSystem.reset();
 
-      // חדש: ניקוי ישיר של כל האובייקטים בסצנה
       this.cleanupAllGameObjects();
-
-      console.log("Assets and tweens cleanup completed");
     } catch (error) {
       console.error("Error during assets and tweens cleanup:", error);
     }
   }
 
-  // פונקציה חדשה לניקוי ישיר של אובייקטים
   private cleanupAllGameObjects(): void {
-    console.log("MainScene: Performing cleanup of specific game objects");
-
-    // לקבל את כל האובייקטים בסצנה
     const allGameObjects = this.children.list;
 
-    // מעבר על אובייקטים שנוצרו בתהליך הטעינה של אסטים ווידאו
     for (let i = allGameObjects.length - 1; i >= 0; i--) {
       const gameObject = allGameObjects[i];
 
-      // נתעלם מאובייקטי בסיס ומערכת
+      // Ignore base and system objects
       if (
         gameObject.name &&
         (gameObject.name.startsWith("ui_") ||
           gameObject.name === "camera" ||
           gameObject.name === "background" ||
-          // אל תנקה אובייקטים קריטיים למערכת
           gameObject.name.includes("manager") ||
           gameObject.name.includes("service") ||
           gameObject.name.includes("system"))
       ) {
-        console.log(`Skipping cleanup for ${gameObject.name}`);
         continue;
       }
 
-      // ניקוי רק של אובייקטים ויזואליים
       try {
         if (
           gameObject instanceof Phaser.GameObjects.Sprite ||
@@ -155,18 +120,14 @@ export class MainScene extends Scene {
           gameObject instanceof Phaser.GameObjects.Video ||
           gameObject instanceof Phaser.GameObjects.Text
         ) {
-          console.log(
-            `Destroying visual game object: ${gameObject.name || "unnamed"}`
-          );
           gameObject.destroy();
         }
-        // טיפול זהיר יותר בקונטיינרים - ננקה רק אם הם לא קריטיים למערכת
+        // Handle containers more carefully - only clean them if they are not critical to the system
         else if (
           gameObject instanceof Phaser.GameObjects.Container &&
           !gameObject.name?.includes("system") &&
           !gameObject.name?.includes("manager")
         ) {
-          console.log(`Clearing container: ${gameObject.name || "unnamed"}`);
           gameObject.removeAll(true);
         }
       } catch (e) {
@@ -177,7 +138,6 @@ export class MainScene extends Scene {
 
   private initializeScene(): void {
     if (!this.isResizing) {
-      console.log("setGameSize");
       this.scale.setGameSize(this.DEFAULT_WIDTH, this.DEFAULT_HEIGHT);
     }
 
@@ -201,14 +161,11 @@ export class MainScene extends Scene {
 
   private async updateResolution(width: number, height: number): Promise<void> {
     if (this.isResizing) {
-      console.log("Already resizing, ignoring request");
       return;
     }
 
     this.width = width;
     this.height = height;
-
-    console.log("Updating resolution:", width, height);
     this.isResizing = true;
 
     try {
@@ -251,11 +208,6 @@ export class MainScene extends Scene {
       // Update export manager resolution
       await this.exportManager.changeResolution(width, height);
 
-      // Reload background if exists
-      if (this.currentBackground) {
-        await this.reloadBackground();
-      }
-
       // Fade back in
       await new Promise<void>((resolve) => {
         this.cameras.main.fadeIn(
@@ -268,8 +220,6 @@ export class MainScene extends Scene {
           }
         );
       });
-
-      console.log("Resolution update completed successfully");
     } catch (error) {
       console.error("Error updating resolution:", error);
       showMessage({
@@ -296,14 +246,6 @@ export class MainScene extends Scene {
     console.log(
       `Resolution changed from ${oldWidth}x${oldHeight} to ${newWidth}x${newHeight}`
     );
-
-    if (this.assetFile) {
-      //  this.handleAssetsJson(this.assetFile);
-    }
-    if (this.timelineFile) {
-      // this.handleTimelineJson(this.timelineFile);
-    }
-    //  this.assetService.handleResize(oldWidth, oldHeight, newWidth, newHeight);
   }
 
   private handleResize(gameSize: Phaser.Structs.Size): void {
@@ -315,44 +257,10 @@ export class MainScene extends Scene {
     this.cameras.main.setBounds(0, 0, width, height);
   }
 
-  private async reloadBackground(): Promise<void> {
-    if (!this.currentBackground) return;
-
-    await new Promise<void>((resolve) => {
-      this.cameras.main.fadeOut(
-        300,
-        0,
-        0,
-        0,
-        (camera: Phaser.Cameras.Scene2D.Camera, progress: number) => {
-          if (progress === 1) resolve();
-        }
-      );
-    });
-
-    // await this.backgroundManager.changeBackground(this.currentBackground);
-    this.cameras.main.fadeIn(300, 0, 0, 0);
-  }
-
-  // private async handleBackgroundChange(file: File): Promise<void> {
-  //   try {
-  //     this.currentBackground = file;
-  //     //  await this.backgroundManager.changeBackground(file);
-  //   } catch (error) {
-  //     console.error("Error changing background:", error);
-  //     this.currentBackground = null;
-  //     showMessage({
-  //       isOpen: true,
-  //       title: "Background Error",
-  //       messages: [createErrorMessage("Failed to change background")],
-  //     });
-  //   }
-  // }
-
   private async handleAssetsJson(file: File): Promise<void> {
     this.assetFile = file;
     try {
-      console.log("Starting to load assets JSON2");
+      console.log("Starting to load assets JSON");
       await this.assetService.handleAssetsJson(file);
     } catch (error) {
       console.error("Error loading assets JSON:", error);
@@ -422,26 +330,16 @@ export class MainScene extends Scene {
     }
   }
   private async resetAssetService(): Promise<void> {
-    console.log("MainScene: Resetting AssetService");
-
     try {
-      // קריאה לפונקציית reset אם קיימת
       if (typeof this.assetService.reset === "function") {
         await this.assetService.reset();
       }
-
-      // או לחלופין, יצירה מחדש של AssetService אם צריך
-      // this.assetService = new AssetService(this);
-
-      console.log("AssetService reset successfully");
     } catch (error) {
       console.error("Error resetting AssetService:", error);
     }
   }
   destroy(): void {
     this.ui?.destroy();
-    // this.videoService.cleanup();
-    // this.characterManager.destroy();
     this.audioManager.destroy();
     this.exportManager.destroy();
     this.scale.removeListener("resize", this.handleResize, this);
