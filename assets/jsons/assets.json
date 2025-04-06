@@ -45,6 +45,27 @@
       }
     },
     {
+      "assetName": "penguin_spine",
+      "assetUrl": {
+        "atlasUrl": "assets/spines/penguin/penguin.atlas",
+        "skeletonUrl": "assets/spines/penguin/penguin.skel",
+        "skeletonType": "binary"
+      },
+      "assetType": "spine",
+      "scale_override": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "aspect_ratio_ override": {
+        "width": 1,
+        "height": 1
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
       "assetName": "sparkle_particle",
       "assetUrl": "assets/images/sparkle.png",
       "assetType": "particle",
