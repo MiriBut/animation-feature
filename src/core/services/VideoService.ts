@@ -6,6 +6,7 @@ import {
   SequenceItem,
 } from "../animation/types";
 import { AssetService } from "./AssetService";
+import { TimelineService } from "./TimelineService";
 import {
   TimelineElement,
   TimelineJson,
@@ -37,35 +38,40 @@ export class VideoService {
     | Phaser.GameObjects.Text
   > = new Map();
   private countdownTimer: CountdownTimer | null = null;
-  testSpine: SpineGameObject | null | undefined;
-  private currentWidth: number; // New variable for current resolution
-  private currentHeight: number; // New variable for current resolution
+  private currentWidth: number;
+  private currentHeight: number;
+  private timelineService: TimelineService;
 
-  constructor(private scene: Scene, private assetService: AssetService) {
+  constructor(
+    private scene: Scene,
+    private assetService: AssetService,
+    assetsMap: Map<string, { url: string; type: string }>
+  ) {
     this.syncSystem = new SyncSystem(scene);
-    this.currentWidth = scene.scale.width; // Initial setup
-    this.currentHeight = scene.scale.height; // Initial setup
+    this.currentWidth = scene.scale.width;
+    this.currentHeight = scene.scale.height;
+    this.timelineService = new TimelineService(assetsMap, assetService, scene);
     this.setupScene();
   }
 
+  /**
+   * Handle resolution changes by updating dimensions and re-initializing elements
+   */
   public handleResize(
     oldWidth: number,
     oldHeight: number,
     newWidth: number,
     newHeight: number
   ): void {
-    console.log(`handleResize in video service`);
-    // Update current resolution
+    console.log(`handleResize in VideoService`);
     this.currentWidth = newWidth;
     this.currentHeight = newHeight;
-
-    // Use AssetService's handleResize to adjust sprites
-    this.assetService.handleResize(oldWidth, oldHeight, newWidth, newHeight);
-
-    // Readjust the timeline
     this.initializeTimelineElements();
   }
 
+  /**
+   * Setup the initial scene configuration
+   */
   private async setupScene(): Promise<void> {
     this.scene.cameras.main.setBackgroundColor("#ffffff");
     this.scene.scale.setGameSize(1920, 1080);
@@ -74,23 +80,20 @@ export class VideoService {
     this.scene.cameras.main.setZoom(1);
   }
 
+  /**
+   * Load a timeline file and initialize its assets and elements
+   */
   public async loadTimelineWithDelay(file: File): Promise<void> {
     try {
       const fileContent = await file.text();
       const timeline = JSON.parse(fileContent) as TimelineJson;
 
       this.timelineData = timeline;
-
-      // Update current resolution before loading
       this.currentWidth = this.scene.scale.width;
       this.currentHeight = this.scene.scale.height;
 
       await this.loadTimelineAssets();
-
-      //this.countdownTimer = new CountdownTimer(this.scene);
-      //await this.countdownTimer.start();
-
-      await this.initializeTimelineElements(); // We'll pass the adjustments to this function
+      await this.initializeTimelineElements();
     } catch (error) {
       showMessage({
         isOpen: true,
@@ -101,7 +104,6 @@ export class VideoService {
           ),
         ],
       });
-
       if (this.countdownTimer) {
         this.countdownTimer.destroy();
       }
@@ -109,10 +111,11 @@ export class VideoService {
     }
   }
 
+  /**
+   * Load all assets referenced in the timeline
+   */
   private async loadTimelineAssets(): Promise<void> {
-    if (!this.timelineData) {
-      return;
-    }
+    if (!this.timelineData) return;
 
     const assetsToLoad = this.timelineData["template video json"]
       .map((element) => element.assetName)
@@ -131,27 +134,20 @@ export class VideoService {
     if (failedAssets.length > 0) {
       console.error("VideoService: Failed assets:", failedAssets);
     }
-
-    const allLoaded = loadResults.every(({ result }) => result.success);
-    if (!allLoaded) {
-      console.error(
-        `VideoService: Failed assets:`,
-        loadResults.filter(({ result }) => !result.success)
-      );
-    }
   }
 
+  /**
+   * Calculate uniform scale for an asset, maintaining aspect ratio
+   */
   private calculateUniformScale(
     assetName: string,
     baseScaleX: number,
     baseScaleY: number,
     widthRatio: number,
     heightRatio: number,
-    sprite: any // Add sprite as a parameter
+    sprite: any
   ): { x: number; y: number } {
     const assetInfo = this.assetService.getAssetInfo(assetName);
-
-    // Get initial scale from scale_override or baseScale
     let initialScaleX =
       (assetInfo?.scale_override?.x ?? baseScaleX) * widthRatio;
     let initialScaleY =
@@ -160,63 +156,42 @@ export class VideoService {
     let adjustedScaleX: number;
     let adjustedScaleY: number;
 
-    // Handle aspect_ratio_override to enforce its proportions
     if (assetInfo?.aspect_ratio_override) {
+      // If the asset has aspect ratio override, use it to calculate the scale
       const { width, height } = assetInfo.aspect_ratio_override;
       const aspectRatio = width / height;
-
-      // Determine the baseScale using absolute values
-      const absX = Math.abs(initialScaleX);
-      const absY = Math.abs(initialScaleY);
-      const baseScaleAbs = Math.min(absX, absY);
-
-      // Preserve the original signs
+      const baseScaleAbs = Math.min(
+        Math.abs(initialScaleX),
+        Math.abs(initialScaleY)
+      );
       const signX = initialScaleX >= 0 ? 1 : -1;
       const signY = initialScaleY >= 0 ? 1 : -1;
 
       if (aspectRatio > 1) {
-        adjustedScaleX = signX * baseScaleAbs * aspectRatio; // Apply sign of x
-        adjustedScaleY = signY * baseScaleAbs; // Apply sign of y
+        adjustedScaleX = signX * baseScaleAbs * aspectRatio;
+        adjustedScaleY = signY * baseScaleAbs;
       } else {
-        adjustedScaleX = signX * baseScaleAbs; // Apply sign of x
-        adjustedScaleY = (signY * baseScaleAbs) / aspectRatio; // Apply sign of y
+        adjustedScaleX = signX * baseScaleAbs;
+        adjustedScaleY = (signY * baseScaleAbs) / aspectRatio;
       }
     } else {
-      // No aspect_ratio_override, use scale_override or base scales directly
       adjustedScaleX = initialScaleX;
       adjustedScaleY = initialScaleY;
 
-      // If no scale_override, adjust based on sprite aspect ratio if available
+      // If no scale override is provided, calculate based on sprite dimensions
       if (!assetInfo?.scale_override && sprite) {
         let aspectRatio = 1;
-
         if (
-          sprite instanceof Phaser.GameObjects.Video ||
           sprite instanceof Phaser.GameObjects.Sprite ||
-          sprite instanceof Phaser.GameObjects.Text ||
-          sprite instanceof Phaser.GameObjects.Container
+          sprite instanceof Phaser.GameObjects.Video ||
+          sprite instanceof Phaser.GameObjects.Text
         ) {
           aspectRatio = sprite.width / sprite.height;
         } else if (sprite instanceof SpineGameObject) {
-          const skeleton = sprite.skeleton;
-          const spineWidth = skeleton?.data?.width || 1;
-          const spineHeight = skeleton?.data?.height || 1;
+          const spineWidth = sprite.skeleton?.data?.width || 1;
+          const spineHeight = sprite.skeleton?.data?.height || 1;
           aspectRatio = spineWidth / spineHeight;
-        } else if (
-          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
-        ) {
-          aspectRatio = 1;
-          console.warn(
-            `No direct aspect ratio for ParticleEmitter ${assetName}, defaulting to 1:1`
-          );
-        } else {
-          aspectRatio = 1;
-          console.warn(
-            `No aspect ratio info for ${assetName}, defaulting to 1:1`
-          );
         }
-
-        // Adjust scale based on sprite aspect ratio
         const minScale = Math.min(adjustedScaleX, adjustedScaleY);
         if (aspectRatio > 1) {
           adjustedScaleX = minScale * aspectRatio;
@@ -231,6 +206,9 @@ export class VideoService {
     return { x: adjustedScaleX, y: adjustedScaleY };
   }
 
+  /**
+   * Convert timeline animations to sequence items for the SyncSystem
+   */
   private convertTimelineToAnimations(
     timelineElement: TimelineElement
   ): SequenceItem[] {
@@ -254,9 +232,10 @@ export class VideoService {
         | SpineGameObject;
     }
 
-    // Use the current resolution that was saved
     const screenWidth = this.currentWidth;
     const screenHeight = this.currentHeight;
+    const widthRatio = this.currentWidth / 1920;
+    const heightRatio = this.currentHeight / 1080;
 
     // Handle audio
     if (
@@ -332,82 +311,13 @@ export class VideoService {
       });
     }
 
-    // Handle text animations
-    if (timelineElement.assetType === "text" && timeline?.text) {
-      timeline.text.forEach(
-        (textAnim: {
-          value: any;
-          fontSize: { startValue: any; endValue: any };
-          color: { startValue: any; endValue: any };
-          fontWeight: any;
-          fontStyle: any;
-          textDecoration: any;
-          easeIn: any;
-          endTime: number;
-          startTime: number;
-        }) => {
-          const assetData = this.assetService.getFontFamily(
-            timelineElement.assetName
-          );
-          const fontName = assetData || "Arial";
-          sequence.push({
-            type: "text",
-            config: {
-              property: "text",
-              textValue: textAnim.value,
-              fontSize: textAnim.fontSize
-                ? {
-                    startValue: textAnim.fontSize.startValue,
-                    endValue: textAnim.fontSize.endValue,
-                  }
-                : undefined,
-              color: textAnim.color
-                ? {
-                    startValue: textAnim.color.startValue,
-                    endValue: textAnim.color.endValue,
-                  }
-                : undefined,
-              fontWeight: textAnim.fontWeight,
-              fontStyle: textAnim.fontStyle,
-              textDecoration: textAnim.textDecoration,
-              easing: textAnim.easeIn || "Linear",
-              duration: (textAnim.endTime - textAnim.startTime) * 1000,
-              delay: textAnim.startTime * 1000,
-              assetName: timelineElement.assetName,
-              fontName: fontName,
-            },
-          });
-        }
-      );
-
-      let lastTextEndTime = 0;
-      timeline.text.forEach((textAnim: { endTime: number }) => {
-        if (textAnim.endTime > lastTextEndTime) {
-          lastTextEndTime = textAnim.endTime;
-        }
-      });
-
-      const hasMatchingOpacity = timeline?.opacity?.some(
-        (opacityAnim) =>
-          opacityAnim.endTime === lastTextEndTime && opacityAnim.endValue === 0
-      );
-      if (!hasMatchingOpacity && lastTextEndTime > 0) {
-        sequence.push({
-          type: "opacity",
-          config: {
-            property: "opacity",
-            startValue: 1,
-            endValue: 0,
-            duration: 0,
-            easing: "Linear",
-            delay: lastTextEndTime * 1000,
-          },
-        });
-      }
-    }
-
-    // Handle position
+    // Handle position animations
     if (timeline?.position) {
+      // Get anchor information if available
+      const hasAnchor = !!timelineElement.initialState?.anchor;
+      const anchorX = timelineElement.initialState?.anchor?.x ?? 0.5;
+      const anchorY = timelineElement.initialState?.anchor?.y ?? 0.5;
+
       timeline.position.forEach((positionAnim) => {
         const startZ =
           positionAnim.startValue.z ??
@@ -415,18 +325,65 @@ export class VideoService {
           0;
         const endZ = positionAnim.endValue.z ?? startZ;
 
+        // Get animation start and end positions
+        const animStartX = positionAnim.startValue.x;
+        const animStartY = positionAnim.startValue.y;
+        const animEndX = positionAnim.endValue.x;
+        const animEndY = positionAnim.endValue.y;
+
+        // Check if values are relative (typically small values <= 1) and if anchor is present
+        const isSmallValue =
+          animStartX <= 1 && animStartY <= 1 && animEndX <= 1 && animEndY <= 1;
+        const needConversion = hasAnchor && isSmallValue;
+
+        // Final position values after calculation
+        let finalStartX = animStartX;
+        let finalStartY = animStartY;
+        let finalEndX = animEndX;
+        let finalEndY = animEndY;
+
+        if (needConversion) {
+          // Calculate base position from anchor (relative to screen)
+          const baseX = anchorX * this.currentWidth;
+          const baseY = anchorY * this.currentHeight;
+
+          // Convert relative positions to pixels, scaling by screen ratio
+          finalStartX = baseX + animStartX * widthRatio;
+          finalStartY = baseY + animStartY * heightRatio;
+          finalEndX = baseX + animEndX * widthRatio;
+          finalEndY = baseY + animEndY * heightRatio;
+
+          console.log(
+            `Timeline position for "${timelineElement.elementName}": ` +
+              `Converted from (${animStartX}, ${animStartY}) -> (${animEndX}, ${animEndY}) ` +
+              `to pixels (${finalStartX}, ${finalStartY}) -> (${finalEndX}, ${finalEndY}) ` +
+              `using anchor (${anchorX}, ${anchorY})`
+          );
+        } else {
+          // For non-relative values, just scale them according to screen ratio
+          finalStartX = animStartX * widthRatio;
+          finalStartY = animStartY * heightRatio;
+          finalEndX = animEndX * widthRatio;
+          finalEndY = animEndY * heightRatio;
+
+          console.log(
+            `Timeline position for "${timelineElement.elementName}": ` +
+              `Using values as-is: (${finalStartX}, ${finalStartY}) -> (${finalEndX}, ${finalEndY})`
+          );
+        }
+
         sequence.push({
           type: "position",
           config: {
             property: "position",
             startValue: {
-              x: positionAnim.startValue.x,
-              y: positionAnim.startValue.y,
+              x: finalStartX,
+              y: finalStartY,
               z: startZ,
             },
             endValue: {
-              x: positionAnim.endValue.x,
-              y: positionAnim.endValue.y,
+              x: finalEndX,
+              y: finalEndY,
               z: endZ,
             },
             duration: (positionAnim.endTime - positionAnim.startTime) * 1000,
@@ -458,8 +415,7 @@ export class VideoService {
       const assetInfo = this.assetService.getAssetInfo(
         timelineElement.assetName
       );
-      if (assetInfo?.scale_override) {
-      } else {
+      if (!assetInfo?.scale_override) {
         const isSupported =
           targetSprite instanceof Phaser.GameObjects.Sprite ||
           targetSprite instanceof Phaser.GameObjects.Video ||
@@ -483,101 +439,12 @@ export class VideoService {
       }
     }
 
-    // Handle rotation
-    if (timeline?.rotation) {
-      const isSupported =
-        targetSprite instanceof Phaser.GameObjects.Sprite ||
-        targetSprite instanceof SpineGameObject ||
-        targetSprite instanceof Phaser.GameObjects.Text;
-
-      if (isSupported) {
-        sequence.push({
-          type: "rotation",
-          config: {
-            property: "rotation",
-            startValue: timeline.rotation[0].startValue,
-            endValue: timeline.rotation[0].endValue,
-            duration:
-              (timeline.rotation[0].endTime - timeline.rotation[0].startTime) *
-              1000,
-            easing: timeline.rotation[0].easeIn || "Linear",
-            delay: timeline.rotation[0].startTime * 1000,
-          },
-        });
-      }
-    }
-
-    // Handle color
-    if (timeline?.color) {
-      const isSupported =
-        targetSprite instanceof Phaser.GameObjects.Sprite ||
-        targetSprite instanceof SpineGameObject ||
-        targetSprite instanceof Phaser.GameObjects.Text;
-
-      if (isSupported) {
-        sequence.push({
-          type: "color",
-          config: {
-            property: "color",
-            startValue: timeline.color[0].startValue,
-            endValue: timeline.color[0].endValue,
-            duration:
-              (timeline.color[0].endTime - timeline.color[0].startTime) * 1000,
-            easing: timeline.color[0].easeIn || "Linear",
-            delay: timeline.color[0].startTime * 1000,
-          },
-        });
-      }
-    }
-
     return sequence;
   }
 
-  public async handleResolutionChange(): Promise<void> {
-    console.log("VideoService: Handling resolution change - clearing assets");
-
-    // Filter GameObjects that can be sent to stopAll
-    const gameObjects = [...this.activeSprites.values()].filter(
-      (sprite) =>
-        sprite instanceof Phaser.GameObjects.Sprite ||
-        sprite instanceof Phaser.GameObjects.Video ||
-        sprite instanceof SpineGameObject ||
-        sprite instanceof Phaser.GameObjects.Container ||
-        sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
-    ) as Phaser.GameObjects.GameObject[];
-
-    // Stop all animations for GameObjects
-    if (gameObjects.length > 0) {
-      this.syncSystem.stopAll(gameObjects);
-    }
-
-    // Destroy all assets (sprites, sound etc.)
-    this.activeSprites.forEach((sprite) => {
-      if (sprite instanceof Phaser.Sound.WebAudioSound) {
-        sprite.stop();
-        sprite.destroy();
-      } else {
-        sprite.destroy();
-      }
-    });
-    this.activeSprites.clear();
-
-    // Clear the timeline and timer only, without resetting the syncSystem or scene
-    this.timelineData = null;
-    if (this.countdownTimer) {
-      this.countdownTimer.destroy();
-      this.countdownTimer = null;
-    }
-
-    // Update current resolution
-    this.currentWidth = this.scene.scale.width;
-    this.currentHeight = this.scene.scale.height;
-
-    console.log(
-      `VideoService: Assets cleared, ready for new timeline at resolution ${this.currentWidth}x${this.currentHeight}`
-    );
-  }
-
+  /**
+   * Initialize all elements from the timeline data
+   */
   private async initializeTimelineElements(): Promise<void> {
     if (!this.timelineData) return;
 
@@ -585,27 +452,86 @@ export class VideoService {
     const activeElements = new Set<string>();
     const baseWidth = 1920;
     const baseHeight = 1080;
+    const widthRatio = this.currentWidth / baseWidth;
+    const heightRatio = this.currentHeight / baseHeight;
 
-    for (const element of this.timelineData["template video json"]) {
-      if (!element.initialState) continue;
+    console.log(
+      `Initializing with resolution ${this.currentWidth}x${this.currentHeight}, ratios: (${widthRatio}, ${heightRatio})`
+    );
 
-      activeElements.add(element.elementName);
-      let sprite = this.activeSprites.get(element.elementName);
-      const widthRatio = this.currentWidth / baseWidth;
-      const heightRatio = this.currentHeight / baseHeight;
-      const assetInfo = this.assetService.getAssetInfo(element.assetName);
+    const normalizedElements =
+      await this.timelineService.processTimelineElements(
+        this.timelineData["template video json"]
+      );
 
-      // Calculate uniform scale first, ensuring aspect_ratio_override takes precedence
+    for (const normalizedElement of normalizedElements) {
+      if (!normalizedElement.initialState) continue;
+
+      // Get initial position and anchor values
+      const positionX = normalizedElement.initialState?.position?.x ?? 0;
+      const positionY = normalizedElement.initialState?.position?.y ?? 0;
+      const hasAnchor = !!normalizedElement.initialState?.anchor;
+      const anchorX = normalizedElement.initialState?.anchor?.x ?? 0.5;
+      const anchorY = normalizedElement.initialState?.anchor?.y ?? 0.5;
+
+      console.log(
+        `Element ${normalizedElement.elementName}: Raw position from normalizedElement:`,
+        normalizedElement.initialState?.position
+      );
+
+      // Calculate final position
+      let finalX: number;
+      let finalY: number;
+
+      if (hasAnchor) {
+        // If there's an anchor, position relative to it, ignoring absolute values
+        finalX = anchorX * this.currentWidth; // Center based on anchor
+        finalY = anchorY * this.currentHeight; // Center based on anchor
+
+        // Add position as a relative offset if it's small
+        const isRelativePosition =
+          Math.abs(positionX) <= 1 && Math.abs(positionY) <= 1;
+        if (isRelativePosition) {
+          finalX += positionX * this.currentWidth;
+          finalY += positionY * this.currentHeight;
+        }
+
+        console.log(
+          `Element ${normalizedElement.elementName}: ` +
+            `Position with anchor: (${finalX}, ${finalY}) ` +
+            `from anchor (${anchorX}, ${anchorY}) ` +
+            (isRelativePosition
+              ? `with relative offset (${positionX}, ${positionY}) scaled by (${this.currentWidth}, ${this.currentHeight})`
+              : `ignoring absolute position (${positionX}, ${positionY})`)
+        );
+      } else {
+        // No anchor: scale absolute position directly
+        finalX = positionX * widthRatio;
+        finalY = positionY * heightRatio;
+
+        console.log(
+          `Element ${normalizedElement.elementName}: ` +
+            `Absolute position scaled: (${finalX}, ${finalY}) ` +
+            `from (${positionX}, ${positionY}) with ratio (${widthRatio}, ${heightRatio})`
+        );
+      }
+
+      activeElements.add(normalizedElement.elementName);
+      let sprite = this.activeSprites.get(normalizedElement.elementName);
+      const assetInfo = this.assetService.getAssetInfo(
+        normalizedElement.assetName
+      );
+
+      // Calculate scale with aspect ratio preservation
       const uniformScale = this.calculateUniformScale(
-        element.assetName,
-        element.initialState.scale?.x ?? 1,
-        element.initialState.scale?.y ?? 1,
+        normalizedElement.assetName,
+        normalizedElement.initialState?.scale?.x ?? 1,
+        normalizedElement.initialState?.scale?.y ?? 1,
         widthRatio,
         heightRatio,
         sprite
       );
 
-      // Use uniformScale directly if aspect_ratio_override exists, otherwise fallback to scale_override or initial state
       const scaleX = assetInfo?.aspect_ratio_override
         ? uniformScale.x
         : assetInfo?.scale_override?.x ?? uniformScale.x;
@@ -613,122 +539,73 @@ export class VideoService {
         ? uniformScale.y
         : assetInfo?.scale_override?.y ?? uniformScale.y;
 
-      if (!sprite) {
-        const initialState: AssetDisplayProperties = {
-          x: element.initialState?.position?.x
-            ? element.initialState.position.x * widthRatio
-            : this.currentWidth / 2,
-          y: element.initialState?.position?.y
-            ? element.initialState.position.y * heightRatio
-            : this.currentHeight / 2,
-          scaleX: scaleX,
-          scaleY: scaleY,
-          alpha: element.initialState?.opacity ?? 1,
-          rotation: element.initialState?.rotation ?? 0,
-          tint: element.initialState?.color
-            ? parseInt(element.initialState.color.replace("#", ""), 16)
-            : undefined,
-          ratio: assetInfo?.aspect_ratio_override,
-          assetName: element.assetName,
-          timelineScale: undefined,
-        };
+      const pivot = assetInfo?.pivot_override || { x: 0.5, y: 0.5 };
 
-        sprite = this.assetService.displayElement(
-          element.assetName,
-          initialState,
-          element.elementName
-        );
-        this.activeSprites.set(element.elementName, sprite);
-      } else {
-        // Update existing sprite with the correct scale
-        const adjustedInitialState: AssetDisplayProperties = {
-          x: element.initialState?.position?.x
-            ? element.initialState.position.x * widthRatio
-            : this.currentWidth / 2,
-          y: element.initialState?.position?.y
-            ? element.initialState.position.y * heightRatio
-            : this.currentHeight / 2,
-          scaleX: scaleX,
-          scaleY: scaleY,
-          alpha: element.initialState?.opacity ?? 1,
-          rotation: element.initialState?.rotation ?? 0,
-          tint: element.initialState?.color
-            ? parseInt(element.initialState.color.replace("#", ""), 16)
-            : undefined,
-          ratio: assetInfo?.aspect_ratio_override,
-          assetName: element.assetName,
-          timelineScale: undefined,
-        };
+      // Prepare display properties for the asset
+      const initialState: AssetDisplayProperties = {
+        x: finalX,
+        y: finalY,
+        scaleX: scaleX,
+        scaleY: scaleY,
+        alpha: normalizedElement.initialState?.opacity ?? 1,
+        rotation: normalizedElement.initialState?.rotation ?? 0,
+        tint: normalizedElement.initialState?.color
+          ? parseInt(normalizedElement.initialState.color.replace("#", ""), 16)
+          : undefined,
+        ratio: assetInfo?.aspect_ratio_override,
+        assetName: normalizedElement.assetName,
+        pivot: pivot,
+        timelineScale: undefined,
+      };
 
-        sprite = this.assetService.displayElement(
-          element.assetName,
-          adjustedInitialState,
-          element.elementName
-        );
-        this.activeSprites.set(element.elementName, sprite);
-      }
+      // Display the element using asset service
+      sprite = this.assetService.displayElement(
+        normalizedElement.assetName,
+        initialState,
+        normalizedElement.elementName
+      );
+      this.activeSprites.set(normalizedElement.elementName, sprite);
 
-      // Apply pivot_override only to supported types
-      if (assetInfo?.pivot_override) {
-        if (
-          sprite instanceof Phaser.GameObjects.Sprite ||
-          sprite instanceof Phaser.GameObjects.Image ||
-          sprite instanceof Phaser.GameObjects.Video ||
-          sprite instanceof SpineGameObject ||
-          sprite instanceof Phaser.GameObjects.Text
-        ) {
-          sprite.setOrigin(
-            assetInfo.pivot_override.x,
-            assetInfo.pivot_override.y
-          );
-        } else if (
-          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
-        ) {
-          // console.warn(
-          //   `pivot_override not supported for ParticleEmitter: ${element.elementName}`
-          // );
-        } else if (sprite instanceof Phaser.Sound.WebAudioSound) {
-          console.warn(
-            `pivot_override not supported for WebAudioSound: ${element.elementName}`
-          );
-        }
-      }
-
-      // Verify applied scale
+      // Set sprite properties based on type
       if (
         sprite instanceof Phaser.GameObjects.Sprite ||
-        sprite instanceof Phaser.GameObjects.Image ||
         sprite instanceof Phaser.GameObjects.Video ||
-        sprite instanceof SpineGameObject ||
         sprite instanceof Phaser.GameObjects.Text
       ) {
-        sprite.setScale(scaleX, scaleY); // Explicitly enforce the scale
-      }
-
-      // Set depth and visibility
-      if (
-        sprite instanceof Phaser.GameObjects.Sprite ||
-        sprite instanceof Phaser.GameObjects.Image ||
-        sprite instanceof Phaser.GameObjects.Video ||
-        sprite instanceof SpineGameObject ||
-        sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
-        sprite instanceof Phaser.GameObjects.Text
-      ) {
-        sprite.setDepth(element.initialState.position?.z ?? 0);
+        const spriteWidth = sprite.width * scaleX;
+        const spriteHeight = sprite.height * scaleY;
+        sprite.setPosition(
+          finalX - spriteWidth * (pivot.x - 0.5), // Adjust for pivot offset
+          finalY - spriteHeight * (pivot.y - 0.5) // Adjust for pivot offset
+        );
+        sprite.setOrigin(pivot.x, pivot.y);
+        sprite.setScale(scaleX, scaleY);
+        sprite.setDepth(normalizedElement.initialState?.position?.z ?? 0);
+        sprite.setVisible(true);
+      } else if (sprite instanceof SpineGameObject) {
+        const spriteWidth = (sprite.skeleton?.data?.width || 100) * scaleX;
+        const spriteHeight = (sprite.skeleton?.data?.height || 100) * scaleY;
+        sprite.setPosition(
+          finalX - spriteWidth * (pivot.x - 0.5), // Adjust for pivot offset
+          finalY - spriteHeight * (pivot.y - 0.5) // Adjust for pivot offset
+        );
+        sprite.setOrigin(pivot.x, pivot.y);
+        sprite.setScale(scaleX, scaleY);
+        sprite.setDepth(normalizedElement.initialState?.position?.z ?? 0);
         sprite.setVisible(true);
       }
 
-      // Process timeline animations
-      if (element.timeline) {
+      // Process animations if they exist
+      if (normalizedElement.timeline) {
         const adjustedTimeline = this.adjustTimeline(
-          element.timeline,
+          normalizedElement.timeline,
           widthRatio,
           heightRatio,
-          element.assetName,
-          element
+          normalizedElement.assetName,
+          normalizedElement
         );
         const sequence = this.convertTimelineToAnimations({
-          ...element,
+          ...normalizedElement,
           timeline: adjustedTimeline,
         });
         if (sequence.length > 0 && sprite) {
@@ -742,10 +619,8 @@ export class VideoService {
       if (!activeElements.has(elementName)) {
         if (
           sprite instanceof Phaser.GameObjects.Sprite ||
-          sprite instanceof Phaser.GameObjects.Image ||
           sprite instanceof Phaser.GameObjects.Video ||
           sprite instanceof SpineGameObject ||
-          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
           sprite instanceof Phaser.GameObjects.Text
         ) {
           sprite.setVisible(false);
@@ -753,12 +628,57 @@ export class VideoService {
       }
     }
 
+    // Play all animations synchronously
     if (syncGroups.length > 0) {
       await this.syncSystem.playSync(syncGroups);
     }
   }
+  /**
+   * Handle resolution changes by clearing and reinitializing assets
+   */
+  public async handleResolutionChange(): Promise<void> {
+    console.log("VideoService: Handling resolution change - clearing assets");
 
-  // New function to adjust timeline to resolution
+    const gameObjects = [...this.activeSprites.values()].filter(
+      (sprite) =>
+        sprite instanceof Phaser.GameObjects.Sprite ||
+        sprite instanceof Phaser.GameObjects.Video ||
+        sprite instanceof SpineGameObject ||
+        sprite instanceof Phaser.GameObjects.Container ||
+        sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter
+    ) as Phaser.GameObjects.GameObject[];
+
+    if (gameObjects.length > 0) {
+      this.syncSystem.stopAll(gameObjects);
+    }
+
+    this.activeSprites.forEach((sprite) => {
+      if (sprite instanceof Phaser.Sound.WebAudioSound) {
+        sprite.stop();
+        sprite.destroy();
+      } else {
+        sprite.destroy();
+      }
+    });
+    this.activeSprites.clear();
+
+    this.timelineData = null;
+    if (this.countdownTimer) {
+      this.countdownTimer.destroy();
+      this.countdownTimer = null;
+    }
+
+    this.currentWidth = this.scene.scale.width;
+    this.currentHeight = this.scene.scale.height;
+
+    console.log(
+      `VideoService: Assets cleared, ready for new timeline at resolution ${this.currentWidth}x${this.currentHeight}`
+    );
+  }
+
+  /**
+   * Adjust timeline animations based on screen resolution
+   */
   private adjustTimeline(
     timeline: any,
     widthRatio: number,
@@ -769,10 +689,15 @@ export class VideoService {
     const adjustedTimeline = { ...timeline };
     const assetInfo = this.assetService.getAssetInfo(assetName);
 
+    // Adjust position animations
     if (adjustedTimeline.position) {
       const initialX = element.initialState?.position?.x ?? 0;
       const initialY = element.initialState?.position?.y ?? 0;
       const initialZ = element.initialState?.position?.z ?? 0;
+
+      // Check if position uses anchor and is relative
+      const hasAnchor = !!element.initialState?.anchor;
+      const isSmallValue = initialX <= 1 && initialY <= 1;
 
       adjustedTimeline.position = adjustedTimeline.position.map(
         (pos: any, index: number) => {
@@ -789,49 +714,73 @@ export class VideoService {
               ? adjustedTimeline.position[index - 1].endValue.z
               : initialZ;
 
-          return {
-            ...pos,
-            startValue: {
-              x:
-                pos.startValue.x !== undefined
-                  ? pos.startValue.x * widthRatio
-                  : previousX * widthRatio,
-              y:
-                pos.startValue.y !== undefined
-                  ? pos.startValue.y * heightRatio
-                  : previousY * heightRatio,
-              z: pos.startValue.z !== undefined ? pos.startValue.z : previousZ,
-            },
-            endValue: {
-              x:
-                pos.endValue.x !== undefined
-                  ? pos.endValue.x * widthRatio
-                  : pos.startValue.x !== undefined
-                  ? pos.startValue.x * widthRatio
-                  : previousX * widthRatio,
-              y:
-                pos.endValue.y !== undefined
-                  ? pos.endValue.y * heightRatio
-                  : pos.startValue.y !== undefined
-                  ? pos.startValue.y * heightRatio
-                  : previousY * heightRatio,
-              z:
-                pos.endValue.z !== undefined
-                  ? pos.endValue.z
-                  : pos.startValue.z !== undefined
-                  ? pos.startValue.z
-                  : previousZ,
-            },
-          };
+          let startX =
+            pos.startValue.x !== undefined ? pos.startValue.x : previousX;
+          let startY =
+            pos.startValue.y !== undefined ? pos.startValue.y : previousY;
+          let endX = pos.endValue.x !== undefined ? pos.endValue.x : startX;
+          let endY = pos.endValue.y !== undefined ? pos.endValue.y : startY;
+
+          // If using anchor and values are relative, adjust based on anchor
+          if (hasAnchor && isSmallValue) {
+            const anchorX = element.initialState?.anchor?.x ?? 0.5;
+            const anchorY = element.initialState?.anchor?.y ?? 0.5;
+
+            const baseX = anchorX * this.currentWidth;
+            const baseY = anchorY * this.currentHeight;
+
+            return {
+              ...pos,
+              startValue: {
+                x: baseX + startX * widthRatio,
+                y: baseY + startY * heightRatio,
+                z:
+                  pos.startValue.z !== undefined ? pos.startValue.z : previousZ,
+              },
+              endValue: {
+                x: baseX + endX * widthRatio,
+                y: baseY + endY * heightRatio,
+                z:
+                  pos.endValue.z !== undefined
+                    ? pos.endValue.z
+                    : pos.startValue.z !== undefined
+                    ? pos.startValue.z
+                    : previousZ,
+              },
+            };
+          } else {
+            // Otherwise just scale by resolution ratio
+            return {
+              ...pos,
+              startValue: {
+                x: startX * widthRatio,
+                y: startY * heightRatio,
+                z:
+                  pos.startValue.z !== undefined ? pos.startValue.z : previousZ,
+              },
+              endValue: {
+                x: endX * widthRatio,
+                y: endY * heightRatio,
+                z:
+                  pos.endValue.z !== undefined
+                    ? pos.endValue.z
+                    : pos.startValue.z !== undefined
+                    ? pos.startValue.z
+                    : previousZ,
+              },
+            };
+          }
         }
       );
     }
 
+    // Adjust scale animations
     if (adjustedTimeline.scale) {
       if (assetInfo?.scale_override) {
-        delete adjustedTimeline.scale; // Ignore timeline scale if scale_override exists
+        // Skip timeline scale if asset has scale override
+        delete adjustedTimeline.scale;
       } else {
-        // If timeline.scale is used as initial scale, we might not need to animate it unless it changes
+        // Adjust scale animations according to screen ratio
         adjustedTimeline.scale = adjustedTimeline.scale.map((scale: any) => {
           const uniformScaleStart = this.calculateUniformScale(
             assetName,
@@ -861,6 +810,9 @@ export class VideoService {
     return adjustedTimeline;
   }
 
+  /**
+   * Pause all active animations
+   */
   public pauseAllAnimations(): void {
     this.activeSprites.forEach((sprite, name) => {
       if (
@@ -875,6 +827,9 @@ export class VideoService {
     });
   }
 
+  /**
+   * Resume all paused animations
+   */
   public resumeAllAnimations(): void {
     this.activeSprites.forEach((sprite, name) => {
       if (

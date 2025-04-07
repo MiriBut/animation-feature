@@ -6,8 +6,8 @@
       "assetName": "character_spine",
       "initialState": {
         "position": {
-          "x": 1000,
-          "y": 540,
+          "x": 0,
+          "y": 0,
           "z": 2
         },
         "scale": {
@@ -15,7 +15,11 @@
           "y": 0.5
         },
         "opacity": 1,
-        "rotation": 0
+        "rotation": 0,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        }
       },
       "timeline": {
         "animation": [
@@ -34,15 +38,15 @@
         ],
         "position": [
           {
-            "startTime": 0,
-            "endTime": 5,
+            "startTime": 10,
+            "endTime": 15,
             "startValue": {
-              "x": 1000,
-              "y": 540
+              "x": 0,
+              "y": 100
             },
             "endValue": {
-              "x": 1600,
-              "y": 540
+              "x": 10,
+              "y": 50
             },
             "easeIn": "Linear",
             "easeOut": "Linear"
@@ -111,15 +115,19 @@
       "assetName": "penguin_spine",
       "initialState": {
         "position": {
-          "x": 500,
-          "y": 400,
+          "x": 0,
+          "y": 0,
           "z": 2
         },
         "scale": {
           "x": 2,
           "y": 15
         },
-        "opacity": 1
+        "opacity": 1,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        }
       },
       "timeline": {
         "animation": [

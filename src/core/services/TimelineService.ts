@@ -20,39 +20,35 @@ interface AssetValidationResult {
 export class TimelineService {
   private assetsMap: Map<string, { url: string; type: string }>;
   private assetService?: AssetService;
+  private scene?: Phaser.Scene; // Add scene for resolution access
 
   constructor(
     assetsMap: Map<string, { url: string; type: string }>,
-    assetService?: AssetService
+    assetService?: AssetService,
+    scene?: Phaser.Scene
   ) {
     this.assetsMap = assetsMap;
     this.assetService = assetService;
+    this.scene = scene;
     console.log("TimelineService initialized with assetsMap:", assetsMap.size);
   }
 
   public async handleTimelineJson(file: File): Promise<void> {
     try {
-      console.log("Starting to handle timeline JSON file:", file.name);
-
       const fileContent = await file.text();
-      let json: TimelineJson;
-
-      try {
-        json = JSON.parse(fileContent) as TimelineJson;
-        console.log("Timeline JSON parsed successfully");
-      } catch (parseError) {
-        return;
-      }
+      let json: TimelineJson = JSON.parse(fileContent) as TimelineJson;
 
       if (
         !json["template video json"] ||
         !Array.isArray(json["template video json"])
       ) {
+        console.error("Invalid timeline JSON structure");
         return;
       }
 
       const validationErrors = await this.validateTimelineJson(json);
       if (validationErrors.length > 0) {
+        console.error("Validation errors:", validationErrors);
         return;
       }
 
@@ -61,8 +57,13 @@ export class TimelineService {
       );
       this.displayLoadResults(assetValidationResults);
 
+      await this.processTimelineElements(json["template video json"]);
+      // VideoService will handle rendering with resolution adjustments
+
       console.log("Timeline handling process completed");
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error handling timeline JSON:", error);
+    }
   }
 
   public async validateAndLoadAssets(
@@ -278,6 +279,49 @@ export class TimelineService {
   }
 
   private normalizeTimelineElement(element: any): TimelineElement {
+    const sceneWidth = this.scene?.scale.width ?? 1920; // Default fallback
+    const sceneHeight = this.scene?.scale.height ?? 1080;
+
+    let position = {
+      x: Number(element.initialState?.position?.x) || 0,
+      y: Number(element.initialState?.position?.y) || 0,
+      z: Number(element.initialState?.position?.z) || 0,
+    };
+
+    // Handle anchor if provided
+    if (element.initialState?.anchor) {
+      const anchor = element.initialState.anchor;
+      // Validate anchor values
+      if (
+        typeof anchor.x !== "number" ||
+        anchor.x < 0 ||
+        anchor.x > 1 ||
+        typeof anchor.y !== "number" ||
+        anchor.y < 0 ||
+        anchor.y > 1
+      ) {
+        console.warn(
+          `Invalid anchor values for ${element.assetName}, defaulting to (0.5, 0.5)`
+        );
+        anchor.x = 0.5;
+        anchor.y = 0.5;
+      }
+
+      // Calculate base position from anchor
+      const anchorX = anchor.x * sceneWidth;
+      const anchorY = anchor.y * sceneHeight;
+
+      // Get pivot from AssetService
+      const pivot = this.assetService?.getAssetPivot(element.assetName) || {
+        x: 0.5,
+        y: 0.5,
+      };
+
+      // Adjust position based on pivot (assuming sprite size is available later in AssetService)
+      position.x = anchorX; // Will be adjusted in VideoService with sprite size
+      position.y = anchorY;
+    }
+
     return {
       ...element,
       elementName: element.elementName || element.assetName,
@@ -285,13 +329,7 @@ export class TimelineService {
       onScreen: element.onScreen || undefined,
       initialState: {
         ...element.initialState,
-        position: element.initialState?.position
-          ? {
-              x: Number(element.initialState.position.x) || 0,
-              y: Number(element.initialState.position.y) || 0,
-              z: Number(element.initialState.position.z) || 0,
-            }
-          : undefined,
+        position: position,
         scale: element.initialState?.scale
           ? {
               x: Number(element.initialState.scale.x) || 1,
@@ -303,6 +341,15 @@ export class TimelineService {
         color: element.initialState?.color || "0xFFFFFF",
       },
     };
+  }
+
+  public async processTimelineElements(
+    elements: TimelineElement[]
+  ): Promise<TimelineElement[]> {
+    const normalizedElements = elements.map((el) =>
+      this.normalizeTimelineElement(el)
+    );
+    return normalizedElements;
   }
 
   private validateTimelineSequence(elements: TimelineElement[]): string[] {

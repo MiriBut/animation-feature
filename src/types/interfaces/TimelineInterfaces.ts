@@ -19,11 +19,13 @@ export interface TimelineElement {
     opacity?: number;
     color?: string;
     rotation?: number;
-    // הוספת הגדרות ספציפיות לפרטיקלס במצב ההתחלתי
+
     emitterScale?: number;
     particleScale?: { min: number; max: number };
     particleSpeed?: { min: number; max: number };
     frequency?: number;
+
+    anchor?: { x: number; y: number }; // Values between 0 and 1
     // for sounds
     audio: string;
     volume?: number;
@@ -77,7 +79,7 @@ interface ParticleConfig {
     min: number;
     max: number;
   };
-  tint?: string[]; // צבעים בפורמט "0xFFFFFF"
+  tint?: string[];
   blendMode?: number;
   gravityX?: number;
   gravityY?: number;
