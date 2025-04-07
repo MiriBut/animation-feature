@@ -38,7 +38,11 @@ export class MainScene extends Scene {
   init(): void {
     // Initialize services first
     this.assetService = new AssetService(this);
-    this.videoService = new VideoService(this, this.assetService);
+    this.videoService = new VideoService(
+      this,
+      this.assetService,
+      this.assetService.getAssetsMap()
+    );
     this.syncSystem = new SyncSystem(this);
 
     this.audioManager = new AudioManager(this);

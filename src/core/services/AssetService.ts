@@ -292,12 +292,12 @@ export class AssetService {
     properties: AssetDisplayProperties,
     elementName: string
   ):
+    | Phaser.GameObjects.Sprite
     | Phaser.GameObjects.Video
     | SpineGameObject
-    | Phaser.GameObjects.Sprite
-    | Phaser.GameObjects.Particles.ParticleEmitter
+    | Phaser.GameObjects.Text
     | Phaser.Sound.WebAudioSound
-    | Phaser.GameObjects.Text {
+    | Phaser.GameObjects.Particles.ParticleEmitter {
     const assetInfo = this.assetsMap.get(assetName);
     if (!assetInfo) {
       throw new Error(`Asset ${assetName} not found`);
@@ -310,27 +310,21 @@ export class AssetService {
     if (element instanceof Phaser.Sound.WebAudioSound) {
       this.applyAudioProperties(element, properties);
     } else if (
-      element instanceof Phaser.GameObjects.Video ||
       element instanceof Phaser.GameObjects.Sprite ||
-      element instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
-      element instanceof SpineGameObject
+      element instanceof Phaser.GameObjects.Video ||
+      element instanceof SpineGameObject ||
+      element instanceof Phaser.GameObjects.Text
     ) {
       element.name = elementName;
-      properties.pivot = this.getAssetPivot(assetName);
       this.applyBasicProperties(element, properties, assetName);
-      if (element instanceof Phaser.GameObjects.Sprite) {
-        // העברת aspect_ratio_override ל-applyAdvancedProperties
-        this.applyAdvancedProperties(element, {
-          ...properties,
-          ratio: assetInfo.aspect_ratio_override || properties.ratio,
-        });
-      }
-    } else if (element instanceof Phaser.GameObjects.Text) {
+      element.setOrigin(properties.pivot?.x ?? 0.5, properties.pivot?.y ?? 0.5);
+    } else if (
+      element instanceof Phaser.GameObjects.Particles.ParticleEmitter
+    ) {
       element.name = elementName;
       this.applyBasicProperties(element, properties, assetName);
     }
 
-    // חישוב ושמירת מיקום יחסי מקורי
     const originalX = properties.x ?? this.scene.scale.width / 2;
     const originalY = properties.y ?? this.scene.scale.height / 2;
     const originalRelativeX =
