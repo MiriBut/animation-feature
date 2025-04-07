@@ -17,7 +17,7 @@
         "opacity": 1,
         "rotation": 0,
         "anchor": {
-          "x": 0.5,
+          "x": 1,
           "y": 0.5
         }
       },
@@ -41,12 +41,12 @@
             "startTime": 10,
             "endTime": 15,
             "startValue": {
-              "x": 0,
+              "x": 100,
               "y": 100
             },
             "endValue": {
-              "x": 10,
-              "y": 50
+              "x": 100,
+              "y": 100
             },
             "easeIn": "Linear",
             "easeOut": "Linear"

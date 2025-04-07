@@ -313,7 +313,6 @@ export class VideoService {
 
     // Handle position animations
     if (timeline?.position) {
-      // Get anchor information if available
       const hasAnchor = !!timelineElement.initialState?.anchor;
       const anchorX = timelineElement.initialState?.anchor?.x ?? 0.5;
       const anchorY = timelineElement.initialState?.anchor?.y ?? 0.5;
@@ -325,52 +324,33 @@ export class VideoService {
           0;
         const endZ = positionAnim.endValue.z ?? startZ;
 
-        // Get animation start and end positions
-        const animStartX = positionAnim.startValue.x;
-        const animStartY = positionAnim.startValue.y;
-        const animEndX = positionAnim.endValue.x;
-        const animEndY = positionAnim.endValue.y;
+        let finalStartX: number;
+        let finalStartY: number;
+        let finalEndX: number;
+        let finalEndY: number;
 
-        // Check if values are relative (typically small values <= 1) and if anchor is present
-        const isSmallValue =
-          animStartX <= 1 && animStartY <= 1 && animEndX <= 1 && animEndY <= 1;
-        const needConversion = hasAnchor && isSmallValue;
-
-        // Final position values after calculation
-        let finalStartX = animStartX;
-        let finalStartY = animStartY;
-        let finalEndX = animEndX;
-        let finalEndY = animEndY;
-
-        if (needConversion) {
-          // Calculate base position from anchor (relative to screen)
+        if (hasAnchor) {
+          // Calculate base position from anchor
           const baseX = anchorX * this.currentWidth;
           const baseY = anchorY * this.currentHeight;
 
-          // Convert relative positions to pixels, scaling by screen ratio
-          finalStartX = baseX + animStartX * widthRatio;
-          finalStartY = baseY + animStartY * heightRatio;
-          finalEndX = baseX + animEndX * widthRatio;
-          finalEndY = baseY + animEndY * heightRatio;
-
-          console.log(
-            `Timeline position for "${timelineElement.elementName}": ` +
-              `Converted from (${animStartX}, ${animStartY}) -> (${animEndX}, ${animEndY}) ` +
-              `to pixels (${finalStartX}, ${finalStartY}) -> (${finalEndX}, ${finalEndY}) ` +
-              `using anchor (${anchorX}, ${anchorY})`
-          );
+          // Treat position values as offsets from anchor, scaled to resolution
+          finalStartX = baseX + positionAnim.startValue.x * widthRatio;
+          finalStartY = baseY + positionAnim.startValue.y * heightRatio;
+          finalEndX = baseX + positionAnim.endValue.x * widthRatio;
+          finalEndY = baseY + positionAnim.endValue.y * heightRatio;
         } else {
-          // For non-relative values, just scale them according to screen ratio
-          finalStartX = animStartX * widthRatio;
-          finalStartY = animStartY * heightRatio;
-          finalEndX = animEndX * widthRatio;
-          finalEndY = animEndY * heightRatio;
-
-          console.log(
-            `Timeline position for "${timelineElement.elementName}": ` +
-              `Using values as-is: (${finalStartX}, ${finalStartY}) -> (${finalEndX}, ${finalEndY})`
-          );
+          // No anchor: scale absolute positions directly
+          finalStartX = positionAnim.startValue.x * widthRatio;
+          finalStartY = positionAnim.startValue.y * heightRatio;
+          finalEndX = positionAnim.endValue.x * widthRatio;
+          finalEndY = positionAnim.endValue.y * heightRatio;
         }
+
+        console.log(
+          `Timeline position for "${timelineElement.elementName}": ` +
+            `Adjusted to (${finalStartX}, ${finalStartY}) -> (${finalEndX}, ${finalEndY})`
+        );
 
         sequence.push({
           type: "position",
@@ -464,12 +444,21 @@ export class VideoService {
         this.timelineData["template video json"]
       );
 
+    // Create a map of original elements for lookup
+    const originalElementsMap = new Map<string, TimelineElement>();
+    this.timelineData["template video json"].forEach((element) => {
+      originalElementsMap.set(element.elementName, element);
+    });
+
     for (const normalizedElement of normalizedElements) {
       if (!normalizedElement.initialState) continue;
 
-      // Get initial position and anchor values
-      const positionX = normalizedElement.initialState?.position?.x ?? 0;
-      const positionY = normalizedElement.initialState?.position?.y ?? 0;
+      // Get the original element from the JSON
+      const originalElement = originalElementsMap.get(
+        normalizedElement.elementName
+      );
+      const originalPositionX = originalElement?.initialState?.position?.x ?? 0;
+      const originalPositionY = originalElement?.initialState?.position?.y ?? 0;
       const hasAnchor = !!normalizedElement.initialState?.anchor;
       const anchorX = normalizedElement.initialState?.anchor?.x ?? 0.5;
       const anchorY = normalizedElement.initialState?.anchor?.y ?? 0.5;
@@ -478,34 +467,36 @@ export class VideoService {
         `Element ${normalizedElement.elementName}: Raw position from normalizedElement:`,
         normalizedElement.initialState?.position
       );
+      console.log(
+        `Element ${normalizedElement.elementName}: Original position from JSON:`,
+        { x: originalPositionX, y: originalPositionY }
+      );
 
       // Calculate final position
       let finalX: number;
       let finalY: number;
 
       if (hasAnchor) {
-        // If there's an anchor, position relative to it, ignoring absolute values
-        finalX = anchorX * this.currentWidth; // Center based on anchor
-        finalY = anchorY * this.currentHeight; // Center based on anchor
+        // Calculate base position from anchor
+        const baseX = anchorX * this.currentWidth;
+        const baseY = anchorY * this.currentHeight;
 
-        // Add position as a relative offset if it's small
-        const isRelativePosition =
-          Math.abs(positionX) <= 1 && Math.abs(positionY) <= 1;
-        if (isRelativePosition) {
-          finalX += positionX * this.currentWidth;
-          finalY += positionY * this.currentHeight;
-        }
+        // Use original position from JSON as offset, scaled to current resolution
+        finalX = baseX + originalPositionX * widthRatio;
+        finalY = baseY + originalPositionY * heightRatio;
 
         console.log(
           `Element ${normalizedElement.elementName}: ` +
             `Position with anchor: (${finalX}, ${finalY}) ` +
-            `from anchor (${anchorX}, ${anchorY}) ` +
-            (isRelativePosition
-              ? `with relative offset (${positionX}, ${positionY}) scaled by (${this.currentWidth}, ${this.currentHeight})`
-              : `ignoring absolute position (${positionX}, ${positionY})`)
+            `from anchor (${anchorX}, ${anchorY}) base (${baseX}, ${baseY}) ` +
+            `with scaled offset (${originalPositionX * widthRatio}, ${
+              originalPositionY * heightRatio
+            })`
         );
       } else {
-        // No anchor: scale absolute position directly
+        // No anchor: use normalized position and scale it
+        const positionX = normalizedElement.initialState?.position?.x ?? 0;
+        const positionY = normalizedElement.initialState?.position?.y ?? 0;
         finalX = positionX * widthRatio;
         finalY = positionY * heightRatio;
 
@@ -633,6 +624,7 @@ export class VideoService {
       await this.syncSystem.playSync(syncGroups);
     }
   }
+
   /**
    * Handle resolution changes by clearing and reinitializing assets
    */
