@@ -40,10 +40,13 @@ export class SequenceSystem {
     // Track all animation promises in a single array
     const allPromises: Promise<void>[] = [];
 
+    //if ypu want to check animations registered to  spine
+
     // Handle Spine animations
     if (this.isSpineObject(target)) {
       const spineTarget = target as SpineGameObject;
 
+      //this.printSpineAnimations(spineTarget);
       // Process Spine animation items
       sequence
         .filter((item) => item.type === "spine")
@@ -216,6 +219,29 @@ export class SequenceSystem {
     this.activeSpineObjects.clear();
 
     this.animationManager.stopAll();
+  }
+
+  printSpineAnimations(target: Phaser.GameObjects.GameObject): void {
+    if (this.isSpineObject(target)) {
+      const spineTarget = target as SpineGameObject;
+      if (
+        spineTarget.animationStateData &&
+        spineTarget.animationStateData.skeletonData
+      ) {
+        const animations =
+          spineTarget.animationStateData.skeletonData.animations;
+        console.log("Available Spine animations:");
+        animations.forEach((animation, index) => {
+          console.log(`${index + 1}: ${animation.name}`);
+        });
+      } else {
+        console.error(
+          "No animationStateData or skeletonData available for this Spine object."
+        );
+      }
+    } else {
+      console.error("Target is not a SpineGameObject.");
+    }
   }
 
   clearAllSequences(): void {

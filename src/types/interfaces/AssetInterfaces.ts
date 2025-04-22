@@ -15,6 +15,7 @@ export interface AssetJson {
 }
 
 export interface AssetDisplayProperties {
+  visible: boolean;
   timelineScale: any;
   assetName: string;
   x?: number;
@@ -53,7 +54,6 @@ export interface BaseAssetInfo {
     y: number;
   };
   aspect_ratio_override?: {
-    // שדה חדש
     width: number;
     height: number;
   };

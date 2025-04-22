@@ -59,7 +59,12 @@ export class AnimationRegistry {
     // Check if this is a video object
     if (target instanceof Phaser.GameObjects.Video) {
       // We can do scaling for video, but not rotation or color
-      if (type !== "position" && type !== "opacity" && type !== "scale") {
+      if (
+        type !== "position" &&
+        type !== "opacity" &&
+        type !== "scale" &&
+        type != "visibility"
+      ) {
         throw new Error(
           `Animation type ${type} not supported for Video objects`
         );

@@ -8,6 +8,7 @@ export class SpineAnimation implements IAnimatable {
   private activeTracks: Set<number> = new Set(); // Tracks currently in use
 
   constructor(scene: Scene, target: AnimatableGameObject) {
+    console.log("playss");
     this.scene = scene;
     if (!(target instanceof SpineGameObject)) {
       throw new Error("SpineAnimation can only be used with SpineGameObject");
@@ -27,7 +28,7 @@ export class SpineAnimation implements IAnimatable {
         (a) => a.name
       );
       //if ypu want to check animations registered to  spine
-      //console.log("Available animations:", animationNames);
+      console.log("Available animations:", animationNames);
 
       if (!animationNames.includes(animationName)) {
         console.warn(`Animation ${animationName} not found, skipping.`);

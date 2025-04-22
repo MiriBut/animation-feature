@@ -9,7 +9,8 @@ export type AnimationPropertyType =
   | "color"
   | "spine"
   | "text"
-  | "audio";
+  | "audio"
+  | "visibility";
 
 export interface AnimationConfig {
   property: AnimationPropertyType;
@@ -33,6 +34,7 @@ export interface AnimationConfig {
 
   fontName?: string;
   assetName?: string;
+  visible?: boolean;
 }
 
 export interface AudioConfig {

@@ -164,18 +164,30 @@ export class Validators {
       errors.push(...timelineErrors);
     }
 
+    // בדיקת element.onScreen
     if (element.onScreen) {
-      element.onScreen.forEach((screen, idx) => {
-        if (screen.startTime < 0 || screen.endTime <= screen.startTime) {
-          errors.push(
-            `Element ${index + 1} (${
-              element.elementName
-            }): Invalid OnScreen time range at index ${idx}: ${
-              screen.startTime
-            }-${screen.endTime}`
-          );
+      if (!Array.isArray(element.onScreen)) {
+        errors.push(`${prefix} onScreen must be an array`);
+      } else {
+        element.onScreen.forEach((screen, idx) => {
+          if (typeof screen.time !== "number" || screen.time < 0) {
+            errors.push(
+              `${prefix} onScreen[${idx}]: time must be a non-negative number`
+            );
+          }
+          if (typeof screen.value !== "boolean") {
+            errors.push(`${prefix} onScreen[${idx}]: value must be a boolean`);
+          }
+        });
+        // בדיקת סדר זמנים עולה
+        for (let i = 1; i < element.onScreen.length; i++) {
+          if (element.onScreen[i].time <= element.onScreen[i - 1].time) {
+            errors.push(
+              `${prefix} onScreen items must be in ascending time order`
+            );
+          }
         }
-      });
+      }
     }
 
     return errors;
@@ -221,6 +233,7 @@ export class Validators {
       "color",
       "opacity",
       "rotation",
+      "onScreen", // הוספת onScreen כסוג אנימציה
     ];
 
     animationTypes.forEach((type) => {
@@ -231,7 +244,8 @@ export class Validators {
           timeline[type].forEach((anim: TimelineAnimation, index: number) => {
             const animErrors = this.validateAnimation(
               anim,
-              `${type} animation ${index + 1}`
+              `${type} animation ${index + 1}`,
+              false
             );
             errors.push(...animErrors);
           });
@@ -244,20 +258,39 @@ export class Validators {
 
   private static validateAnimation(
     anim: TimelineAnimation,
-    prefix: string
+    prefix: string,
+    isOnScreen: boolean = false
   ): string[] {
     const errors: string[] = [];
 
-    if (typeof anim.startTime !== "number")
+    if (typeof anim.startTime !== "number") {
       errors.push(`${prefix}: Missing or invalid startTime`);
-    if (typeof anim.endTime !== "number")
+    } else if (anim.startTime < 0) {
+      errors.push(`${prefix}: startTime must be non-negative`);
+    }
+
+    if (typeof anim.endTime !== "number") {
       errors.push(`${prefix}: Missing or invalid endTime`);
-    if (anim.startTime >= anim.endTime)
-      errors.push(`${prefix}: startTime must be less than endTime`);
-    if (!this.isValidEaseEquation(anim.easeIn))
-      errors.push(`${prefix}: Invalid easeIn function` + "" + anim.easeIn);
-    if (!this.isValidEaseEquation(anim.easeOut))
-      errors.push(`${prefix}: Invalid easeOut function` + "" + anim.easeIn);
+    } else if (anim.endTime <= anim.startTime) {
+      errors.push(`${prefix}: endTime must be greater than startTime`);
+    }
+
+    if (!this.isValidEaseEquation(anim.easeIn)) {
+      errors.push(`${prefix}: Invalid easeIn function: ${anim.easeIn}`);
+    }
+    if (!this.isValidEaseEquation(anim.easeOut)) {
+      errors.push(`${prefix}: Invalid easeOut function: ${anim.easeOut}`);
+    }
+
+    // בדיקת startValue ו-endValue עבור onScreen
+    if (isOnScreen) {
+      if (typeof anim.startValue !== "boolean") {
+        errors.push(`${prefix}: startValue must be a boolean`);
+      }
+      if (typeof anim.endValue !== "boolean") {
+        errors.push(`${prefix}: endValue must be a boolean`);
+      }
+    }
 
     return errors;
   }

@@ -188,6 +188,7 @@ export class VideoService {
         ) {
           aspectRatio = sprite.width / sprite.height;
         } else if (sprite instanceof SpineGameObject) {
+          sprite.setVisible(false);
           const spineWidth = sprite.skeleton?.data?.width || 1;
           const spineHeight = sprite.skeleton?.data?.height || 1;
           aspectRatio = spineWidth / spineHeight;
@@ -290,6 +291,43 @@ export class VideoService {
           });
         });
       }
+    }
+
+    // Handle TimelineElement.onScreen
+    if (timelineElement.onScreen) {
+      timelineElement.onScreen.forEach(
+        (onScreenItem: { time: number; value: boolean }) => {
+          sequence.push({
+            type: "visibility",
+            config: {
+              property: "visibility",
+              startValue: onScreenItem.value,
+              endValue: onScreenItem.value,
+              duration: 0,
+              easing: "Linear", // Added for AnimationConfig
+              delay: onScreenItem.time * 1000,
+            },
+            delay: onScreenItem.time * 1000,
+          });
+        }
+      );
+    }
+
+    // Handle timeline.onScreen as { time: number; value: boolean }[]
+    if (timeline?.onScreen) {
+      timeline.onScreen.forEach((anim) => {
+        sequence.push({
+          type: "visibility",
+          config: {
+            property: "visibility",
+            startValue: anim.value,
+            //endValue: anim.value,
+            duration: 0,
+            easing: "Linear",
+            delay: anim.time * 1000, // Changed from anim.startTime to anim.time
+          },
+        });
+      });
     }
 
     // Handle spine animations
@@ -422,9 +460,215 @@ export class VideoService {
     return sequence;
   }
 
-  /**
-   * Initialize all elements from the timeline data
-   */
+  private positionSpineElement(
+    spine: SpineGameObject,
+    element: TimelineElement,
+    finalX: number,
+    finalY: number,
+    scaleX: number,
+    scaleY: number,
+    widthRatio: number,
+    heightRatio: number
+  ): void {
+    const assetInfo = this.assetService.getAssetInfo(element.assetName);
+    const pivot = assetInfo?.pivot_override || { x: 0.5, y: 0.5 };
+
+    // Get Spine dimensions from skeleton data
+    const spineWidth = (spine.skeleton?.data?.width || 200) * scaleX; // Fallback to 200 if undefined
+    const spineHeight = (spine.skeleton?.data?.height || 200) * scaleY; // Fallback to 200 if undefined
+
+    // Adjust position to align the center of the Spine with the anchor point
+    const adjustedX = finalX; // No pivot offset needed since we want center alignment
+    const adjustedY = finalY; // No pivot offset needed since we want center alignment
+
+    // Log positioning details for debugging
+    console.log(
+      `Positioning Spine ${element.elementName}: ` +
+        `Final (${finalX}, ${finalY}), Adjusted (${adjustedX}, ${adjustedY}), ` +
+        `Pivot (${pivot.x}, ${pivot.y}), Dimensions (${spineWidth}, ${spineHeight}), ` +
+        `Scale (${scaleX}, ${scaleY})`
+    );
+
+    // Set position, origin, and scale
+    spine.setPosition(adjustedX, adjustedY);
+    spine.setOrigin(pivot.x, pivot.y); // Ensure origin is at center (0.5, 0.5)
+    spine.setScale(scaleX, scaleY);
+    spine.setDepth(element.initialState?.position?.z ?? 0);
+    //spine.setVisible(false); // Instead of always true
+    // Debug the positioning
+    //this.debugPivotAndAnchor(spine, element.elementName, finalX, finalY);
+
+    // Additional debug: Draw a red dot at the exact anchor point
+    //  const debugGraphics = this.scene.add.graphics();
+    // debugGraphics.fillStyle(0xff0000, 1);
+    // debugGraphics.fillCircle(finalX, finalY, 5); // Red dot at anchor point
+  }
+
+  // Draw a debug grid to visualize screen coordinates
+  private drawDebugGrid(): void {
+    const graphics = this.scene.add.graphics();
+    graphics.lineStyle(2, 0x00ff00, 0.5);
+
+    // Draw vertical lines every 100 pixels
+    for (let x = 0; x <= this.currentWidth; x += 100) {
+      graphics.lineBetween(x, 0, x, this.currentHeight);
+      this.scene.add.text(x, 10, `${x}`, {
+        color: "#ffffff",
+        fontSize: "16px",
+      });
+    }
+
+    // Draw horizontal lines every 100 pixels
+    for (let y = 0; y <= this.currentHeight; y += 100) {
+      graphics.lineBetween(0, y, this.currentWidth, y);
+      this.scene.add.text(10, y, `${y}`, {
+        color: "#ffffff",
+        fontSize: "16px",
+      });
+    }
+
+    // Highlight center of the screen
+    graphics.fillStyle(0xffff00, 1);
+    graphics.fillCircle(this.currentWidth / 2, this.currentHeight / 2, 10);
+  }
+
+  private debugPivotAndAnchor(
+    sprite:
+      | Phaser.GameObjects.Sprite
+      | Phaser.GameObjects.Video
+      | SpineGameObject
+      | Phaser.GameObjects.Text,
+    elementName: string,
+    finalX: number,
+    finalY: number
+  ): void {
+    // Create a graphics object for debugging
+    const graphics = this.scene.add.graphics();
+
+    // Get dimensions and scale
+    let width: number, height: number;
+    const scaleX = sprite.scaleX;
+    const scaleY = sprite.scaleY;
+
+    if (sprite instanceof SpineGameObject) {
+      sprite.setVisible(false);
+      width = (sprite.skeleton?.data?.width || 100) * scaleX;
+      height = (sprite.skeleton?.data?.height || 100) * scaleY;
+    } else {
+      width = sprite.width * scaleX;
+      height = sprite.height * scaleY;
+    }
+
+    // Calculate the origin point (based on pivot)
+    const originX = sprite.x;
+    const originY = sprite.y;
+
+    // Calculate the center point of the bounding box
+    const centerX = sprite.x - width * (sprite.originX - 0.5);
+    const centerY = sprite.y - height * (sprite.originY - 0.5);
+
+    // Draw a red dot at the origin (pivot)
+    graphics.fillStyle(0xff0000, 1);
+    graphics.fillCircle(originX, originY, 5);
+
+    // Draw a blue dot at the center of the bounding box
+    graphics.fillStyle(0x0000ff, 1);
+    graphics.fillCircle(centerX, centerY, 5);
+
+    // Draw a yellow dot at the anchor position (finalX, finalY before pivot adjustment)
+    graphics.fillStyle(0xffff00, 1);
+    graphics.fillCircle(finalX, finalY, 5);
+
+    // Draw a green rectangle around the bounding box
+    graphics.lineStyle(2, 0x00ff00, 1);
+    graphics.strokeRect(
+      sprite.x - width * sprite.originX,
+      sprite.y - height * sprite.originY,
+      width,
+      height
+    );
+
+    // Optional: Destroy graphics after a few seconds for temporary debugging
+    // this.scene.time.delayedCall(5000, () => {
+    //   graphics.destroy();
+    // });
+  }
+
+  private debugSpineCenter(spine: SpineGameObject): void {
+    // Create a graphics object for debugging
+    const graphics = this.scene.add.graphics();
+
+    // Get the dimensions of the Spine object from skeleton data
+    const scaleX = spine.scaleX;
+    const scaleY = spine.scaleY;
+    const width = (spine.skeleton?.data?.width || 100) * scaleX;
+    const height = (spine.skeleton?.data?.height || 100) * scaleY;
+
+    // Calculate the origin point in world coordinates
+    const originX = spine.x;
+    const originY = spine.y;
+
+    // Calculate the center point of the Spine's bounding box
+    const centerX = spine.x - width * (spine.originX - 0.5);
+    const centerY = spine.y - height * (spine.originY - 0.5);
+
+    // Draw a red dot at the origin
+    graphics.fillStyle(0xff0000, 1);
+    graphics.fillCircle(originX, originY, 5);
+
+    // Draw a blue dot at the center of the bounding box
+    graphics.fillStyle(0x0000ff, 1);
+    graphics.fillCircle(centerX, centerY, 5);
+
+    // Draw a green rectangle around the Spine bounds
+    graphics.lineStyle(2, 0x00ff00, 1);
+    graphics.strokeRect(
+      spine.x - width * spine.originX,
+      spine.y - height * spine.originY,
+      width,
+      height
+    );
+
+    // Optional: Destroy graphics after a few seconds for temporary debugging
+    this.scene.time.delayedCall(5000, () => {
+      graphics.destroy();
+    });
+  }
+  // Add debug visualization for SpineGameObject position and origin
+  private debugSpinePosition(spine: SpineGameObject): void {
+    // Create a graphics object for debugging
+    const graphics = this.scene.add.graphics();
+
+    // Get the dimensions of the Spine object from skeleton data
+    const scaleX = spine.scaleX;
+    const scaleY = spine.scaleY;
+    const width = (spine.skeleton?.data?.width || 100) * scaleX;
+    const height = (spine.skeleton?.data?.height || 100) * scaleY;
+
+    // Calculate the origin point in world coordinates
+    const originX = spine.x;
+    const originY = spine.y;
+
+    // Draw a red dot at the origin
+    graphics.fillStyle(0xff0000, 1);
+    graphics.fillCircle(originX, originY, 5);
+
+    // Draw a green rectangle around the Spine bounds, adjusted for origin
+    graphics.lineStyle(2, 0x00ff00, 1);
+    graphics.strokeRect(
+      spine.x - width * spine.originX,
+      spine.y - height * spine.originY,
+      width,
+      height
+    );
+
+    // Optional: Destroy graphics after a few seconds for temporary debugging
+    // this.scene.time.delayedCall(5000, () => {
+    //   graphics.destroy();
+    // });
+  }
+
+  // Initialize all elements from the timeline data
   private async initializeTimelineElements(): Promise<void> {
     if (!this.timelineData) return;
 
@@ -463,48 +707,20 @@ export class VideoService {
       const anchorX = normalizedElement.initialState?.anchor?.x ?? 0.5;
       const anchorY = normalizedElement.initialState?.anchor?.y ?? 0.5;
 
-      console.log(
-        `Element ${normalizedElement.elementName}: Raw position from normalizedElement:`,
-        normalizedElement.initialState?.position
-      );
-      console.log(
-        `Element ${normalizedElement.elementName}: Original position from JSON:`,
-        { x: originalPositionX, y: originalPositionY }
-      );
-
-      // Calculate final position
+      // Calculate final position using anchor
       let finalX: number;
       let finalY: number;
 
       if (hasAnchor) {
-        // Calculate base position from anchor
         const baseX = anchorX * this.currentWidth;
         const baseY = anchorY * this.currentHeight;
-
-        // Use original position from JSON as offset, scaled to current resolution
         finalX = baseX + originalPositionX * widthRatio;
         finalY = baseY + originalPositionY * heightRatio;
-
-        console.log(
-          `Element ${normalizedElement.elementName}: ` +
-            `Position with anchor: (${finalX}, ${finalY}) ` +
-            `from anchor (${anchorX}, ${anchorY}) base (${baseX}, ${baseY}) ` +
-            `with scaled offset (${originalPositionX * widthRatio}, ${
-              originalPositionY * heightRatio
-            })`
-        );
       } else {
-        // No anchor: use normalized position and scale it
         const positionX = normalizedElement.initialState?.position?.x ?? 0;
         const positionY = normalizedElement.initialState?.position?.y ?? 0;
         finalX = positionX * widthRatio;
         finalY = positionY * heightRatio;
-
-        console.log(
-          `Element ${normalizedElement.elementName}: ` +
-            `Absolute position scaled: (${finalX}, ${finalY}) ` +
-            `from (${positionX}, ${positionY}) with ratio (${widthRatio}, ${heightRatio})`
-        );
       }
 
       activeElements.add(normalizedElement.elementName);
@@ -538,7 +754,7 @@ export class VideoService {
         y: finalY,
         scaleX: scaleX,
         scaleY: scaleY,
-        alpha: normalizedElement.initialState?.opacity ?? 1,
+        alpha: normalizedElement.initialState?.opacity ?? 0,
         rotation: normalizedElement.initialState?.rotation ?? 0,
         tint: normalizedElement.initialState?.color
           ? parseInt(normalizedElement.initialState.color.replace("#", ""), 16)
@@ -547,7 +763,27 @@ export class VideoService {
         assetName: normalizedElement.assetName,
         pivot: pivot,
         timelineScale: undefined,
+        visible: false, // Always hidden by default
       };
+
+      // Check onScreen for initial visibility (only at time 0)
+      let initialVisible = false;
+      if (originalElement?.onScreen) {
+        const firstOnScreen = originalElement.onScreen.find(
+          (item: { time: number; value: boolean }) => item.time === 0
+        );
+        initialVisible = firstOnScreen ? firstOnScreen.value : false;
+      }
+
+      // Update initialState with visibility
+      initialState.visible = initialVisible;
+
+      // Log to debug visibility
+      console.log(
+        `Element ${normalizedElement.elementName}: onScreen at time 0=${
+          initialVisible ? "visible" : "hidden"
+        }`
+      );
 
       // Display the element using asset service
       sprite = this.assetService.displayElement(
@@ -566,24 +802,39 @@ export class VideoService {
         const spriteWidth = sprite.width * scaleX;
         const spriteHeight = sprite.height * scaleY;
         sprite.setPosition(
-          finalX - spriteWidth * (pivot.x - 0.5), // Adjust for pivot offset
-          finalY - spriteHeight * (pivot.y - 0.5) // Adjust for pivot offset
+          finalX - spriteWidth * (pivot.x - 0.5),
+          finalY - spriteHeight * (pivot.y - 0.5)
         );
         sprite.setOrigin(pivot.x, pivot.y);
         sprite.setScale(scaleX, scaleY);
         sprite.setDepth(normalizedElement.initialState?.position?.z ?? 0);
-        sprite.setVisible(true);
-      } else if (sprite instanceof SpineGameObject) {
-        const spriteWidth = (sprite.skeleton?.data?.width || 100) * scaleX;
-        const spriteHeight = (sprite.skeleton?.data?.height || 100) * scaleY;
-        sprite.setPosition(
-          finalX - spriteWidth * (pivot.x - 0.5), // Adjust for pivot offset
-          finalY - spriteHeight * (pivot.y - 0.5) // Adjust for pivot offset
+        sprite.setVisible(initialVisible);
+        sprite.setAlpha(initialState.alpha);
+      }
+
+      if (sprite instanceof SpineGameObject) {
+        //sprite.setAlpha(initialState.alpha);
+        this.positionSpineElement(
+          sprite,
+          normalizedElement,
+          finalX,
+          finalY,
+          scaleX,
+          scaleY,
+          widthRatio,
+          heightRatio
         );
-        sprite.setOrigin(pivot.x, pivot.y);
-        sprite.setScale(scaleX, scaleY);
-        sprite.setDepth(normalizedElement.initialState?.position?.z ?? 0);
-        sprite.setVisible(true);
+        //sprite.setPosition(-10000, -10000);
+        // sprite.setVisible(true); // Set visibility explicitly
+
+        // // Log final state
+        // console.log(
+        //   `Element ${normalizedElement.elementName}: Final Visible=${sprite.visible}, Alpha=${sprite.alpha}`
+        // );
+      }
+
+      if (sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
+        sprite.setVisible(initialVisible);
       }
 
       // Process animations if they exist
@@ -600,6 +851,14 @@ export class VideoService {
           timeline: adjustedTimeline,
         });
         if (sequence.length > 0 && sprite) {
+          // Log animations to debug visibility issues
+          sequence.forEach((anim, index) => {
+            if (anim.type === "visibility") {
+              console.log(
+                `Element ${normalizedElement.elementName}: Visibility animation ${index} - Delay=${anim.config.delay}ms, StartValue=${anim.config.startValue}`
+              );
+            }
+          });
           syncGroups.push({ target: sprite, sequence });
         }
       }
@@ -615,6 +874,7 @@ export class VideoService {
           sprite instanceof Phaser.GameObjects.Text
         ) {
           sprite.setVisible(false);
+          console.log(`Hiding inactive element: ${elementName}`);
         }
       }
     }

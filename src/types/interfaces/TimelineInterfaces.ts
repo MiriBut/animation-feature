@@ -4,7 +4,7 @@ export interface TimelineElement {
   assetType: "image" | "video" | "text" | "particle" | "spine" | "audio";
   assetName: string;
   particles?: {
-    textureName: string; // שם הטקסטורה לפרטיקל
+    textureName: string;
     config: ParticleConfig;
   };
   initialState?: {
@@ -19,18 +19,16 @@ export interface TimelineElement {
     opacity?: number;
     color?: string;
     rotation?: number;
-
     emitterScale?: number;
     particleScale?: { min: number; max: number };
     particleSpeed?: { min: number; max: number };
     frequency?: number;
-
-    anchor?: { x: number; y: number }; // Values between 0 and 1
-    // for sounds
+    anchor?: { x: number; y: number };
     audio: string;
     volume?: number;
     loop?: boolean | undefined;
   };
+  onScreen?: { time: number; value: boolean }[]; // Kept as is
   timeline?: {
     text: any;
     animation?: TimelineAnimation[];
@@ -39,21 +37,16 @@ export interface TimelineElement {
     color?: TimelineAnimation[];
     opacity?: TimelineAnimation[];
     rotation?: TimelineAnimation[];
-    // for particles
     emitterScale?: TimelineAnimation[];
     particleScale?: TimelineAnimation[];
     particleSpeed?: TimelineAnimation[];
     frequency?: TimelineAnimation[];
-    // for audio
     loop?: TimelineAnimation[];
     audio?: TimelineAnimation[];
     volume: TimelineAnimation[];
     play: TimelineAnimation[];
+    onScreen?: TimelineAnimation[];
   };
-  onScreen?: {
-    startTime: number;
-    endTime: number;
-  }[];
 }
 
 interface ParticleConfig {
@@ -95,6 +88,7 @@ interface ParticleConfig {
 }
 
 export interface TimelineAnimation {
+  time: number;
   stopOnComplete: boolean;
   detune: number;
   rate: number;

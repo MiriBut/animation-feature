@@ -7,6 +7,7 @@ import { ColorAnimation } from "./ColorAnimation";
 import { SpineAnimation } from "./SpineAnimation";
 import { AudioAnimation } from "./AudioAnimation";
 import { TextAnimation } from "./TextAnimation";
+import { VisibilityAnimation } from "./VisibilityAnimation";
 
 // Register all animations
 const registry = AnimationRegistry.getInstance();
@@ -18,6 +19,7 @@ registry.register("color", ColorAnimation);
 registry.register("spine", SpineAnimation);
 registry.register("audio", AudioAnimation);
 registry.register("text", TextAnimation);
+registry.register("visibility", VisibilityAnimation);
 
 export { PositionAnimation };
 export { ScaleAnimation };
@@ -27,3 +29,4 @@ export { ColorAnimation };
 export { SpineAnimation };
 export { AudioAnimation };
 export { TextAnimation };
+export { VisibilityAnimation };

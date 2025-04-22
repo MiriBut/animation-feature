@@ -6,8 +6,8 @@
       "assetName": "character_spine",
       "initialState": {
         "position": {
-          "x": 0,
-          "y": 0,
+          "x": 1000,
+          "y": 540,
           "z": 2
         },
         "scale": {
@@ -15,38 +15,58 @@
           "y": 0.5
         },
         "opacity": 1,
-        "rotation": 0,
-        "anchor": {
-          "x": 1,
-          "y": 0.5
-        }
+        "rotation": 0
       },
       "timeline": {
+        "onScreen": [
+          {
+            "time": 0,
+            "value": false
+          },
+          {
+            "time": 5,
+            "value": true
+          },
+          {
+            "time": 10,
+            "value": false
+          },
+          {
+            "time": 12,
+            "value": true
+          }
+        ],
         "animation": [
           {
             "animationName": "shoot",
             "startTime": 0,
-            "endTime": 5,
+            "endTime": 10,
             "loop": "true"
           },
           {
             "animationName": "run",
-            "startTime": 2,
-            "endTime": 10,
+            "startTime": 10,
+            "endTime": 15,
+            "loop": "true"
+          },
+          {
+            "animationName": "shoot",
+            "startTime": 10,
+            "endTime": 20,
             "loop": "true"
           }
         ],
         "position": [
           {
-            "startTime": 10,
-            "endTime": 15,
+            "startTime": 0,
+            "endTime": 5,
             "startValue": {
-              "x": 100,
-              "y": 100
+              "x": 1000,
+              "y": 540
             },
             "endValue": {
-              "x": 100,
-              "y": 100
+              "x": 1600,
+              "y": 540
             },
             "easeIn": "Linear",
             "easeOut": "Linear"
@@ -115,57 +135,33 @@
       "assetName": "penguin_spine",
       "initialState": {
         "position": {
-          "x": 0,
-          "y": 0,
+          "x": 500,
+          "y": 400,
           "z": 2
         },
         "scale": {
           "x": 2,
           "y": 15
         },
-        "opacity": 1,
-        "anchor": {
-          "x": 0.5,
-          "y": 0.5
-        }
+        "opacity": 1
       },
       "timeline": {
+        "onScreen": [
+          {
+            "time": 0,
+            "value": false
+          },
+          {
+            "time": 10,
+            "value": true
+          }
+        ],
         "animation": [
           {
-            "animationName": "Walking",
-            "startTime": 0,
-            "endTime": 1,
+            "animationName": "hello",
+            "startTime": 10,
+            "endTime": 20,
             "loop": true
-          },
-          {
-            "animationName": "Jump",
-            "startTime": 0,
-            "endTime": 3,
-            "loop": true
-          },
-          {
-            "animationName": "Jump",
-            "startTime": 6,
-            "endTime": 7,
-            "loop": false
-          },
-          {
-            "animationName": "Jump",
-            "startTime": 12,
-            "endTime": 13,
-            "loop": false
-          },
-          {
-            "animationName": "Jump",
-            "startTime": 22,
-            "endTime": 23,
-            "loop": false
-          },
-          {
-            "animationName": "Jump",
-            "startTime": 28,
-            "endTime": 29,
-            "loop": false
           }
         ]
       }
@@ -271,12 +267,18 @@
           "z": 1
         },
         "scale": {
-          "x": 0.5,
-          "y": 0.5
+          "x": 1,
+          "y": 1
         },
-        "opacity": 1
+        "opacity": 0.5
       },
       "timeline": {
+        "onScreen": [
+          {
+            "time": 0,
+            "value": true
+          }
+        ],
         "scale": [
           {
             "startTime": 0,
@@ -323,6 +325,12 @@
         "opacity": 1
       },
       "timeline": {
+        "onScreen": [
+          {
+            "time": 5,
+            "value": true
+          }
+        ],
         "scale": [
           {
             "startTime": 0,
@@ -345,16 +353,7 @@
       "elementName": "logoImage",
       "assetType": "image",
       "assetName": "logo_image",
-      "onScreen": [
-        {
-          "startTime": 10,
-          "endTime": 20
-        },
-        {
-          "startTime": 30,
-          "endTime": 40
-        }
-      ],
+
       "initialState": {
         "position": {
           "x": 960,
@@ -369,6 +368,12 @@
         "opacity": 1
       },
       "timeline": {
+        "onScreen": [
+          {
+            "time": 1,
+            "value": true
+          }
+        ],
         "scale": [
           {
             "startTime": 10,
