@@ -56,8 +56,8 @@
     {
       "assetName": "penguin_spine",
       "assetUrl": {
-        "atlasUrl": "assets/spines/penguin/penguin.atlas",
-        "skeletonUrl": "assets/spines/penguin/penguin.skel",
+        "atlasUrl": "assets/spines/penguin/penguinBigPack.atlas",
+        "skeletonUrl": "assets/spines/penguin/penguinBigPack.skel",
         "skeletonType": "binary"
       },
       "assetType": "spine",
@@ -66,8 +66,8 @@
         "y": 0.8
       },
       "aspect_ratio_override": {
-        "width": 0.6,
-        "height": 1
+        "width": 0.5,
+        "height": 0.5
       },
       "pivot_override": {
         "x": 0.5,
