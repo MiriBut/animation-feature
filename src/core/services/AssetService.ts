@@ -185,10 +185,10 @@ export class AssetService {
           };
 
           // הצגת האלמנט
-          this.displayElement(assetName, properties, elementName);
-          console.log(
-            `AssetService: Displayed ${elementName} with asset ${assetName}`
-          );
+          // this.displayElement(assetName, properties, elementName);
+          // console.log(
+          //   `AssetService: Displayed ${elementName} with asset ${assetName}`
+          // );
         });
       } else {
       }
@@ -372,7 +372,7 @@ export class AssetService {
     );
   }
 
-  private createElement(
+  public createElement(
     assetName: string,
     assetInfo: AssetInfo,
     properties: AssetDisplayProperties
@@ -387,12 +387,20 @@ export class AssetService {
     const y = properties.y ?? 0;
 
     if (assetInfo.type === "spine") {
+      // const spine = new SpineGameObject(
+      //   this.scene,
+      //   this.scene.spine,
+      //   x,
+      //   y,
+      //   assetName,
+      //   `${assetName}_atlas`
+      // );
       const spine = this.scene.add.spine(x, y, assetName, `${assetName}_atlas`);
-      // Apply scale_override immediately if it exists
+      // //  Apply scale_override immediately if it exists
       if (assetInfo.scale_override) {
-        spine.setScale(assetInfo.scale_override.x, assetInfo.scale_override.y);
+        //  spine.setScale(assetInfo.scale_override.x, assetInfo.scale_override.y);
       } else if (properties.scaleX && properties.scaleY) {
-        spine.setScale(properties.scaleX, properties.scaleY);
+        //  spine.setScale(properties.scaleX, properties.scaleY);
       }
       return spine;
     }
@@ -491,7 +499,7 @@ export class AssetService {
     const assetInfo = this.assetsMap.get(assetName);
 
     sprite.setAlpha(properties.alpha ?? 1);
-    sprite.setVisible(true);
+    //sprite.setVisible(true);
 
     if (properties.scale !== undefined) {
       sprite.setScale(properties.scale);
@@ -559,10 +567,10 @@ export class AssetService {
               sprite.height
             );
             underline.setPosition(sprite.x, sprite.y);
-            underline.setVisible(true);
+            //underline.setVisible(true);
           }
         } else if (underline) {
-          underline.setVisible(false);
+          //underline.setVisible(false);
         }
       }
     }

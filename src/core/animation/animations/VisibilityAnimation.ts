@@ -1,3 +1,4 @@
+import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist";
 import { AnimatableGameObject, AnimationConfig, IAnimatable } from "../types";
 
 export class VisibilityAnimation implements IAnimatable {
@@ -17,6 +18,7 @@ export class VisibilityAnimation implements IAnimatable {
         this.target instanceof Phaser.GameObjects.Text ||
         this.target instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
         this.target instanceof Phaser.GameObjects.Container ||
+        this.target instanceof SpineGameObject ||
         (this.target as any).setVisible // For SpineGameObject or other custom types
       ) {
         // Set visibility immediately to endValue or startValue or true

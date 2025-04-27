@@ -39,6 +39,15 @@ module.exports = {
     ],
   },
   resolve: {
+    alias: {
+      // Prevent conflicts by aliasing spine-core to a single version
+      "@esotericsoftware/spine-core": require.resolve(
+        "@esotericsoftware/spine-core"
+      ),
+      "@esotericsoftware/spine-webgl": require.resolve(
+        "@esotericsoftware/spine-webgl"
+      ),
+    },
     extensions: [".tsx", ".ts", ".js"],
     fallback: {
       fs: false,

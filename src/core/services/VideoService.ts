@@ -1,4 +1,4 @@
-import { Scene } from "phaser";
+import { Display, Scene } from "phaser";
 import { SyncSystem, SyncGroup } from "../animation/SyncSystem";
 import {
   AnimationPropertyType,
@@ -21,6 +21,7 @@ import {
 import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist/SpineGameObject";
 import {
   AssetDisplayProperties,
+  AssetInfo,
   SpineState,
 } from "@/types/interfaces/AssetInterfaces";
 
@@ -457,9 +458,36 @@ export class VideoService {
       }
     }
 
+    if (timeline?.rotation) {
+      const RotationAnimation = timeline.rotation[0];
+      sequence.push({
+        type: "rotation",
+        config: {
+          property: "rotation",
+          startValue: RotationAnimation.startValue,
+          endValue: RotationAnimation.endValue,
+          duration:
+            (RotationAnimation.endTime - RotationAnimation.startTime) * 1000,
+          easing: RotationAnimation.easeIn || "Linear",
+          delay: RotationAnimation.startTime * 1000,
+        },
+      });
+    }
+
     return sequence;
   }
 
+  /**
+   * Position a SpineGameObject with adjusted pivot to center the origin.
+   * @param spine The SpineGameObject to position.
+   * @param element The timeline element data.
+   * @param finalX The target X position.
+   * @param finalY The target Y position.
+   * @param scaleX The X scale.
+   * @param scaleY The Y scale.
+   * @param widthRatio The width scaling ratio.
+   * @param heightRatio The height scaling ratio.
+   */
   private positionSpineElement(
     spine: SpineGameObject,
     element: TimelineElement,
@@ -477,34 +505,84 @@ export class VideoService {
     const spineWidth = (spine.skeleton?.data?.width || 200) * scaleX; // Fallback to 200 if undefined
     const spineHeight = (spine.skeleton?.data?.height || 200) * scaleY; // Fallback to 200 if undefined
 
-    // Adjust position to align the center of the Spine with the anchor point
-    const adjustedX = finalX; // No pivot offset needed since we want center alignment
-    const adjustedY = finalY; // No pivot offset needed since we want center alignment
+    // Get the relative position of the origin
+    const { relativeX, relativeY } = this.getSpineOriginRelativePositionNumeric(
+      spine,
+      element.elementName
+    );
+
+    // Calculate the offset needed to center the origin (move relativeX and relativeY to 0.5)
+    const offsetX = relativeX - 1; // Offset to center the origin horizontally
+    const offsetY = relativeY - 1; // Offset to center the origin vertically
+
+    // Adjust position to account for custom pivot with offset
+    const adjustedX = finalX + (pivot.x + offsetX) * spineWidth; // Offset to center at finalX
+    const adjustedY = finalY + (pivot.y + offsetY) * spineHeight; // Offset to center at finalY
 
     // Log positioning details for debugging
     console.log(
       `Positioning Spine ${element.elementName}: ` +
         `Final (${finalX}, ${finalY}), Adjusted (${adjustedX}, ${adjustedY}), ` +
-        `Pivot (${pivot.x}, ${pivot.y}), Dimensions (${spineWidth}, ${spineHeight}), ` +
-        `Scale (${scaleX}, ${scaleY})`
+        `Pivot (${pivot.x.toFixed(3)}, ${pivot.y.toFixed(3)}), ` +
+        `Offset (${offsetX.toFixed(3)}, ${offsetY.toFixed(3)}), ` +
+        `Relative (${relativeX.toFixed(3)}, ${relativeY.toFixed(3)}), ` +
+        `Dimensions (${spineWidth}, ${spineHeight}), Scale (${scaleX}, ${scaleY})`
     );
 
     // Set position, origin, and scale
     spine.setPosition(adjustedX, adjustedY);
-    spine.setOrigin(pivot.x, pivot.y); // Ensure origin is at center (0.5, 0.5)
+    //this is not working ye on spine - should be diskast with spine-company
+    //spine.setOrigin(0.5, 0.5);
     spine.setScale(scaleX, scaleY);
     spine.setDepth(element.initialState?.position?.z ?? 0);
-    //spine.setVisible(false); // Instead of always true
+
     // Debug the positioning
     //this.debugPivotAndAnchor(spine, element.elementName, finalX, finalY);
-
-    // Additional debug: Draw a red dot at the exact anchor point
-    //  const debugGraphics = this.scene.add.graphics();
-    // debugGraphics.fillStyle(0xff0000, 1);
-    // debugGraphics.fillCircle(finalX, finalY, 5); // Red dot at anchor point
   }
 
-  // Draw a debug grid to visualize screen coordinates
+  /**
+   * Calculate the relative position of the Spine's origin (red dot from debugPivotAndAnchor)
+   * with respect to the Spine's bounding box, returning normalized coordinates (0 to 1).
+   * @param spine The SpineGameObject to analyze.
+   * @param elementName The name of the element for logging purposes.
+   * @returns An object with relativeX and relativeY (both between 0 and 1).
+   */
+  public getSpineOriginRelativePositionNumeric(
+    spine: SpineGameObject,
+    elementName: string
+  ): { relativeX: number; relativeY: number } {
+    // Get dimensions and scale
+    const scaleX = spine.scaleX;
+    const scaleY = spine.scaleY;
+    const width = (spine.skeleton?.data?.width || 100) * scaleX; // Fallback to 100 if undefined
+    const height = (spine.skeleton?.data?.height || 100) * scaleY; // Fallback to 100 if undefined
+
+    // Get the origin point (red dot from debugPivotAndAnchor)
+    const originX = spine.x;
+    const originY = spine.y;
+
+    // Calculate the bounding box boundaries
+    const leftBound = spine.x - width * spine.originX;
+    const rightBound = leftBound + width;
+    const topBound = spine.y - height * spine.originY;
+    const bottomBound = topBound + height;
+
+    // Calculate the relative position of the origin within the bounding box
+    const relativeX = (originX - leftBound) / width; // Normalize to 0-1
+    const relativeY = (originY - topBound) / height; // Normalize to 0-1
+
+    // Log the calculated positions for debugging
+    console.log(
+      `Spine ${elementName}: Origin at (${originX}, ${originY}), ` +
+        `Bounding box [(${leftBound}, ${topBound}), (${rightBound}, ${bottomBound})], ` +
+        `Relative position: (relativeX: ${relativeX.toFixed(
+          3
+        )}, relativeY: ${relativeY.toFixed(3)})`
+    );
+
+    return { relativeX, relativeY };
+  }
+
   private drawDebugGrid(): void {
     const graphics = this.scene.add.graphics();
     graphics.lineStyle(2, 0x00ff00, 0.5);
@@ -785,14 +863,24 @@ export class VideoService {
         }`
       );
 
-      // Display the element using asset service
-      sprite = this.assetService.displayElement(
-        normalizedElement.assetName,
-        initialState,
-        normalizedElement.elementName
-      );
-      this.activeSprites.set(normalizedElement.elementName, sprite);
+      //if (normalizedElement.assetType != "spine") {
+      //  Display the element using asset service
+      // sprite = this.assetService.displayElement(
+      //   normalizedElement.assetName,
+      //   initialState,
+      //   normalizedElement.elementName
+      // );
 
+      const element = this.assetService.createElement(
+        normalizedElement.assetName,
+        assetInfo as AssetInfo,
+        initialState
+      );
+
+      this.activeSprites.set(normalizedElement.elementName, element);
+      // }
+
+      sprite = element;
       // Set sprite properties based on type
       if (
         sprite instanceof Phaser.GameObjects.Sprite ||
@@ -813,7 +901,7 @@ export class VideoService {
       }
 
       if (sprite instanceof SpineGameObject) {
-        //sprite.setAlpha(initialState.alpha);
+        sprite.setAlpha(initialState.alpha);
         this.positionSpineElement(
           sprite,
           normalizedElement,
@@ -824,13 +912,12 @@ export class VideoService {
           widthRatio,
           heightRatio
         );
-        //sprite.setPosition(-10000, -10000);
-        // sprite.setVisible(true); // Set visibility explicitly
 
-        // // Log final state
-        // console.log(
-        //   `Element ${normalizedElement.elementName}: Final Visible=${sprite.visible}, Alpha=${sprite.alpha}`
-        // );
+        sprite.setVisible(false); // Set visibility explicitly
+        // Log final state
+        console.log(
+          `Element ${normalizedElement.elementName}: Final Visible=${sprite.visible}, Alpha=${sprite.alpha}`
+        );
       }
 
       if (sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
