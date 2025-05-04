@@ -38,6 +38,7 @@ export class AssetService {
     "Impact",
     "Tahoma",
   ];
+
   getAssetElement(assetName: string) {
     throw new Error("Method not implemented.");
   }
@@ -386,6 +387,42 @@ export class AssetService {
     const x = properties.x ?? 0;
     const y = properties.y ?? 0;
 
+    if (assetInfo.type === "particle") {
+      const particleInfo = assetInfo as ParticleAssetInfo;
+      const particleConfig = properties.emitterConfig;
+
+      // || {
+      //   quantity: 10,
+      //   lifespan: 1000,
+      //   speed: { min: 50, max: 200 },
+      //   scale: { start: 1, end: 0 },
+      //   alpha: { start: 1, end: 0 },
+      //   blendMode: "ADD",
+      //   frequency: 100,
+      //   tint: 0xff4500,
+      // };
+
+      // Add this at the beginning of the function to log all properties
+      console.log(
+        "All properties for asset:",
+        assetName,
+        JSON.stringify(properties, null, 2)
+      );
+
+      const particleManager = this.scene.add.particles(
+        x,
+        y,
+        particleInfo.textureName || assetName,
+        particleConfig
+      );
+      particleManager.setVisible(false); //if not, the tetture is shown
+
+      // particleInfo.emitterConfig = particleConfig;
+      this.assetsMap.set(assetName, particleInfo);
+
+      return particleManager;
+    }
+
     if (assetInfo.type === "spine") {
       // const spine = new SpineGameObject(
       //   this.scene,
@@ -454,15 +491,6 @@ export class AssetService {
       return video;
     }
 
-    if (assetInfo.type === "particle") {
-      const particleManager = this.scene.add.particles(2, 2, assetName);
-      if (properties.emitterConfig) {
-        particleManager.createEmitter(); ///properties.emitterConfig);
-      }
-      particleManager.setPosition(x, y);
-      return particleManager;
-    }
-
     const sprite = this.scene.add.sprite(x, y, assetName);
     return sprite;
   }
@@ -482,6 +510,7 @@ export class AssetService {
   }
 
   private applyBasicProperties(
+    //THIS MATHOD OESNT CALLED!!!!!!
     sprite:
       | Phaser.GameObjects.Video
       | SpineGameObject
@@ -506,6 +535,19 @@ export class AssetService {
     }
     if (properties.rotation !== undefined) {
       sprite.setRotation(properties.rotation);
+    }
+
+    // Apply position
+    if (properties.x !== undefined || properties.y !== undefined) {
+      sprite.setPosition(properties.x ?? sprite.x, properties.y ?? sprite.y);
+    }
+
+    // Handle specific properties for ParticleEmitter
+    if (sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
+      // Update emitter config if provided
+      if (properties.emitterConfig) {
+        sprite.setConfig(properties.emitterConfig);
+      }
     }
 
     if (sprite instanceof Phaser.GameObjects.Text) {
@@ -587,7 +629,9 @@ export class AssetService {
   }
 
   public applyAdvancedProperties(
-    sprite: Phaser.GameObjects.Sprite,
+    sprite:
+      | Phaser.GameObjects.Sprite
+      | Phaser.GameObjects.Particles.ParticleEmitter,
     properties: AssetDisplayProperties
   ): void {
     const assetInfo = this.assetsMap.get(
@@ -614,21 +658,20 @@ export class AssetService {
     const texture = sprite.texture;
     const sourceImage = texture.getSourceImage();
 
+    // Apply aspect ratio if specified
     const effectiveRatio = assetInfo?.aspect_ratio_override || properties.ratio;
-    if (effectiveRatio) {
+    if (effectiveRatio && sprite instanceof Phaser.GameObjects.Sprite) {
       this.applyAspectRatio(sprite, {
         ...properties,
         scaleX: scaleX,
         scaleY: scaleY,
         ratio: effectiveRatio,
       });
-    } else {
-      console.log(
-        `No Aspect Ratio applied for ${sprite.name}, keeping ScaleX=${sprite.scaleX}, ScaleY=${sprite.scaleY}`
-      );
     }
 
-    sprite.setOrigin(properties.pivot?.x ?? 0.5, properties.pivot?.y ?? 0.5);
+    if (!(sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter)) {
+      sprite.setOrigin(properties.pivot?.x ?? 0.5, properties.pivot?.y ?? 0.5);
+    }
     sprite.setPosition(400, 300); // Hardcode for testing
     sprite.setVisible(true);
   }
@@ -1572,7 +1615,13 @@ export class AssetService {
       const newScale = Math.min(newScaleX, newScaleY);
 
       // Update sprite properties
-      if (sprite && typeof sprite.setPosition === "function") {
+      if (
+        sprite &&
+        (sprite instanceof Phaser.GameObjects.Sprite ||
+          sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
+          sprite instanceof Phaser.GameObjects.Text ||
+          sprite instanceof SpineGameObject)
+      ) {
         sprite.setPosition(newX, newY);
         sprite.setScale(newScale);
       } else {

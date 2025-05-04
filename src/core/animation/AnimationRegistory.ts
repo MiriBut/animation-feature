@@ -72,7 +72,14 @@ export class AnimationRegistry {
     }
 
     if (target instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
-      if (type !== "position" && type !== "opacity") {
+      if (
+        type !== "position" &&
+        type !== "opacity" &&
+        type != "visibility" &&
+        type != "rotation" &&
+        type !== "scale" &&
+        type !== "particle"
+      ) {
         throw new Error(
           `Animation type ${type} not supported for ParticleEmitter objects`
         );

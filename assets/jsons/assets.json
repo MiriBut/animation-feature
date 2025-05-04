@@ -23,8 +23,8 @@
     {
       "assetName": "title_text2",
       "assetType": "text",
-      "fontFamily": "Arial",
-      "assetUrl": "none",
+      "fontFamily": "myfont3",
+      "assetUrl": "assets/fonts/V5PRC___.TTF",
       "aspect_ratio_override": {
         "width": 6,
         "height": 8

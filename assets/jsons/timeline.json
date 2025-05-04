@@ -1,314 +1,6 @@
 {
   "template video json": [
     {
-      "elementName": "characterSpine",
-      "assetType": "spine",
-      "assetName": "character_spine",
-      "initialState": {
-        "position": {
-          "x": 1000,
-          "y": 540,
-          "z": 2
-        },
-        "scale": {
-          "x": 0.5,
-          "y": 0.5
-        },
-        "opacity": 1,
-        "rotation": 0
-      },
-      "timeline": {
-        "onScreen": [
-          {
-            "time": 0,
-            "value": false
-          },
-          {
-            "time": 5,
-            "value": true
-          },
-          {
-            "time": 10,
-            "value": false
-          },
-          {
-            "time": 12,
-            "value": true
-          }
-        ],
-        "animation": [
-          {
-            "animationName": "shoot",
-            "startTime": 0,
-            "endTime": 10,
-            "loop": "true"
-          },
-          {
-            "animationName": "run",
-            "startTime": 10,
-            "endTime": 15,
-            "loop": "true"
-          },
-          {
-            "animationName": "shoot",
-            "startTime": 10,
-            "endTime": 20,
-            "loop": "true"
-          }
-        ],
-        "position": [
-          {
-            "startTime": 0,
-            "endTime": 5,
-            "startValue": {
-              "x": 1000,
-              "y": 540
-            },
-            "endValue": {
-              "x": 1600,
-              "y": 540
-            },
-            "easeIn": "Linear",
-            "easeOut": "Linear"
-          }
-        ],
-        "scale": [
-          {
-            "startTime": 0,
-            "endTime": 5,
-            "startValue": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "endValue": {
-              "x": 1,
-              "y": 1
-            },
-            "easeIn": "Linear",
-            "easeOut": "Linear"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "kic1",
-      "assetType": "audio",
-      "assetName": "kick",
-      "initialState": {
-        "volume": 0.5,
-        "loop": true
-      },
-      "timeline": {
-        "play": [
-          {
-            "startTime": 1,
-            "endTime": 5,
-            "loop": "true"
-          },
-          {
-            "startTime": 10,
-            "endTime": 25,
-            "loop": "true"
-          }
-        ],
-        "volume": [
-          {
-            "startTime": 1,
-            "endTime": 5,
-            "startValue": 0,
-            "endValue": 1,
-            "easeIn": "Linear"
-          },
-          {
-            "startTime": 10,
-            "endTime": 25,
-            "startValue": 0,
-            "endValue": 1,
-            "easeIn": "Linear"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "penguin_spine",
-      "assetType": "spine",
-      "assetName": "penguin_spine",
-      "initialState": {
-        "position": {
-          "x": 500,
-          "y": 400,
-          "z": 2
-        },
-        "scale": {
-          "x": 2,
-          "y": 15
-        },
-        "opacity": 1
-      },
-      "timeline": {
-        "onScreen": [
-          {
-            "time": 0,
-            "value": false
-          },
-          {
-            "time": 10,
-            "value": true
-          }
-        ],
-        "animation": [
-          {
-            "animationName": "hello",
-            "startTime": 10,
-            "endTime": 20,
-            "loop": true
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "sparklesEffect",
-      "assetType": "particle",
-      "assetName": "sparkle_particle",
-      "particles": {
-        "textureName": "particle",
-        "config": {
-          "frequency": 50,
-          "lifespan": {
-            "min": 800,
-            "max": 1500
-          },
-          "quantity": 3,
-          "speed": {
-            "min": 100,
-            "max": 150,
-            "radial": false
-          },
-          "scale": {
-            "start": 0.4,
-            "end": 0.1,
-            "min": 0.1,
-            "max": 0.4
-          },
-          "alpha": {
-            "start": 1,
-            "end": 0,
-            "min": 0.6,
-            "max": 1
-          },
-          "rotate": {
-            "min": -45,
-            "max": 45
-          },
-          "tint": ["0xFFFFFF", "0xFFE5CC", "0xFFF0E6"],
-          "blendMode": "ADD",
-          "emitZone": {
-            "type": "edge",
-            "source": {
-              "x": 0,
-              "y": 0,
-              "width": 10,
-              "height": 600
-            }
-          },
-          "gravityX": -50,
-          "gravityY": 10
-        }
-      },
-      "initialState": {
-        "position": {
-          "x": 960,
-          "y": 540,
-          "z": 5
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 1
-      },
-      "timeline": {
-        "position": [
-          {
-            "startTime": 0,
-            "endTime": 10,
-            "startValue": {
-              "x": 960,
-              "y": 540
-            },
-            "endValue": {
-              "x": -500,
-              "y": 0
-            },
-            "easeIn": "Linear",
-            "easeOut": "Linear"
-          }
-        ],
-        "opacity": [
-          {
-            "startTime": 4,
-            "endTime": 5,
-            "startValue": 1,
-            "endValue": 1,
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "magicVideo",
-      "assetType": "video",
-      "assetName": "magic_video",
-      "initialState": {
-        "position": {
-          "x": 960,
-          "y": 540,
-          "z": 1
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 0.5
-      },
-      "timeline": {
-        "onScreen": [
-          {
-            "time": 0,
-            "value": true
-          }
-        ],
-        "scale": [
-          {
-            "startTime": 0,
-            "endTime": 5,
-            "startValue": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "endValue": {
-              "x": 1,
-              "y": 1
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
-          }
-        ],
-        "opacity": [
-          {
-            "startTime": 4,
-            "endTime": 5,
-            "startValue": 1,
-            "endValue": 1,
-            "easeIn": "Linear",
-            "easeOut": "Linear"
-          }
-        ]
-      }
-    },
-
-    {
       "elementName": "backgroundImage",
       "assetType": "image",
       "assetName": "background_image",
@@ -327,8 +19,8 @@
       "timeline": {
         "onScreen": [
           {
-            "time": 5,
-            "value": true
+            "start": 0,
+            "value": "true"
           }
         ],
         "scale": [
@@ -350,529 +42,338 @@
       }
     },
     {
-      "elementName": "logoImage",
-      "assetType": "image",
-      "assetName": "logo_image",
-
+      "elementName": "butterflyEffect",
+      "assetType": "particle",
+      "assetName": "sparkle_particle",
       "initialState": {
         "position": {
-          "x": 960,
-          "y": 540,
-          "z": 1
+          "x": 500,
+          "y": 400,
+          "z": 0
         },
         "scale": {
           "x": 1,
           "y": 1
         },
-        "rotation": 0,
         "opacity": 1
       },
       "timeline": {
-        "onScreen": [
+        "onscreen": [
           {
-            "time": 1,
-            "value": true
+            "start": 0,
+            "value": "true"
           }
         ],
-        "scale": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
-              "x": 1.5,
-              "y": 1.5
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
-          }
-        ],
-        "rotation": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": 0,
-            "endValue": 360,
-            "easeIn": "Linear",
-            "easeOut": "Linear"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "characterImage",
-      "assetType": "image",
-      "assetName": "character_image",
-      "initialState": {
-        "position": {
-          "x": 960,
-          "y": 540,
-          "z": 5
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "color": "0xFFFFFF",
-        "opacity": 1
-      },
-      "timeline": {
-        "position": [
+        "position": [],
+        "particle": [
           {
             "startTime": 0,
-            "endTime": 2,
-            "startValue": {
-              "x": 200,
-              "y": 200
-            },
-            "endValue": {
-              "x": 200,
-              "y": 400
-            },
-            "easeIn": "Expo.easeIn",
-            "easeOut": "Expo.easeOut"
-          },
-          {
-            "startTime": 3,
-            "endTime": 4,
-            "startValue": {
-              "x": 200,
-              "y": 400
-            },
-            "endValue": {
-              "x": 600,
-              "y": 400
-            },
-            "easeIn": "Expo.easeIn",
-            "easeOut": "Expo.easeOut"
-          },
-          {
-            "startTime": 5,
-            "endTime": 10,
-            "startValue": {
-              "x": 600,
-              "y": 400
-            },
-            "endValue": {
-              "x": 900,
-              "y": 400
-            },
-            "easeIn": "Expo.easeIn",
-            "easeOut": "Expo.easeOut"
-          }
-        ],
-        "color": [
-          {
-            "startTime": 2,
-            "endTime": 10,
-            "startValue": "0xFFFFFF",
-            "endValue": "0xFF0000",
-            "easeIn": "Sine.easeIn",
-            "easeOut": "Sine.easeOut"
+            "endTime": 30,
+            "easeIn": "Sine",
+            "quantity": 15,
+            "lifespan": 8000,
+            "speed": { "min": 30, "max": 60 },
+            "angle": { "min": 0, "max": 360 },
+            "scale": 0.2,
+            "alpha": 0.8,
+            "blendMode": "NORMAL",
+            "tint": [
+              "0xFF69B4",
+              "0xDA70D6",
+              "0x9370DB",
+              "0x6495ED",
+              "0x00BFFF"
+            ],
+            "gravityY": -10,
+            "rotate": 0,
+            "moveToX": { "min": -100, "max": 100 },
+            "moveToY": { "min": -100, "max": 100 },
+            "frequency": 500,
+            "particleBringToTop": true
           }
         ]
       }
     },
     {
-      "elementName": "iconImage",
-      "assetType": "image",
-      "assetName": "icon_image",
+      "elementName": "magicSparklesEffect",
+      "assetType": "particle",
+      "assetName": "sparkle_particle",
       "initialState": {
         "position": {
-          "x": 1000,
-          "y": 540,
-          "z": 3
+          "x": 200,
+          "y": 100,
+          "z": 0
         },
         "scale": {
           "x": 1,
           "y": 1
         },
-        "opacity": 1
+        "opacity": 0.8
       },
       "timeline": {
-        "position": [
+        "onscreen": [
           {
-            "startTime": 5,
-            "endTime": 12,
-            "startValue": {
-              "x": 0,
-              "y": -20
-            },
-            "endValue": {
-              "x": 100,
-              "y": 50
-            },
-            "easeIn": "Expo.easeIn",
-            "easeOut": "Expo.easeOut"
+            "start": 0,
+            "value": "true"
           }
         ],
-        "scale": [
+        "position": [],
+        "particle": [
           {
-            "startTime": 5,
-            "endTime": 12,
-            "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
-              "x": 2,
-              "y": 2
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
+            "startTime": 0,
+            "endTime": 30,
+            "easeIn": "Quad",
+            "quantity": 3,
+            "lifespan": 3000,
+            "speed": { "min": 50, "max": 150 },
+            "angle": { "min": 0, "max": 360 },
+            "scale": { "start": 0.1, "end": 0.4 },
+            "alpha": { "start": 0, "end": 1, "ease": "Sine.easeIn" },
+            "blendMode": "ADD",
+            "tint": [
+              "0xFFD700",
+              "0xFFFACD",
+              "0xFFFFE0",
+              "0xFFFFF0",
+              "0xFFFFFF"
+            ],
+            "gravityY": -20,
+            "frequency": 200,
+            "accelerationY": -10
           }
         ]
       }
     },
-
     {
-      "elementName": "Banner_Image",
-      "assetType": "image",
-      "assetName": "Banner_image",
+      "elementName": "flameEffect",
+      "assetType": "particle",
+      "assetName": "sparkle_particle",
       "initialState": {
         "position": {
-          "x": 960,
-          "y": 540,
-          "z": -1
+          "x": 100,
+          "y": 500,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 0.9
+      },
+      "timeline": {
+        "onscreen": [
+          {
+            "start": 0,
+            "value": "true"
+          }
+        ],
+        "position": [],
+        "particle": [
+          {
+            "startTime": 0,
+            "endTime": 30,
+            "easeIn": "Cubic",
+            "quantity": 10,
+            "lifespan": 1500,
+            "speed": { "min": 100, "max": 200 },
+            "angle": { "min": 250, "max": 290 },
+            "scale": { "start": 0.4, "end": 0.1 },
+            "alpha": { "start": 0.7, "end": 0 },
+            "blendMode": "ADD",
+            "tint": [
+              "0xFF4500",
+              "0xFF8C00",
+              "0xFFA500",
+              "0xFFD700",
+              "0xFFFF00"
+            ],
+            "gravityY": -150,
+            "frequency": 30,
+            "rotate": { "min": -15, "max": 15 }
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "stardustEffect",
+      "assetType": "particle",
+      "assetName": "sparkle_particle",
+      "initialState": {
+        "position": {
+          "x": 900,
+          "y": 100,
+          "z": 0
+        },
+        "scale": {
+          "x": 5,
+          "y": 5
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onscreen": [
+          {
+            "start": 0,
+            "value": "true"
+          }
+        ],
+        "position": [],
+        "particle": [
+          {
+            "startTime": 0,
+            "endTime": 30,
+            "easeIn": "Quad",
+            "quantity": 1,
+            "lifespan": 4000,
+            "speed": { "min": 5, "max": 20 },
+            "angle": { "min": 0, "max": 360 },
+            "scale": { "start": 0.05, "end": 0.01 },
+            "alpha": { "start": 1, "end": 0 },
+            "blendMode": "ADD",
+            "tint": [
+              "0xFFD700",
+              "0x9400D3",
+              "0x4B0082",
+              "0x0000FF",
+              "0xFFFFFF"
+            ],
+            "frequency": 50,
+            "emitZone": {
+              "type": "circle",
+              "radius": 150
+            }
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "bubblesEffect",
+      "assetType": "particle",
+      "assetName": "sparkle_particle",
+      "initialState": {
+        "position": {
+          "x": 900,
+          "y": 600,
+          "z": 0
+        },
+        "scale": {
+          "x": 2,
+          "y": 1
+        },
+        "opacity": 0.6
+      },
+      "timeline": {
+        "onscreen": [
+          {
+            "start": 0,
+            "value": "true"
+          }
+        ],
+        "position": [],
+        "particle": [
+          {
+            "startTime": 0,
+            "endTime": 30,
+            "easeIn": "Linear",
+            "quantity": 2,
+            "lifespan": 6000,
+            "speed": { "min": 60, "max": 120 },
+            "angle": { "min": 260, "max": 280 },
+            "scale": { "start": 0.1, "end": 0.3 },
+            "alpha": { "start": 0.7, "end": 0 },
+            "blendMode": "NORMAL",
+            "tint": [
+              "0xADD8E6",
+              "0xB0E0E6",
+              "0xAFEEEE",
+              "0xE0FFFF",
+              "0xF0FFFF"
+            ],
+            "gravityY": -30,
+            "frequency": 300,
+            "moveToX": { "min": -50, "max": 50 }
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "explosionEffect",
+      "assetType": "particle",
+      "assetName": "sparkle_particle",
+      "initialState": {
+        "position": {
+          "x": 200,
+          "y": 200,
+          "z": 0
         },
         "scale": {
           "x": 2,
           "y": 2
         },
-        "opacity": 1,
-        "color": "0x0000FF"
+        "opacity": 1
       },
       "timeline": {
-        "position": [
+        "onscreen": [
           {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": {
-              "x": 960,
-              "y": 540
-            },
-            "endValue": {
-              "x": 50,
-              "y": 50
-            },
-            "easeIn": "Circ.easeIn",
-            "easeOut": "Circ.easeOut"
+            "start": 0,
+            "value": "true"
           }
         ],
-        "scale": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": {
-              "x": 2,
-              "y": 2
-            },
-            "endValue": {
-              "x": 0.5,
-              "y": 0.5
-            },
-            "easeIn": "Quad.easeIn",
-            "easeOut": "Quad.easeOut"
-          }
-        ],
-        "color": [
-          {
-            "startTime": 12,
-            "endTime": 20,
-            "startValue": "0x0000FF",
-            "endValue": "0x0000FF",
-            "easeIn": "Sine.easeIn",
-            "easeOut": "Sine.easeOut"
-          }
-        ],
-        "opacity": [
-          {
-            "startTime": 10,
-            "endTime": 20,
-            "startValue": 1,
-            "endValue": 0.3,
-            "easeIn": "Back.easeIn",
-            "easeOut": "Back.easeOut"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "titleText",
-      "assetType": "text",
-      "assetName": "title_text",
-      "initialState": {
-        "position": {
-          "x": 960,
-          "y": 200,
-          "z": 10
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 0.5,
-        "text": "miri!",
-        "fontSize": "20",
-        "color": "#ffffff",
-        "fontWeight": "normal",
-        "fontStyle": "normal",
-        "textDecoration": "none"
-      },
-      "timeline": {
-        "scale": [
-          {
-            "startTime": 5,
-            "endTime": 5,
-            "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
-              "x": 1,
-              "y": 1
-            },
-            "easeIn": "Quad.easeIn"
-          }
-        ],
-        "opacity": [
-          {
-            "startTime": 4,
-            "endTime": 5,
-            "startValue": 1,
-            "endValue": 1,
-            "easeIn": "Linear"
-          }
-        ],
-        "text": [
-          {
-            "startTime": 0,
-            "endTime": 5,
-            "value": "miri!",
-            "fontSize": {
-              "startValue": "100",
-              "endValue": "100"
-            },
-            "color": {
-              "startValue": "#00000",
-              "endValue": "#ffffff"
-            },
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textDecoration": "normal",
-            "easeIn": "Sine.easeIn"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "titleText1",
-      "assetType": "text",
-      "assetName": "title_text1",
-      "initialState": {
-        "position": {
-          "x": 960,
-          "y": 600,
-          "z": 10
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 0.5,
-        "text": "Welcome!",
-        "fontSize": "100",
-        "color": "#ff69b4",
-        "fontWeight": "normal",
-        "fontStyle": "normal",
-        "textDecoration": "none"
-      },
-      "timeline": {
-        "scale": [
-          {
-            "startTime": 5,
-            "endTime": 5,
-            "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
-              "x": 1,
-              "y": 1
-            },
-            "easeIn": "Quad.easeIn"
-          }
-        ],
-        "opacity": [
-          {
-            "startTime": 4,
-            "endTime": 5,
-            "startValue": 1,
-            "endValue": 1,
-            "easeIn": "Linear"
-          }
-        ],
-        "text": [
-          {
-            "startTime": 0,
-            "endTime": 5,
-            "value": "Welcome!",
-            "fontSize": {
-              "startValue": "100",
-              "endValue": "100"
-            },
-
-            "fontWeight": "bold",
-            "fontStyle": "italic",
-            "textDecoration": "underline",
-            "easeIn": "Sine.easeIn"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "titleText2",
-      "assetType": "text",
-      "assetName": "title_text2",
-      "initialState": {
-        "position": {
-          "x": 660,
-          "y": 900,
-          "z": 10
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 0.5,
-        "text": "Welcome!",
-        "fontSize": "100",
-        "color": "#800080",
-        "fontWeight": "normal",
-        "fontStyle": "normal",
-        "textDecoration": "none"
-      },
-      "timeline": {
         "position": [
           {
             "startTime": 0,
             "endTime": 5,
             "startValue": {
-              "x": 500,
-              "y": 540
+              "x": 200,
+              "y": 200,
+              "z": 5
             },
             "endValue": {
               "x": 500,
-              "y": 560
+              "y": 200,
+              "z": 5
+            },
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          },
+          {
+            "startTime": 10,
+            "endTime": 20,
+            "startValue": {
+              "x": 500,
+              "y": 200
+            },
+            "endValue": {
+              "x": 200,
+              "y": 200
             },
             "easeIn": "Linear",
             "easeOut": "Linear"
           }
         ],
-        "scale": [
-          {
-            "startTime": 5,
-            "endTime": 5,
-            "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
-              "x": 1,
-              "y": 1
-            },
-            "easeIn": "Quad.easeIn"
-          }
-        ],
-        "opacity": [
-          {
-            "startTime": 4,
-            "endTime": 5,
-            "startValue": 1,
-            "endValue": 1,
-            "easeIn": "Linear"
-          }
-        ],
-        "text": [
+        "particle": [
           {
             "startTime": 0,
-            "endTime": 5,
-            "value": "Welcome!",
-            "fontSize": {
-              "startValue": "100",
-              "endValue": "100"
-            },
-            "fontWeight": "bold",
-            "fontStyle": "italic",
-            "textDecoration": "normal",
-            "easeIn": "Cubic.easeOut"
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "titleText3",
-      "assetType": "text",
-      "assetName": "title_text2",
-      "initialState": {
-        "position": {
-          "x": 100,
-          "y": 900,
-          "z": 10
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 0.5,
-        "text": "Welcome!",
-        "fontSize": "100",
-        "color": "#800080",
-        "fontWeight": "normal",
-        "fontStyle": "normal",
-        "textDecoration": "none"
-      },
-      "timeline": {
-        "scale": [
-          {
-            "startTime": 5,
-            "endTime": 5,
-            "startValue": {
-              "x": 1,
-              "y": 1
-            },
-            "endValue": {
-              "x": 1,
-              "y": 1
-            },
-            "easeIn": "Quad.easeIn"
-          }
-        ],
-        "opacity": [
-          {
-            "startTime": 4,
-            "endTime": 5,
-            "startValue": 1,
-            "endValue": 1,
-            "easeIn": "Linear"
-          }
-        ],
-        "text": [
-          {
-            "startTime": 0,
-            "endTime": 5,
-            "value": "Welcome!",
-            "fontSize": {
-              "startValue": "100",
-              "endValue": "100"
-            },
-            "fontWeight": "normal",
-            "fontStyle": "normal",
-            "textDecoration": "underline",
-            "easeIn": "Sine.easeIn"
+            "endTime": 20,
+            "easeIn": "Linear",
+            "quantity": 50,
+            "lifespan": 200,
+            "speed": 400,
+            "angle": 0,
+            "scale": 0.2,
+            "alpha": 0,
+            "blendMode": "NORMAL",
+            "tint": [
+              "0xFF0000",
+              "0xFF4500",
+              "0xFFA500",
+              "0xFFFF00",
+              "0xFFFFFF",
+              "0x808080"
+            ],
+
+            "gravityY": 100,
+            "rotate": 180
           }
         ]
       }

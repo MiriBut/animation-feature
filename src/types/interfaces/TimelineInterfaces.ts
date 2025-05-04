@@ -8,6 +8,8 @@ export interface TimelineElement {
     config: ParticleConfig;
   };
   initialState?: {
+    ParticleEmitterConfig: ParticleConfig | undefined;
+    emitterConfig: ParticleConfig;
     textDecoration: undefined;
     fontStyle: undefined;
     fontWeight: string;
@@ -20,6 +22,7 @@ export interface TimelineElement {
     color?: string;
     rotation?: number;
     emitterScale?: number;
+    particle?: ParticleConfig;
     particleScale?: { min: number; max: number };
     particleSpeed?: { min: number; max: number };
     frequency?: number;
@@ -40,6 +43,7 @@ export interface TimelineElement {
     emitterScale?: TimelineAnimation[];
     particleScale?: TimelineAnimation[];
     particleSpeed?: TimelineAnimation[];
+    particle?: TimelineAnimation[];
     frequency?: TimelineAnimation[];
     loop?: TimelineAnimation[];
     audio?: TimelineAnimation[];
@@ -88,6 +92,21 @@ interface ParticleConfig {
 }
 
 export interface TimelineAnimation {
+  emitZone: any;
+  start: any;
+  texture: any;
+  quantity: any;
+  lifespan: any;
+  speed: any;
+  angle: any;
+  scale: any;
+  alpha: any;
+  blendMode: any;
+  color: any;
+  tint: any;
+  gravityY: any;
+  rotate: any;
+  emitterConfig: any;
   time: number;
   stopOnComplete: boolean;
   detune: number;

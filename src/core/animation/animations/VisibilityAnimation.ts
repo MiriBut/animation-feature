@@ -11,23 +11,19 @@ export class VisibilityAnimation implements IAnimatable {
 
   async play(config: AnimationConfig): Promise<void> {
     return new Promise((resolve) => {
-      // Check if target supports setVisible
       if (
         this.target instanceof Phaser.GameObjects.Sprite ||
         this.target instanceof Phaser.GameObjects.Video ||
         this.target instanceof Phaser.GameObjects.Text ||
         this.target instanceof Phaser.GameObjects.Particles.ParticleEmitter ||
         this.target instanceof Phaser.GameObjects.Container ||
-        this.target instanceof SpineGameObject ||
-        (this.target as any).setVisible // For SpineGameObject or other custom types
+        this.target instanceof SpineGameObject
       ) {
-        // Set visibility immediately to endValue or startValue or true
-        const finalValue = config.endValue ?? config.startValue ?? true;
-        (this.target as any).setVisible(finalValue);
-        resolve();
-      } else {
-        resolve(); // Skip for non-visual objects like WebAudioSound
+        const finalValue = Boolean(config.visible) || false;
+        // console.log("finalValue:", finalValue);
+        this.target.setVisible(finalValue);
       }
+      resolve();
     });
   }
 
@@ -56,7 +52,7 @@ export class VisibilityAnimation implements IAnimatable {
       this.target instanceof Phaser.GameObjects.Container ||
       (this.target as any).setVisible
     ) {
-      (this.target as any).setVisible(true); // Default to visible
+      (this.target as any).setVisible(false); // Default to visible
     }
   }
 }
