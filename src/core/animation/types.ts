@@ -1,5 +1,5 @@
 import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist";
-import { AudioAnimation } from "./animations";
+import { AudioAnimation, ParticleEffectAnimation } from "./animations";
 
 export type AnimationPropertyType =
   | "scale"
@@ -10,7 +10,8 @@ export type AnimationPropertyType =
   | "spine"
   | "text"
   | "audio"
-  | "visibility";
+  | "visibility"
+  | "particle";
 
 export interface AnimationConfig {
   property: AnimationPropertyType;
@@ -27,6 +28,7 @@ export interface AnimationConfig {
   //for text
   textValue?: string;
   fontSize?: string | { startValue: number; endValue: number };
+
   color?: string | { startValue: string; endValue: string };
   fontWeight?: string;
   fontStyle?: string;
@@ -35,6 +37,30 @@ export interface AnimationConfig {
   fontName?: string;
   assetName?: string;
   visible?: boolean;
+}
+
+// Specific configuration for particle animations
+export interface ParticleConfig extends AnimationConfig {
+  emitZone: any;
+  alpha?: { start: number; end: number };
+  frequency?: number;
+  gravityY?: number;
+  rotate?: number | { min: number; max: number };
+  tint?: number | number[] | { start: number | string; end: number | string };
+  scale?: { start: number | { min: number; max: number }; end: number };
+  angle?: { min: number; max: number };
+  speed?: { min: number; max: number };
+  property: "particle";
+  texture?: string;
+  quantity?: number;
+  lifespan?: number | { min: number; max: number };
+  blendMode?: Phaser.BlendModes | string;
+  emitterConfig?: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig; // Add emitterConfig
+
+  easing: string;
+  duration: number;
+  delay: number;
+  color: string;
 }
 
 export interface AudioConfig {
@@ -75,10 +101,11 @@ export type AnimatableGameObject =
   | Phaser.GameObjects.Container
   | SpineGameObject
   | Phaser.Sound.WebAudioSound
-  | Phaser.GameObjects.Text;
+  | Phaser.GameObjects.Text
+  | Phaser.GameObjects.Particles.ParticleEmitter;
 
 export interface IAnimatable {
-  play(config: AnimationConfig | AudioConfig): Promise<void>;
+  play(config: AnimationConfig | AudioConfig | ParticleConfig): Promise<void>;
   pause(): void;
   resume(): void;
   stop(): void;
@@ -87,7 +114,7 @@ export interface IAnimatable {
 
 export interface SequenceItem {
   type: AnimationPropertyType;
-  config: AnimationConfig | AudioConfig;
+  config: AnimationConfig | AudioConfig | ParticleConfig;
   delay?: number;
 }
 

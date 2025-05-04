@@ -3,6 +3,7 @@ import { SyncSystem, SyncGroup } from "../animation/SyncSystem";
 import {
   AnimationPropertyType,
   AudioConfig,
+  ParticleConfig,
   SequenceItem,
 } from "../animation/types";
 import { AssetService } from "./AssetService";
@@ -22,8 +23,10 @@ import { SpineGameObject } from "@esotericsoftware/spine-phaser/dist/SpineGameOb
 import {
   AssetDisplayProperties,
   AssetInfo,
+  ParticleAssetInfo,
   SpineState,
 } from "@/types/interfaces/AssetInterfaces";
+import { config } from "process";
 
 export class VideoService {
   private syncSystem: SyncSystem;
@@ -189,7 +192,7 @@ export class VideoService {
         ) {
           aspectRatio = sprite.width / sprite.height;
         } else if (sprite instanceof SpineGameObject) {
-          sprite.setVisible(false);
+          // sprite.setVisible(true);
           const spineWidth = sprite.skeleton?.data?.width || 1;
           const spineHeight = sprite.skeleton?.data?.height || 1;
           aspectRatio = spineWidth / spineHeight;
@@ -217,6 +220,11 @@ export class VideoService {
     const sequence: SequenceItem[] = [];
     const timeline = timelineElement.timeline;
 
+    // console.log(
+    //   "Timeline config (detailed):",
+    //   JSON.stringify(timeline, null, 2)
+    // );
+
     let sprite = this.activeSprites.get(timelineElement.elementName);
 
     if (!sprite && timelineElement.assetType !== "audio") {
@@ -238,6 +246,37 @@ export class VideoService {
     const screenHeight = this.currentHeight;
     const widthRatio = this.currentWidth / 1920;
     const heightRatio = this.currentHeight / 1080;
+
+    // Handle legacy timeline.particle for backward compatibility
+    if (timeline?.particle) {
+      const assetInfo = this.assetService.getAssetInfo(
+        timelineElement.assetName
+      );
+      const particleAnimation = timeline.particle[0];
+      sequence.push({
+        type: "particle",
+        config: {
+          property: "particle",
+          easing: particleAnimation.easeIn || "Linear",
+          duration:
+            (particleAnimation.endTime - particleAnimation.startTime) * 1000,
+          delay: particleAnimation.startTime * 1000,
+          texture: (assetInfo as any).textureName,
+          quantity: particleAnimation.quantity,
+          lifespan: particleAnimation.lifespan,
+          speed: particleAnimation.speed,
+          angle: particleAnimation.angle,
+          scale: particleAnimation.scale,
+          alpha: particleAnimation.alpha,
+          blendMode: particleAnimation.blendMode,
+          color: particleAnimation.color,
+          tint: particleAnimation.tint,
+          gravityY: particleAnimation.gravityY,
+          rotate: particleAnimation.rotate,
+          emitZone: particleAnimation.emitZone,
+        } as ParticleConfig,
+      });
+    }
 
     // Handle audio
     if (
@@ -321,11 +360,10 @@ export class VideoService {
           type: "visibility",
           config: {
             property: "visibility",
-            startValue: anim.value,
-            //endValue: anim.value,
-            duration: 0,
+            visible: anim.value === "true" ? true : false,
+            duration: anim.start * 1000, //can be anything.. not needed
             easing: "Linear",
-            delay: anim.time * 1000, // Changed from anim.startTime to anim.time
+            delay: anim.start * 1000,
           },
         });
       });
@@ -385,11 +423,6 @@ export class VideoService {
           finalEndX = positionAnim.endValue.x * widthRatio;
           finalEndY = positionAnim.endValue.y * heightRatio;
         }
-
-        console.log(
-          `Timeline position for "${timelineElement.elementName}": ` +
-            `Adjusted to (${finalStartX}, ${finalStartY}) -> (${finalEndX}, ${finalEndY})`
-        );
 
         sequence.push({
           type: "position",
@@ -473,6 +506,28 @@ export class VideoService {
         },
       });
     }
+    if (timeline?.text) {
+      const TextAnimation = timeline.text[0];
+      sequence.push({
+        type: "text",
+        config: {
+          textValue: TextAnimation.value,
+          property: "text",
+          startValue: TextAnimation.startValue,
+          endValue: TextAnimation.endValue,
+          duration: (TextAnimation.endTime - TextAnimation.startTime) * 1000,
+          easing: TextAnimation.easeIn || "Linear",
+          delay: TextAnimation.startTime * 1000,
+          // Add these missing properties:
+          fontSize: TextAnimation.fontSize,
+          color: TextAnimation.color,
+          fontWeight: TextAnimation.fontWeight,
+          fontStyle: TextAnimation.fontStyle,
+          textDecoration: TextAnimation.textDecoration,
+          fontName: TextAnimation.fontName,
+        },
+      });
+    }
 
     return sequence;
   }
@@ -519,16 +574,6 @@ export class VideoService {
     const adjustedX = finalX + (pivot.x + offsetX) * spineWidth; // Offset to center at finalX
     const adjustedY = finalY + (pivot.y + offsetY) * spineHeight; // Offset to center at finalY
 
-    // Log positioning details for debugging
-    console.log(
-      `Positioning Spine ${element.elementName}: ` +
-        `Final (${finalX}, ${finalY}), Adjusted (${adjustedX}, ${adjustedY}), ` +
-        `Pivot (${pivot.x.toFixed(3)}, ${pivot.y.toFixed(3)}), ` +
-        `Offset (${offsetX.toFixed(3)}, ${offsetY.toFixed(3)}), ` +
-        `Relative (${relativeX.toFixed(3)}, ${relativeY.toFixed(3)}), ` +
-        `Dimensions (${spineWidth}, ${spineHeight}), Scale (${scaleX}, ${scaleY})`
-    );
-
     // Set position, origin, and scale
     spine.setPosition(adjustedX, adjustedY);
     //this is not working ye on spine - should be diskast with spine-company
@@ -570,15 +615,6 @@ export class VideoService {
     // Calculate the relative position of the origin within the bounding box
     const relativeX = (originX - leftBound) / width; // Normalize to 0-1
     const relativeY = (originY - topBound) / height; // Normalize to 0-1
-
-    // Log the calculated positions for debugging
-    console.log(
-      `Spine ${elementName}: Origin at (${originX}, ${originY}), ` +
-        `Bounding box [(${leftBound}, ${topBound}), (${rightBound}, ${bottomBound})], ` +
-        `Relative position: (relativeX: ${relativeX.toFixed(
-          3
-        )}, relativeY: ${relativeY.toFixed(3)})`
-    );
 
     return { relativeX, relativeY };
   }
@@ -629,7 +665,7 @@ export class VideoService {
     const scaleY = sprite.scaleY;
 
     if (sprite instanceof SpineGameObject) {
-      sprite.setVisible(false);
+      // sprite.setVisible(true);
       width = (sprite.skeleton?.data?.width || 100) * scaleX;
       height = (sprite.skeleton?.data?.height || 100) * scaleY;
     } else {
@@ -841,7 +877,7 @@ export class VideoService {
         assetName: normalizedElement.assetName,
         pivot: pivot,
         timelineScale: undefined,
-        visible: false, // Always hidden by default
+        visible: false, // chage to false: Always hidden by default
       };
 
       // Check onScreen for initial visibility (only at time 0)
@@ -853,23 +889,12 @@ export class VideoService {
         initialVisible = firstOnScreen ? firstOnScreen.value : false;
       }
 
-      // Update initialState with visibility
-      initialState.visible = initialVisible;
-
       // Log to debug visibility
       console.log(
         `Element ${normalizedElement.elementName}: onScreen at time 0=${
-          initialVisible ? "visible" : "hidden"
+          initialState.visible ? "visible" : "hidden"
         }`
       );
-
-      //if (normalizedElement.assetType != "spine") {
-      //  Display the element using asset service
-      // sprite = this.assetService.displayElement(
-      //   normalizedElement.assetName,
-      //   initialState,
-      //   normalizedElement.elementName
-      // );
 
       const element = this.assetService.createElement(
         normalizedElement.assetName,
@@ -896,7 +921,6 @@ export class VideoService {
         sprite.setOrigin(pivot.x, pivot.y);
         sprite.setScale(scaleX, scaleY);
         sprite.setDepth(normalizedElement.initialState?.position?.z ?? 0);
-        sprite.setVisible(initialVisible);
         sprite.setAlpha(initialState.alpha);
       }
 
@@ -912,16 +936,20 @@ export class VideoService {
           widthRatio,
           heightRatio
         );
-
-        sprite.setVisible(false); // Set visibility explicitly
+        //sprite.setVisible(true); // Set visibility explicitly
         // Log final state
         console.log(
           `Element ${normalizedElement.elementName}: Final Visible=${sprite.visible}, Alpha=${sprite.alpha}`
         );
+        if (sprite instanceof Phaser.GameObjects.Text) {
+          console.log(
+            `Text position for ${normalizedElement.elementName}: x=${sprite.x}, y=${sprite.y}, width=${sprite.width}, height=${sprite.height}`
+          );
+        }
       }
 
       if (sprite instanceof Phaser.GameObjects.Particles.ParticleEmitter) {
-        sprite.setVisible(initialVisible);
+        //sprite.setVisible(true);
       }
 
       // Process animations if they exist
@@ -953,17 +981,17 @@ export class VideoService {
 
     // Hide inactive elements
     for (const [elementName, sprite] of this.activeSprites.entries()) {
-      if (!activeElements.has(elementName)) {
-        if (
-          sprite instanceof Phaser.GameObjects.Sprite ||
-          sprite instanceof Phaser.GameObjects.Video ||
-          sprite instanceof SpineGameObject ||
-          sprite instanceof Phaser.GameObjects.Text
-        ) {
-          sprite.setVisible(false);
-          console.log(`Hiding inactive element: ${elementName}`);
-        }
+      //if (!activeElements.has(elementName)) {
+      if (
+        sprite instanceof Phaser.GameObjects.Sprite ||
+        sprite instanceof Phaser.GameObjects.Video ||
+        sprite instanceof SpineGameObject ||
+        sprite instanceof Phaser.GameObjects.Text
+      ) {
+        sprite.setVisible(false);
+        //  console.log(`Hiding inactive element: ${elementName}`);
       }
+      //  }
     }
 
     // Play all animations synchronously

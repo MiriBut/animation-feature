@@ -95,6 +95,7 @@ export interface VideoAssetInfo extends BaseAssetInfo {
 }
 
 export interface ParticleAssetInfo extends BaseAssetInfo {
+  emitterConfig: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig;
   type: "particle";
   textureName?: string;
   sprite?: Phaser.GameObjects.Sprite;

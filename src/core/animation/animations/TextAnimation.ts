@@ -41,12 +41,11 @@ export class TextAnimation {
   }
 
   async play(config: AnimationConfig): Promise<void> {
-    if (this.isDestroyed) return Promise.resolve();
+    if (this.isDestroyed) return;
 
     if (!this.target || !this.target.active) {
       this.target = this.scene.add.text(
         this.target?.x || 0,
-
         this.target?.y || 0,
         config.textValue || "",
         {
@@ -58,92 +57,100 @@ export class TextAnimation {
       );
     }
 
-    if (config.property !== "text") return Promise.resolve();
+    this.target.setPadding(10, 40, 10, 10);
+    this.target.setOrigin(0.5, 0);
+
+    if (config.property !== "text") return;
 
     if (config.textValue) {
       this.target.setText(config.textValue);
     }
     this.updateFontStyle(config);
 
-    const tweenConfig: any = {
-      targets: this.target,
-      duration: config.duration,
-      ease: config.easing || "Linear",
-    };
+    return new Promise((resolve) => {
+      const tweenConfig: any = {
+        targets: this.target,
+        duration: config.duration,
+        ease: config.easing || "Linear",
+        onComplete: () => {
+          resolve();
+        },
+      };
 
-    if (config.easing) {
-      this.target.setAlpha(0);
+      if (config.easing) {
+        this.target.setAlpha(0);
+        tweenConfig.alpha = { from: 0, to: 1 };
 
-      tweenConfig.alpha = { from: 0, to: 1 };
-
-      if (this.underlineGraphics) {
-        this.underlineGraphics.setAlpha(0);
-
-        this.scene.tweens.add({
-          targets: this.underlineGraphics,
-          alpha: { from: 0, to: 1 },
-          duration: config.duration,
-          ease: config.easing,
-          delay: config.delay || 0,
-        });
+        if (this.underlineGraphics) {
+          this.underlineGraphics.setAlpha(0);
+          this.scene.tweens.add({
+            targets: this.underlineGraphics,
+            alpha: { from: 0, to: 1 },
+            duration: config.duration,
+            ease: config.easing,
+            delay: config.delay || 0,
+          });
+        }
       }
-    }
 
-    if (config.fontSize && typeof config.fontSize === "object") {
-      const startValue = parseInt(
-        String(config.fontSize.startValue || this.currentFontSize),
-        10
-      );
-      const endValue = parseInt(String(config.fontSize.endValue), 10);
-      tweenConfig.progress = { from: 0, to: 1 };
-      tweenConfig.onUpdate = (tween: Phaser.Tweens.Tween) => {
-        if (!this.target.active) return;
-        const progress = tween.getValue() as number;
-        const currentSize = Math.round(
-          startValue + (endValue - startValue) * progress
+      if (config.fontSize && typeof config.fontSize === "object") {
+        const startValue = parseInt(
+          String(config.fontSize.startValue || this.currentFontSize),
+          10
         );
-        const newStyle = { ...this.target.style };
-        newStyle.fontSize = `${currentSize}px`;
-        this.target.setStyle(newStyle);
-        if (this.underlineGraphics) {
-          this.updateUnderline();
-        }
-      };
-    }
+        const endValue = parseInt(String(config.fontSize.endValue), 10);
+        tweenConfig.progress = { from: 0, to: 1 };
+        tweenConfig.onUpdate = (tween: Phaser.Tweens.Tween) => {
+          if (!this.target.active) return;
+          const progress = tween.getValue() as number;
+          const currentSize = Math.round(
+            startValue + (endValue - startValue) * progress
+          );
+          const newStyle = { ...this.target.style };
+          newStyle.fontSize = `${currentSize}px`;
+          this.target.setStyle(newStyle);
+          if (this.underlineGraphics) {
+            this.updateUnderline();
+          }
+        };
+      }
 
-    if (config.color && typeof config.color === "object") {
-      const startColor = parseInt(config.color.startValue.replace("#", ""), 16);
-      const endColor = parseInt(config.color.endValue.replace("#", ""), 16);
-      tweenConfig.colorBlend = { from: 0, to: 1 };
-      tweenConfig.onUpdate = (tween: Phaser.Tweens.Tween) => {
-        if (!this.target.active) return;
-        const value = tween.getValue() as number;
-        const blendedColor = this.blendColors(startColor, endColor, value);
-        this.target.setTint(blendedColor);
-        this.currentColor = `#${blendedColor.toString(16).padStart(6, "0")}`;
-        if (this.underlineGraphics) {
-          this.updateUnderline();
-        }
-      };
-    }
+      if (config.color && typeof config.color === "object") {
+        const startColor = parseInt(
+          config.color.startValue.replace("#", ""),
+          16
+        );
+        const endColor = parseInt(config.color.endValue.replace("#", ""), 16);
+        tweenConfig.colorBlend = { from: 0, to: 1 };
+        tweenConfig.onUpdate = (tween: Phaser.Tweens.Tween) => {
+          if (!this.target.active) return;
+          const value = tween.getValue() as number;
+          const blendedColor = this.blendColors(startColor, endColor, value);
+          this.target.setTint(blendedColor);
+          this.currentColor = `#${blendedColor.toString(16).padStart(6, "0")}`;
+          if (this.underlineGraphics) {
+            this.updateUnderline();
+          }
+        };
+      }
 
-    this.tween = this.scene.tweens.add(tweenConfig);
+      this.tween = this.scene.tweens.add(tweenConfig);
 
-    this.scene.time.addEvent({
-      delay: config.duration + (config.delay || 0),
-      callback: () => {
-        if (this.tween) {
-          this.tween.stop();
-          this.tween = undefined;
-        }
-        this.target.destroy();
-        this.removeUnderline();
-      },
-      callbackScope: this,
-      loop: false,
+      // הסר את ההרס האוטומטי של הטקסט
+      // this.scene.time.addEvent({
+      //   delay: config.duration + (config.delay || 0),
+      //   callback: () => {
+      //     if (this.tween) {
+      //       this.tween.stop();
+      //       this.tween = undefined;
+      //     }
+      //     this.target.destroy();
+      //     this.removeUnderline();
+      //   },
+      //   callbackScope: this,
+      //   loop: false,
+      // });
     });
-
-    return Promise.resolve();
   }
 
   private blendColors(
@@ -179,6 +186,7 @@ export class TextAnimation {
     const newStyle: any = { ...this.target.style };
 
     let fontSizeValue: number;
+
     if (typeof config.fontSize === "string") {
       fontSizeValue = parseInt(config.fontSize, 10);
     } else if (config.fontSize && "endValue" in config.fontSize) {

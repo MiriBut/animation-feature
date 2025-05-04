@@ -30,7 +30,7 @@ export class TimelineService {
     this.assetsMap = assetsMap;
     this.assetService = assetService;
     this.scene = scene;
-    console.log("TimelineService initialized with assetsMap:", assetsMap.size);
+    // console.log("TimelineService initialized with assetsMap:", assetsMap.size);
   }
 
   public async handleTimelineJson(file: File): Promise<void> {
@@ -176,6 +176,7 @@ export class TimelineService {
 
       // Text-specific validation
       if (element.assetType === "text") {
+        console.log("element.assetType === text");
         if (element.initialState) {
           if (
             element.initialState.text === undefined ||
@@ -185,6 +186,14 @@ export class TimelineService {
               `${prefix}: 'initialState.text' must be a non-empty string`
             );
           }
+
+          // Normalize fontSize to a number in pixels
+          const fontSize = element.initialState?.fontSize
+            ? typeof element.initialState.fontSize === "string"
+              ? parseInt(element.initialState.fontSize, 10)
+              : element.initialState.fontSize
+            : 16; // Default font size
+
           // Fix: Check if fontSize exists and is a string before testing with regex
           if (
             element.initialState.fontSize &&
@@ -195,6 +204,9 @@ export class TimelineService {
               `${prefix}: 'initialState.fontSize' must be in format 'number}px', e.g., '32px'`
             );
           }
+          console.log("fontSize : " + fontSize);
+          console.log("fontSize : " + element.initialState.fontSize);
+
           if (
             element.initialState.color &&
             !/^#[0-9A-Fa-f]{6}$/.test(element.initialState.color)
@@ -204,7 +216,6 @@ export class TimelineService {
             );
           }
         }
-
         if (element.timeline && element.timeline.text) {
           element.timeline.text.forEach(
             (
@@ -231,6 +242,7 @@ export class TimelineService {
                   } - 'value' must be a non-empty string`
                 );
               }
+
               if (textAnim.fontSize) {
                 if (
                   typeof textAnim.fontSize.startValue !== "number" ||
@@ -275,43 +287,44 @@ export class TimelineService {
       }
 
       // Validate TimelineElement.onScreen
-      if (element.onScreen) {
-        if (!Array.isArray(element.onScreen)) {
-          errors.push(`${prefix}: 'onScreen' must be an array`);
-        } else {
-          element.onScreen.forEach(
-            (
-              onScreenItem: { time: number; value: boolean },
-              onScreenIndex: number
-            ) => {
-              if (
-                typeof onScreenItem.time !== "number" ||
-                onScreenItem.time < 0
-              ) {
-                errors.push(
-                  `${prefix}: 'onScreen' item #${
-                    onScreenIndex + 1
-                  } - 'time' must be a non-negative number`
-                );
-              }
-              if (typeof onScreenItem.value !== "boolean") {
-                errors.push(
-                  `${prefix}: 'onScreen' item #${
-                    onScreenIndex + 1
-                  } - 'value' must be a boolean`
-                );
-              }
-            }
-          );
-          for (let i = 1; i < element.onScreen.length; i++) {
-            if (element.onScreen[i].time <= element.onScreen[i - 1].time) {
-              errors.push(
-                `${prefix}: 'onScreen' items must be in ascending time order`
-              );
-            }
-          }
-        }
-      }
+      // if (element.onScreen) {
+      //   if (!Array.isArray(element.onScreen)) {
+      //     errors.push(`${prefix}: 'onScreen' mus2
+      //       t be an array`);
+      //   } else {
+      //     element.onScreen.forEach(
+      //       (
+      //         onScreenItem: { time: number; value: boolean },
+      //         onScreenIndex: number
+      //       ) => {
+      //         if (
+      //           typeof onScreenItem.time !== "number" ||
+      //           onScreenItem.time < 0
+      //         ) {
+      //           errors.push(
+      //             `${prefix}: 'onScreen' item #${
+      //               onScreenIndex + 1
+      //             } - 'time' must be a non-negative number`
+      //           );
+      //         }
+      //         if (typeof onScreenItem.value !== "boolean") {
+      //           errors.push(
+      //             `${prefix}: 'onScreen' item #${
+      //               onScreenIndex + 1
+      //             } - 'value' must be a boolean`
+      //           );
+      //         }
+      //       }
+      //     );
+      //     for (let i = 1; i < element.onScreen.length; i++) {
+      //       if (element.onScreen[i].time <= element.onScreen[i - 1].time) {
+      //         errors.push(
+      //           `${prefix}: 'onScreen' items must be in ascending time order`
+      //         );
+      //       }
+      //     }
+      //   }
+      // }
 
       // Validate timeline.onScreen as TimelineAnimation[]
       if (element.timeline?.onScreen) {
@@ -320,37 +333,23 @@ export class TimelineService {
         } else {
           element.timeline.onScreen.forEach((onScreenAnim, onScreenIndex) => {
             if (
-              typeof onScreenAnim.startTime !== "number" ||
-              onScreenAnim.startTime < 0
+              typeof onScreenAnim.start !== "number" ||
+              onScreenAnim.start < 0
             ) {
               errors.push(
                 `${prefix}: 'timeline.onScreen' item #${
                   onScreenIndex + 1
-                } - 'startTime' must be a non-negative number`
+                } - 'start' must be a non-negative number`
               );
             }
             if (
-              typeof onScreenAnim.endTime !== "number" ||
-              onScreenAnim.endTime <= onScreenAnim.startTime
+              typeof onScreenAnim.value !== "string" ||
+              !["true", "false"].includes(onScreenAnim.value)
             ) {
               errors.push(
                 `${prefix}: 'timeline.onScreen' item #${
                   onScreenIndex + 1
-                } - 'endTime' must be greater than 'startTime'`
-              );
-            }
-            if (typeof onScreenAnim.startValue !== "boolean") {
-              errors.push(
-                `${prefix}: 'timeline.onScreen' item #${
-                  onScreenIndex + 1
-                } - 'startValue' must be a boolean`
-              );
-            }
-            if (typeof onScreenAnim.endValue !== "boolean") {
-              errors.push(
-                `${prefix}: 'timeline.onScreen' item #${
-                  onScreenIndex + 1
-                } - 'endValue' must be a boolean`
+                } - 'value' must be a string of 'true' or 'false'`
               );
             }
           });

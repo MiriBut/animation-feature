@@ -1,12 +1,14 @@
-import { Scene } from "phaser";
+import { Scene, Time } from "phaser";
 import { AudioManager } from "../managers/AudioManager";
 import { ExportManager } from "../managers/ExportManager";
 import { AssetService } from "../core/services/AssetService";
 import { VideoService } from "../core/services/VideoService";
+import { TimelineService } from "../core/services/TimelineService";
 import { SceneUI } from "../ui/SceneUI";
 import { SyncSystem } from "../core/animation/SyncSystem";
 import { showMessage, createErrorMessage } from "../ui/ErrorModal/MessageModal";
 import "../core/animation/animations";
+import { TimelineJson } from "@/types/interfaces/TimelineInterfaces";
 
 export class MainScene extends Scene {
   private ui?: SceneUI;
@@ -14,6 +16,7 @@ export class MainScene extends Scene {
 
   // Services
   private assetService!: AssetService;
+  private timelineService!: TimelineService;
   private videoService!: VideoService;
   private syncSystem!: SyncSystem;
 
@@ -31,13 +34,18 @@ export class MainScene extends Scene {
   private height!: number;
 
   constructor() {
-    console.log("27.4.25 version 0.9");
+    console.log("04.5.25 version 1.0");
     super({ key: "MainScene" });
   }
 
   init(): void {
     // Initialize services first
     this.assetService = new AssetService(this);
+    this.timelineService = new TimelineService(
+      this.assetService.getAssetsMap(),
+      this.assetService,
+      this
+    );
     this.videoService = new VideoService(
       this,
       this.assetService,
@@ -289,6 +297,10 @@ export class MainScene extends Scene {
       );
 
     try {
+      const fileContent = await file.text();
+      const timeline = JSON.parse(fileContent) as TimelineJson;
+
+      await this.timelineService.validateTimelineJson(timeline);
       await this.videoService.loadTimelineWithDelay(file);
     } catch (error) {
       console.error("Error processing timeline JSON:", error);
