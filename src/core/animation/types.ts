@@ -11,7 +11,8 @@ export type AnimationPropertyType =
   | "text"
   | "audio"
   | "visibility"
-  | "particle";
+  | "particle"
+  | "camera";
 
 export interface AnimationConfig {
   property: AnimationPropertyType;
@@ -37,6 +38,81 @@ export interface AnimationConfig {
   fontName?: string;
   assetName?: string;
   visible?: boolean;
+}
+
+// Interface for camera effect configuration
+export interface CameraEffectConfig extends AnimationConfig {
+  initialState?: {
+    position?: { x: number; y: number; z: number };
+    zoom?: number;
+    opacity?: number;
+  };
+  timeline?: {
+    onScreen?: Array<{ start: number; value: boolean }>;
+    shake?: Array<{
+      startTime: number;
+      endTime: number;
+      intensity: number;
+      easeIn: string;
+      easeOut: string;
+    }>;
+    flash?: Array<{
+      startTime: number;
+      endTime: number;
+      color: string;
+      easeIn: string;
+      easeOut: string;
+    }>;
+    fade?: Array<{
+      startTime: number;
+      endTime: number;
+      startOpacity: number;
+      endOpacity: number;
+      color: string;
+      easeIn: string;
+      easeOut: string;
+    }>;
+    zoom?: Array<{
+      startTime: number;
+      endTime: number;
+      startValue: number;
+      endValue: number;
+      easeIn: string;
+      easeOut: string;
+    }>;
+    blur?: Array<{
+      startTime: number;
+      endTime: number;
+      startValue: number;
+      endValue: number;
+      easeIn: string;
+      easeOut: string;
+    }>;
+    bloom?: Array<{
+      startTime: number;
+      endTime: number;
+      startValue: number;
+      endValue: number;
+      easeIn: string;
+      easeOut: string;
+    }>;
+    colorGrading?: Array<{
+      startTime: number;
+      endTime: number;
+      startValue: number;
+      endValue: number;
+      easeIn: string;
+      easeOut: string;
+    }>;
+    vignette?: Array<{
+      startTime: number;
+      endTime: number;
+      startValue: number;
+      endValue: number;
+      easeIn: string;
+      easeOut: string;
+    }>;
+  };
 }
 
 // Specific configuration for particle animations
@@ -102,7 +178,8 @@ export type AnimatableGameObject =
   | SpineGameObject
   | Phaser.Sound.WebAudioSound
   | Phaser.GameObjects.Text
-  | Phaser.GameObjects.Particles.ParticleEmitter;
+  | Phaser.GameObjects.Particles.ParticleEmitter
+  | Phaser.Cameras.Scene2D.Camera;
 
 export interface IAnimatable {
   play(config: AnimationConfig | AudioConfig | ParticleConfig): Promise<void>;

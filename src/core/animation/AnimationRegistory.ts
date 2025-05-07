@@ -56,6 +56,15 @@ export class AnimationRegistry {
       }
     }
 
+    if (type === "camera") {
+      console.log("Creating CameraEffectAnimation for scene.cameras.main");
+      const CameraAnimation = this.animations.get("camera");
+      if (!CameraAnimation) {
+        throw new Error(`Animation type camera not registered`);
+      }
+      return new CameraAnimation(scene, scene.cameras.main);
+    }
+    
     // Check if this is a video object
     if (target instanceof Phaser.GameObjects.Video) {
       // We can do scaling for video, but not rotation or color

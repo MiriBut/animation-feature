@@ -1,8 +1,10 @@
 import { Display, Scene } from "phaser";
 import { SyncSystem, SyncGroup } from "../animation/SyncSystem";
 import {
+  AnimationConfig,
   AnimationPropertyType,
   AudioConfig,
+  CameraEffectConfig,
   ParticleConfig,
   SequenceItem,
 } from "../animation/types";
@@ -246,6 +248,141 @@ export class VideoService {
     const screenHeight = this.currentHeight;
     const widthRatio = this.currentWidth / 1920;
     const heightRatio = this.currentHeight / 1080;
+
+    if (timelineElement.assetType === "camera") {
+      console.log("is camera?");
+      const cameraEffects = {
+        shake:
+          timelineElement.timeline?.shake?.map((effect: any) => ({
+            startTime: effect.startTime,
+            endTime: effect.endTime,
+            intensity: effect.intensity,
+            easeIn: effect.easeIn || "Linear",
+            easeOut: effect.easeOut || "Linear",
+            duration: (effect.endTime - effect.startTime) * 1000,
+          })) || [],
+        flash:
+          timelineElement.timeline?.flash?.map((effect: any) => ({
+            startTime: effect.startTime,
+            endTime: effect.endTime,
+            color: effect.color,
+            easeIn: effect.easeIn || "Linear",
+            easeOut: effect.easeOut || "Linear",
+            duration: (effect.endTime - effect.startTime) * 1000,
+          })) || [],
+        fade:
+          timelineElement.timeline?.fade?.map((effect: any) => ({
+            startTime: effect.startTime,
+            endTime: effect.endTime,
+            startOpacity: effect.startOpacity,
+            endOpacity: effect.endOpacity,
+            color: effect.color,
+            easeIn: effect.easeIn || "Linear",
+            easeOut: effect.easeOut || "Linear",
+            duration: (effect.endTime - effect.startTime) * 1000,
+          })) || [],
+        zoom:
+          timelineElement.timeline?.zoom?.map((effect: any) => ({
+            startTime: effect.startTime,
+            endTime: effect.endTime,
+            startValue: effect.startValue,
+            endValue: effect.endValue,
+            easeIn: effect.easeIn || "Linear",
+            easeOut: effect.easeOut || "Linear",
+            duration: (effect.endTime - effect.startTime) * 1000,
+          })) || [],
+        blur:
+          timelineElement.timeline?.blur?.map((effect: any) => ({
+            startTime: effect.startTime,
+            endTime: effect.endTime,
+            intensity: effect.intensity,
+            blurSize: effect.blurSize,
+            easeIn: effect.easeIn || "Linear",
+            easeOut: effect.easeOut || "Linear",
+            duration: (effect.endTime - effect.startTime) * 1000,
+          })) || [],
+        bloom:
+          timelineElement.timeline?.bloom?.map((effect: any) => ({
+            startTime: effect.startTime,
+            endTime: effect.endTime,
+            intensity: effect.intensity,
+            threshold: effect.threshold,
+            easeIn: effect.easeIn || "Linear",
+            easeOut: effect.easeOut || "Linear",
+            duration: (effect.endTime - effect.startTime) * 1000,
+          })) || [],
+        colorGrading:
+          timelineElement.timeline?.colorGrading?.map((effect: any) => ({
+            startTime: effect.startTime,
+            endTime: effect.endTime,
+            redMultiplier: effect.redMultiplier,
+            greenMultiplier: effect.greenMultiplier,
+            blueMultiplier: effect.blueMultiplier,
+            easeIn: effect.easeIn || "Linear",
+            easeOut: effect.easeOut || "Linear",
+            duration: (effect.endTime - effect.startTime) * 1000,
+          })) || [],
+        vignette:
+          timelineElement.timeline?.vignette?.map((effect: any) => ({
+            startTime: effect.startTime,
+            endTime: effect.endTime,
+            intensity: effect.intensity,
+            radius: effect.radius,
+            softness: effect.softness,
+            easeIn: effect.easeIn || "Linear",
+            easeOut: effect.easeOut || "Linear",
+            duration: (effect.endTime - effect.startTime) * 1000,
+          })) || [],
+      };
+
+      // Calculate max duration for all effects
+      const maxDuration = Math.max(
+        ...[
+          ...cameraEffects.shake,
+          ...cameraEffects.flash,
+          ...cameraEffects.fade,
+          ...cameraEffects.zoom,
+          ...cameraEffects.blur,
+          ...cameraEffects.bloom,
+          ...cameraEffects.colorGrading,
+          ...cameraEffects.vignette,
+        ].map((effect) => effect.endTime * 1000),
+        0
+      );
+
+      // Create a single config with timeline
+      const cameraConfig: CameraEffectConfig = {
+        property: "camera",
+        easing: "Linear",
+        duration: maxDuration,
+        delay: 0,
+        initialState: timelineElement.initialState
+          ? {
+              position: timelineElement.initialState.position
+                ? {
+                    x: timelineElement.initialState.position.x,
+                    y: timelineElement.initialState.position.y,
+                    z: timelineElement.initialState.position.z || 0, // Ensure z is defined
+                  }
+                : undefined,
+              zoom: timelineElement.initialState.zoom,
+              opacity: timelineElement.initialState.opacity,
+            }
+          : {},
+        timeline: cameraEffects,
+      };
+
+      console.log(
+        "Creating camera SequenceItem with config:",
+        JSON.stringify(cameraConfig, null, 2)
+      );
+
+      sequence.push({
+        type: "camera",
+        config: cameraConfig,
+        delay: 0,
+      });
+    }
 
     // Handle legacy timeline.particle for backward compatibility
     if (timeline?.particle) {
@@ -889,13 +1026,6 @@ export class VideoService {
         initialVisible = firstOnScreen ? firstOnScreen.value : false;
       }
 
-      // Log to debug visibility
-      console.log(
-        `Element ${normalizedElement.elementName}: onScreen at time 0=${
-          initialState.visible ? "visible" : "hidden"
-        }`
-      );
-
       const element = this.assetService.createElement(
         normalizedElement.assetName,
         assetInfo as AssetInfo,
@@ -967,13 +1097,7 @@ export class VideoService {
         });
         if (sequence.length > 0 && sprite) {
           // Log animations to debug visibility issues
-          sequence.forEach((anim, index) => {
-            if (anim.type === "visibility") {
-              console.log(
-                `Element ${normalizedElement.elementName}: Visibility animation ${index} - Delay=${anim.config.delay}ms, StartValue=${anim.config.startValue}`
-              );
-            }
-          });
+          //sequence.forEach((anim, index) => {});
           syncGroups.push({ target: sprite, sequence });
         }
       }

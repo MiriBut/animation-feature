@@ -1,6 +1,11 @@
 {
   "assets": [
     {
+      "assetName": "camera",
+      "assetType": "camera",
+      "assetUrl": ""
+    },
+    {
       "assetName": "title_text",
       "assetType": "text",
       "fontFamily": "myfont1",

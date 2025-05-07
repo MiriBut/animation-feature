@@ -20,7 +20,7 @@ export class VisibilityAnimation implements IAnimatable {
         this.target instanceof SpineGameObject
       ) {
         const finalValue = Boolean(config.visible) || false;
-        // console.log("finalValue:", finalValue);
+
         this.target.setVisible(finalValue);
       }
       resolve();
