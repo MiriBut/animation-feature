@@ -9,6 +9,7 @@ import { AudioAnimation } from "./AudioAnimation";
 import { TextAnimation } from "./TextAnimation";
 import { VisibilityAnimation } from "./VisibilityAnimation";
 import { ParticleEffectAnimation } from "./ParticleEffectAnimation";
+import { CameraEffectAnimation } from "./CameraEffectAnimation";
 
 // Register all animations
 const registry = AnimationRegistry.getInstance();
@@ -22,6 +23,7 @@ registry.register("audio", AudioAnimation);
 registry.register("text", TextAnimation);
 registry.register("visibility", VisibilityAnimation);
 registry.register("particle", ParticleEffectAnimation);
+registry.register("camera", CameraEffectAnimation);
 
 export { PositionAnimation };
 export { ScaleAnimation };
@@ -33,3 +35,4 @@ export { AudioAnimation };
 export { TextAnimation };
 export { VisibilityAnimation };
 export { ParticleEffectAnimation };
+export { CameraEffectAnimation };

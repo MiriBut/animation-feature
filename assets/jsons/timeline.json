@@ -41,339 +41,97 @@
         ]
       }
     },
+
     {
-      "elementName": "butterflyEffect",
-      "assetType": "particle",
-      "assetName": "sparkle_particle",
-      "initialState": {
-        "position": {
-          "x": 500,
-          "y": 400,
-          "z": 0
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 1
-      },
+      "elementName": "mainCameraEffect1",
+      "assetType": "camera",
+      "assetName": "camera",
+      "initialState": {},
       "timeline": {
-        "onscreen": [
-          {
-            "start": 0,
-            "value": "true"
-          }
-        ],
-        "position": [],
-        "particle": [
+        "shake": [
           {
             "startTime": 0,
-            "endTime": 30,
-            "easeIn": "Sine",
-            "quantity": 15,
-            "lifespan": 8000,
-            "speed": { "min": 30, "max": 60 },
-            "angle": { "min": 0, "max": 360 },
-            "scale": 0.2,
-            "alpha": 0.8,
-            "blendMode": "NORMAL",
-            "tint": [
-              "0xFF69B4",
-              "0xDA70D6",
-              "0x9370DB",
-              "0x6495ED",
-              "0x00BFFF"
-            ],
-            "gravityY": -10,
-            "rotate": 0,
-            "moveToX": { "min": -100, "max": 100 },
-            "moveToY": { "min": -100, "max": 100 },
-            "frequency": 500,
-            "particleBringToTop": true
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "magicSparklesEffect",
-      "assetType": "particle",
-      "assetName": "sparkle_particle",
-      "initialState": {
-        "position": {
-          "x": 200,
-          "y": 100,
-          "z": 0
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 0.8
-      },
-      "timeline": {
-        "onscreen": [
-          {
-            "start": 0,
-            "value": "true"
+            "endTime": 3,
+            "intensity": 0.02,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
           }
         ],
-        "position": [],
-        "particle": [
+        "flash": [
           {
-            "startTime": 0,
-            "endTime": 30,
-            "easeIn": "Quad",
-            "quantity": 3,
-            "lifespan": 3000,
-            "speed": { "min": 50, "max": 150 },
-            "angle": { "min": 0, "max": 360 },
-            "scale": { "start": 0.1, "end": 0.4 },
-            "alpha": { "start": 0, "end": 1, "ease": "Sine.easeIn" },
-            "blendMode": "ADD",
-            "tint": [
-              "0xFFD700",
-              "0xFFFACD",
-              "0xFFFFE0",
-              "0xFFFFF0",
-              "0xFFFFFF"
-            ],
-            "gravityY": -20,
-            "frequency": 200,
-            "accelerationY": -10
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "flameEffect",
-      "assetType": "particle",
-      "assetName": "sparkle_particle",
-      "initialState": {
-        "position": {
-          "x": 100,
-          "y": 500,
-          "z": 0
-        },
-        "scale": {
-          "x": 1,
-          "y": 1
-        },
-        "opacity": 0.9
-      },
-      "timeline": {
-        "onscreen": [
-          {
-            "start": 0,
-            "value": "true"
+            "startTime": 5,
+            "endTime": 8,
+            "color": "0xFFFFFF",
+            "easeIn": "Sine.easeIn",
+            "easeOut": "Sine.easeOut"
           }
         ],
-        "position": [],
-        "particle": [
-          {
-            "startTime": 0,
-            "endTime": 30,
-            "easeIn": "Cubic",
-            "quantity": 10,
-            "lifespan": 1500,
-            "speed": { "min": 100, "max": 200 },
-            "angle": { "min": 250, "max": 290 },
-            "scale": { "start": 0.4, "end": 0.1 },
-            "alpha": { "start": 0.7, "end": 0 },
-            "blendMode": "ADD",
-            "tint": [
-              "0xFF4500",
-              "0xFF8C00",
-              "0xFFA500",
-              "0xFFD700",
-              "0xFFFF00"
-            ],
-            "gravityY": -150,
-            "frequency": 30,
-            "rotate": { "min": -15, "max": 15 }
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "stardustEffect",
-      "assetType": "particle",
-      "assetName": "sparkle_particle",
-      "initialState": {
-        "position": {
-          "x": 900,
-          "y": 100,
-          "z": 0
-        },
-        "scale": {
-          "x": 5,
-          "y": 5
-        },
-        "opacity": 1
-      },
-      "timeline": {
-        "onscreen": [
-          {
-            "start": 0,
-            "value": "true"
-          }
-        ],
-        "position": [],
-        "particle": [
-          {
-            "startTime": 0,
-            "endTime": 30,
-            "easeIn": "Quad",
-            "quantity": 1,
-            "lifespan": 4000,
-            "speed": { "min": 5, "max": 20 },
-            "angle": { "min": 0, "max": 360 },
-            "scale": { "start": 0.05, "end": 0.01 },
-            "alpha": { "start": 1, "end": 0 },
-            "blendMode": "ADD",
-            "tint": [
-              "0xFFD700",
-              "0x9400D3",
-              "0x4B0082",
-              "0x0000FF",
-              "0xFFFFFF"
-            ],
-            "frequency": 50,
-            "emitZone": {
-              "type": "circle",
-              "radius": 150
-            }
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "bubblesEffect",
-      "assetType": "particle",
-      "assetName": "sparkle_particle",
-      "initialState": {
-        "position": {
-          "x": 900,
-          "y": 600,
-          "z": 0
-        },
-        "scale": {
-          "x": 2,
-          "y": 1
-        },
-        "opacity": 0.6
-      },
-      "timeline": {
-        "onscreen": [
-          {
-            "start": 0,
-            "value": "true"
-          }
-        ],
-        "position": [],
-        "particle": [
-          {
-            "startTime": 0,
-            "endTime": 30,
-            "easeIn": "Linear",
-            "quantity": 2,
-            "lifespan": 6000,
-            "speed": { "min": 60, "max": 120 },
-            "angle": { "min": 260, "max": 280 },
-            "scale": { "start": 0.1, "end": 0.3 },
-            "alpha": { "start": 0.7, "end": 0 },
-            "blendMode": "NORMAL",
-            "tint": [
-              "0xADD8E6",
-              "0xB0E0E6",
-              "0xAFEEEE",
-              "0xE0FFFF",
-              "0xF0FFFF"
-            ],
-            "gravityY": -30,
-            "frequency": 300,
-            "moveToX": { "min": -50, "max": 50 }
-          }
-        ]
-      }
-    },
-    {
-      "elementName": "explosionEffect",
-      "assetType": "particle",
-      "assetName": "sparkle_particle",
-      "initialState": {
-        "position": {
-          "x": 200,
-          "y": 200,
-          "z": 0
-        },
-        "scale": {
-          "x": 2,
-          "y": 2
-        },
-        "opacity": 1
-      },
-      "timeline": {
-        "onscreen": [
-          {
-            "start": 0,
-            "value": "true"
-          }
-        ],
-        "position": [
-          {
-            "startTime": 0,
-            "endTime": 5,
-            "startValue": {
-              "x": 200,
-              "y": 200,
-              "z": 5
-            },
-            "endValue": {
-              "x": 500,
-              "y": 200,
-              "z": 5
-            },
-            "easeIn": "Linear",
-            "easeOut": "Linear"
-          },
+        "fade": [
           {
             "startTime": 10,
-            "endTime": 20,
-            "startValue": {
-              "x": 500,
-              "y": 200
-            },
-            "endValue": {
-              "x": 200,
-              "y": 200
-            },
-            "easeIn": "Linear",
-            "easeOut": "Linear"
+            "endTime": 12,
+            "startOpacity": 1,
+            "endOpacity": 0,
+            "color": "0x0000FF",
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          },
+          {
+            "startTime": 12,
+            "endTime": 14,
+            "startOpacity": 0,
+            "endOpacity": 1,
+            "color": "0x0000FF",
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
           }
         ],
-        "particle": [
+        "zoom": [
           {
-            "startTime": 0,
+            "startTime": 16,
+            "endTime": 18,
+            "startValue": 1,
+            "endValue": 1.5,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          },
+          {
+            "startTime": 18,
             "endTime": 20,
-            "easeIn": "Linear",
-            "quantity": 50,
-            "lifespan": 200,
-            "speed": 400,
-            "angle": 0,
-            "scale": 0.2,
-            "alpha": 0,
-            "blendMode": "NORMAL",
-            "tint": [
-              "0xFF0000",
-              "0xFF4500",
-              "0xFFA500",
-              "0xFFFF00",
-              "0xFFFFFF",
-              "0x808080"
-            ],
-
-            "gravityY": 100,
-            "rotate": 180
+            "startValue": 1.5,
+            "endValue": 1,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "mainCameraEffect2",
+      "assetType": "camera",
+      "assetName": "camera",
+      "initialState": {
+        "postProcessingEnabled": true
+      },
+      "timeline": {
+        "blur": [
+          {
+            "startTime": 22,
+            "endTime": 24,
+            "intensity": 0.01,
+            "blurSize": 2.0,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "bloom": [
+          {
+            "startTime": 26,
+            "endTime": 28,
+            "intensity": 1.4,
+            "threshold": 0.2,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
           }
         ]
       }

@@ -7,7 +7,8 @@ export type AssetType =
   | "particle"
   | "spine"
   | "audio"
-  | "text";
+  | "text"
+  | "camera";
 
 export interface AssetJson {
   elements: boolean;
@@ -76,6 +77,10 @@ export interface SpineState {
   ) => void;
 }
 
+export interface CameraAssetInfo extends BaseAssetInfo {
+  type: "camera";
+}
+
 export interface SpineAssetInfo extends BaseAssetInfo {
   type: "spine";
   atlasUrl: string;
@@ -135,4 +140,5 @@ export type AssetInfo =
   | ImageAssetInfo
   | VideoAssetInfo
   | SpineAssetInfo
-  | AudioAssetInfo;
+  | AudioAssetInfo
+  | CameraAssetInfo;

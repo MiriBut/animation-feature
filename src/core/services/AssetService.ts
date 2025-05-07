@@ -10,6 +10,7 @@ import {
   SpineAssetInfo,
   AudioAssetInfo,
   TextAssetInfo,
+  CameraAssetInfo,
 } from "../../types/interfaces/AssetInterfaces";
 import {
   showMessage,
@@ -268,6 +269,13 @@ export class AssetService {
             url: asset.assetUrl as string,
             textureName: assetName,
           } as ParticleAssetInfo;
+          break;
+        case "camera":
+          newAssetInfo = {
+            type: "camera",
+            url: "",
+          } as CameraAssetInfo;
+
           break;
         default:
           newAssetInfo = {
@@ -792,6 +800,7 @@ export class AssetService {
     assetName: string
   ): Promise<{ success: boolean; error?: string }> {
     const assetInfo = this.getAssetsMap().get(assetName);
+
     if (!assetInfo) {
       return { success: false, error: `Asset ${assetName} not found` };
     }
@@ -800,7 +809,7 @@ export class AssetService {
       return { success: true };
     }
 
-    switch (assetInfo.type) {
+    switch (assetInfo?.type) {
       case "text":
         return this.loadFontAsset(assetName, assetInfo as TextAssetInfo);
       case "audio":
@@ -819,8 +828,13 @@ export class AssetService {
           assetName,
           assetInfo as ParticleAssetInfo
         );
+      // Return a success response instead of the Camera object to match the return type
       case "image":
         return this.loadImageAsset(assetName, assetInfo as ImageAssetInfo);
+
+      case "camera":
+        return { success: true };
+
       default:
         return {
           success: false,
@@ -1212,6 +1226,9 @@ export class AssetService {
               ("state" in assetInfo.sprite ||
                 "animationState" in assetInfo.sprite);
             break;
+          case "camera":
+            assetExists = true; // there is no asset thogh
+            break;
           default:
             console.warn(
               `AssetService: Unknown asset type for ${result.assetName}: ${assetInfo}`
@@ -1219,7 +1236,11 @@ export class AssetService {
             assetExists = true;
         }
 
-        if (!assetExists && assetInfo.type !== "spine") {
+        if (
+          !assetExists &&
+          assetInfo.type !== "spine" &&
+          assetInfo.type !== "camera"
+        ) {
           console.error(
             `AssetService: Asset ${result.assetName} reported success but asset verification failed!`
           );
@@ -1247,6 +1268,7 @@ export class AssetService {
 
   public isAssetLoaded(assetName: string): boolean {
     const assetInfo = this.assetsMap.get(assetName);
+
     if (!assetInfo) {
       console.log(`AssetService: Asset ${assetName} not found in assetsMap`);
       return false;
@@ -1321,6 +1343,7 @@ export class AssetService {
         "spine",
         "audio",
         "text",
+        "camera",
       ];
       if (!asset.assetType || !validTypes.includes(asset.assetType)) {
         console.log(
@@ -1339,7 +1362,9 @@ export class AssetService {
         asset.fontFamily &&
         this.isSystemFont(asset.fontFamily);
 
-      if (!asset.assetUrl && !isSystemFont) {
+      const isCameraAsset = asset.assetType == "camera";
+
+      if (!asset.assetUrl && !isSystemFont && !isCameraAsset) {
         console.log(`AssetService: ${assetPrefix} - 'assetUrl' is missing`);
         errors.push(`${assetPrefix}: 'assetUrl' is missing`);
       } else if (asset.assetType === "spine") {
@@ -1352,7 +1377,7 @@ export class AssetService {
         } else {
           // Remaining spine validation code...
         }
-      } else if (!isSystemFont) {
+      } else if (!isSystemFont && !isCameraAsset) {
         // Skip URL validation for system fonts
         if (typeof asset.assetUrl !== "string") {
           console.log(
@@ -1474,7 +1499,8 @@ export class AssetService {
             urlToCheck &&
             "atlasUrl" in urlToCheck &&
             "skeletonUrl" in urlToCheck
-          )
+          ) &&
+          asset.assetType != "camera"
         ) {
           console.log(
             `-AssetService: ${assetPrefix} - Skipping due to invalid or empty URL`
@@ -1519,6 +1545,7 @@ export class AssetService {
     }
     return errors;
   }
+
   /**
    * Display results of asset loading and created elements
    */

@@ -1,13 +1,22 @@
 export interface TimelineElement {
+  camera: any;
   assetUrl: string;
   elementName: string;
-  assetType: "image" | "video" | "text" | "particle" | "spine" | "audio";
+  assetType:
+    | "image"
+    | "video"
+    | "text"
+    | "particle"
+    | "spine"
+    | "audio"
+    | "camera";
   assetName: string;
   particles?: {
     textureName: string;
     config: ParticleConfig;
   };
   initialState?: {
+    zoom: number | undefined;
     ParticleEmitterConfig: ParticleConfig | undefined;
     emitterConfig: ParticleConfig;
     textDecoration: undefined;
@@ -33,6 +42,15 @@ export interface TimelineElement {
   };
   onScreen?: { time: number; value: boolean }[]; // Kept as is
   timeline?: {
+    zoom?: any;
+    fade?: any;
+    flash?: any;
+    shake?: any;
+    blur?: any;
+    bloom?: any;
+    colorGrading?: any;
+    vignette?: any;
+
     text: any;
     animation?: TimelineAnimation[];
     scale?: TimelineAnimation[];
@@ -50,6 +68,7 @@ export interface TimelineElement {
     volume: TimelineAnimation[];
     play: TimelineAnimation[];
     onScreen?: TimelineAnimation[];
+    camera?: TimelineAnimation[];
   };
 }
 
