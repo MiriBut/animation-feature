@@ -643,27 +643,45 @@ export class VideoService {
         },
       });
     }
+
     if (timeline?.text) {
-      const TextAnimation = timeline.text[0];
-      sequence.push({
-        type: "text",
-        config: {
-          textValue: TextAnimation.value,
-          property: "text",
-          startValue: TextAnimation.startValue,
-          endValue: TextAnimation.endValue,
-          duration: (TextAnimation.endTime - TextAnimation.startTime) * 1000,
-          easing: TextAnimation.easeIn || "Linear",
-          delay: TextAnimation.startTime * 1000,
-          // Add these missing properties:
-          fontSize: TextAnimation.fontSize,
-          color: TextAnimation.color,
-          fontWeight: TextAnimation.fontWeight,
-          fontStyle: TextAnimation.fontStyle,
-          textDecoration: TextAnimation.textDecoration,
-          fontName: TextAnimation.fontName,
-        },
-      });
+      timeline.text.forEach(
+        (text: {
+          value: any;
+          startValue: any;
+          endValue: any;
+          endTime: number;
+          startTime: number;
+          easeIn: any;
+          fontSize: any;
+          color: any;
+          fontWeight: any;
+          fontStyle: any;
+          textDecoration: any;
+          fontName: any;
+        }) => {
+          //const TextAnimation = timeline.text[0];
+          sequence.push({
+            type: "text",
+            config: {
+              textValue: text.value,
+              property: "text",
+              startValue: text.startValue,
+              endValue: text.endValue,
+              duration: (text.endTime - text.startTime) * 1000,
+              easing: text.easeIn || "Linear",
+              delay: text.startTime * 1000,
+              // Add these missing properties:
+              fontSize: text.fontSize,
+              color: text.color,
+              fontWeight: text.fontWeight,
+              fontStyle: text.fontStyle,
+              textDecoration: text.textDecoration,
+              fontName: text.fontName,
+            },
+          });
+        }
+      );
     }
 
     return sequence;

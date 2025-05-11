@@ -57,7 +57,7 @@ export class TextAnimation {
       );
     }
 
-    this.target.setPadding(10, 40, 10, 10);
+    this.target.setPadding(10, 50, 10, 10);
     this.target.setOrigin(0.5, 0);
 
     if (config.property !== "text") return;
