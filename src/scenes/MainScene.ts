@@ -9,6 +9,7 @@ import { SyncSystem } from "../core/animation/SyncSystem";
 import { showMessage, createErrorMessage } from "../ui/ErrorModal/MessageModal";
 import "../core/animation/animations";
 import { TimelineJson } from "@/types/interfaces/TimelineInterfaces";
+import { AnchorPositionDebugger } from "../core/services/AnchorPositionDebugger";
 
 export class MainScene extends Scene {
   private ui?: SceneUI;
@@ -19,6 +20,7 @@ export class MainScene extends Scene {
   private timelineService!: TimelineService;
   private videoService!: VideoService;
   private syncSystem!: SyncSystem;
+  private anchorPositionDebugger!: AnchorPositionDebugger;
 
   // Managers
   private audioManager!: AudioManager;
@@ -81,6 +83,19 @@ export class MainScene extends Scene {
 
     // Ensure camera is properly configured
     this.cameras.main.setBounds(0, 0, this.scale.width, this.scale.height);
+
+    // Initialize AnchorPositionDebugger
+    const width = this.width || this.scale.width;
+    const height = this.height || this.scale.height;
+    const widthRatio = width / this.DEFAULT_WIDTH;
+    const heightRatio = height / this.DEFAULT_HEIGHT;
+    this.anchorPositionDebugger = new AnchorPositionDebugger(
+      this,
+      width,
+      height,
+      widthRatio,
+      heightRatio
+    );
   }
 
   private async cleanupAssetsAndTweens(): Promise<void> {
@@ -245,6 +260,14 @@ export class MainScene extends Scene {
       this.cameras.main.setBounds(0, 0, this.scale.width, this.scale.height);
       this.cameras.main.centerOn(this.scale.width / 2, this.scale.height / 2);
     } finally {
+      // Update AnchorPositionDebugger with new dimensions
+      this.anchorPositionDebugger.updateResolution(
+        this.width,
+        this.height,
+        this.width / this.DEFAULT_WIDTH,
+        this.height / this.DEFAULT_HEIGHT
+      );
+
       this.isResizing = false;
     }
   }
@@ -267,6 +290,14 @@ export class MainScene extends Scene {
     this.cameras.main.setViewport(0, 0, width, height);
     this.cameras.main.setScroll(0, 0);
     this.cameras.main.setBounds(0, 0, width, height);
+
+    // Update AnchorPositionDebugger with new dimensions
+    this.anchorPositionDebugger.updateResolution(
+      width,
+      height,
+      width / this.DEFAULT_WIDTH,
+      height / this.DEFAULT_HEIGHT
+    );
   }
 
   private async handleAssetsJson(file: File): Promise<void> {
@@ -358,6 +389,7 @@ export class MainScene extends Scene {
     this.ui?.destroy();
     this.audioManager.destroy();
     this.exportManager.destroy();
+
     this.scale.removeListener("resize", this.handleResize, this);
   }
 }

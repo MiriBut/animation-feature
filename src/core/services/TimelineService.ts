@@ -216,6 +216,7 @@ export class TimelineService {
             );
           }
         }
+
         if (element.timeline && element.timeline.text) {
           element.timeline.text.forEach(
             (
@@ -428,8 +429,8 @@ export class TimelineService {
   public async processTimelineElements(
     elements: TimelineElement[]
   ): Promise<TimelineElement[]> {
-    const normalizedElements = elements.map((el) =>
-      this.normalizeTimelineElement(el)
+    const normalizedElements = elements.map((element) =>
+      this.normalizeTimelineElement(element)
     );
     return normalizedElements;
   }
