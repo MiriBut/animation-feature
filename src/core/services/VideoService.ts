@@ -93,6 +93,7 @@ export class VideoService {
     try {
       const fileContent = await file.text();
       const timeline = JSON.parse(fileContent) as TimelineJson;
+      console.log("Loaded JSON:", JSON.stringify(timeline, null, 2));
 
       this.timelineData = timeline;
       this.currentWidth = this.scene.scale.width;
@@ -601,31 +602,37 @@ export class VideoService {
 
     // Handle scale
     if (timeline?.scale) {
-      const assetInfo = this.assetService.getAssetInfo(
-        timelineElement.assetName
-      );
-      if (!assetInfo?.scale_override) {
-        const isSupported =
-          targetSprite instanceof Phaser.GameObjects.Sprite ||
-          targetSprite instanceof Phaser.GameObjects.Video ||
-          targetSprite instanceof SpineGameObject ||
-          targetSprite instanceof Phaser.GameObjects.Text;
+      timeline.scale.forEach((scaleAnim, index) => {
+        console.log(`Scale Animation ${index}:`, scaleAnim);
+      });
+      timeline.scale.forEach((scaleAnim) => {
+        const assetInfo = this.assetService.getAssetInfo(
+          timelineElement.assetName
+        );
+        if (!assetInfo?.scale_override) {
+          const isSupported =
+            targetSprite instanceof Phaser.GameObjects.Sprite ||
+            targetSprite instanceof Phaser.GameObjects.Video ||
+            targetSprite instanceof SpineGameObject ||
+            targetSprite instanceof Phaser.GameObjects.Text;
 
-        if (isSupported) {
-          const scaleAnim = timeline.scale[0];
-          sequence.push({
-            type: "scale",
-            config: {
-              property: "scale",
-              startValue: scaleAnim.startValue,
-              endValue: scaleAnim.endValue,
-              duration: (scaleAnim.endTime - scaleAnim.startTime) * 1000,
-              easing: scaleAnim.easeIn || "Linear",
-              delay: scaleAnim.startTime * 1000,
-            },
-          });
+          if (isSupported) {
+            console.log("scaleAnim.startValue " + scaleAnim.startValue.x);
+            console.log("scaleAnim.endValue " + scaleAnim.endValue.x);
+            sequence.push({
+              type: "scale",
+              config: {
+                property: "scale",
+                startValue: scaleAnim.startValue,
+                endValue: scaleAnim.endValue,
+                duration: (scaleAnim.endTime - scaleAnim.startTime) * 1000,
+                easing: scaleAnim.easeIn || "Linear",
+                delay: scaleAnim.startTime * 1000,
+              },
+            });
+          }
         }
-      }
+      });
     }
 
     if (timeline?.rotation) {

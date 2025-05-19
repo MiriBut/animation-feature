@@ -26,7 +26,10 @@ export class ParticleEffectAnimation implements IAnimatable {
       const targetWithPosition = this.target as unknown as {
         x: number;
         y: number;
+        z: number;
       };
+
+      console.log("targetWithPosition" + targetWithPosition.z);
 
       // Use config.emitterConfig if provided, otherwise build from config
       const emitterConfig: Phaser.Types.GameObjects.Particles.ParticleEmitterConfig =
@@ -246,6 +249,8 @@ export class ParticleEffectAnimation implements IAnimatable {
         emitterConfig.texture,
         emitterConfig
       );
+
+      this.particleManager.depth = 3; //targetWithPosition.z;
 
       // Make sure the emitter follows the target
       if (this.particleManager) {

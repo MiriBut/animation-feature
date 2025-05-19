@@ -1,0 +1,584 @@
+{
+  "template video json": [
+    {
+      "elementName": "mainCameraEffect1",
+      "assetType": "camera",
+      "assetName": "camera",
+      "initialState": {},
+      "timeline": {
+        "shake": [
+          {
+            "startTime": 1,
+            "endTime": 1.5,
+            "intensity": 0.02,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "flash": [
+          {
+            "startTime": 6,
+            "endTime": 7,
+            "color": "0xFFFFFF",
+            "easeIn": "Sine.easeIn",
+            "easeOut": "Sine.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "seabackground1",
+      "assetType": "image",
+      "assetName": "seabackground",
+      "initialState": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": -1
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 0,
+            "value": "true"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 0,
+            "endTime": 4,
+            "startValue": {
+              "x": 2,
+              "y": 2
+            },
+            "endValue": {
+              "x": 1,
+              "y": 1
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "penguin_spine",
+      "assetType": "spine",
+      "assetName": "penguin",
+      "initialState": {
+        "position": {
+          "x": -100,
+          "y": 170,
+          "z": 1
+        },
+        "scale": {
+          "x": 0.05,
+          "y": 0.05
+        },
+        "opacity": 1,
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 0,
+            "value": "true"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 0,
+            "endTime": 4,
+            "startValue": {
+              "x": 0.2,
+              "y": 0.2
+            },
+            "endValue": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "position": [
+          {
+            "startTime": 0,
+            "endTime": 4,
+            "startValue": {
+              "x": 50,
+              "y": 350
+            },
+            "endValue": {
+              "x": 200,
+              "y": 550
+            },
+            "easeIn": "Linear",
+            "easeOut": "Linear"
+          }
+        ],
+        "animation": [
+          {
+            "animationName": "Run",
+            "startTime": 0,
+            "endTime": 4,
+            "loop": "true"
+          },
+          {
+            "animationName": "fall",
+            "startTime": 1,
+            "endTime": 3,
+            "loop": "false"
+          },
+          {
+            "animationName": "pickup",
+            "startTime": 1,
+            "endTime": 3,
+            "loop": "false"
+          },
+          {
+            "animationName": "clap",
+            "startTime": 4,
+            "endTime": 6,
+            "loop": "true"
+          },
+
+          {
+            "animationName": "dance",
+            "startTime": 6,
+            "endTime": 10,
+            "loop": "true"
+          }
+        ]
+      }
+    },
+
+    {
+      "elementName": "bubbleEffect",
+      "assetType": "particle",
+      "assetName": "blue_bubble",
+      "initialState": {
+        "position": {
+          "x": 500,
+          "y": 600,
+          "z": 3
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 0.7
+      },
+      "timeline": {
+        "onscreen": [
+          {
+            "start": 0,
+            "value": "true"
+          }
+        ],
+        "particle": [
+          {
+            "startTime": 0,
+            "endTime": 6,
+            "easeIn": "Linear",
+            "quantity": 30,
+            "lifespan": 100000,
+            "speed": { "min": 260, "max": 600 },
+            "angle": { "min": -360, "max": 280 },
+            "scale": { "start": 0.3, "end": 0.2 },
+            "alpha": { "start": 0.9, "end": 0.2 },
+            "blendMode": "NORMAL",
+            "tint": [
+              "0x00B7EB",
+              "0x87CEEB",
+              "0xADD8E6",
+              "0xB0E0E6",
+              "0xE0FFFF"
+            ],
+            "rotate": { "min": -360, "max": 360 },
+            "gravityY": -20,
+            "frequency": 1,
+            "moveToX": { "min": -150, "max": 150 },
+            "emitZone": {
+              "type": "rectangle",
+              "width": 1800,
+              "height": 100
+            }
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "purpleDiamondParticle",
+      "assetType": "particle",
+      "assetName": "purple_diamond",
+      "initialState": {
+        "position": {
+          "x": 400,
+          "y": 400,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onscreen": [
+          {
+            "start": 6,
+            "value": "true"
+          },
+          {
+            "start": 20,
+            "value": "false"
+          }
+        ],
+        "position": [],
+        "particle": [
+          {
+            "startTime": 6,
+            "endTime": 10,
+            "easeIn": "Quad",
+            "quantity": 1,
+            "lifespan": 100000,
+            "speed": { "min": 300, "max": 600 },
+            "angle": { "min": -135, "max": -45 },
+            "scale": { "start": 0.2, "end": 0.1 },
+            "alpha": { "start": 1, "end": 1 },
+            "blendMode": "NORMAL",
+            "tint": ["0xE0FFFF"],
+            "gravityY": 300,
+            "frequency": 10,
+            "rotate": { "min": -180, "max": 180 },
+            "moveToX": { "min": -150, "max": 150 },
+            "moveToY": { "min": -100, "max": 100 }
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "fishCoinParticle",
+      "assetType": "particle",
+      "assetName": "fish_coin",
+      "initialState": {
+        "position": {
+          "x": 400,
+          "y": 400,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onscreen": [
+          {
+            "start": 6,
+            "value": "true"
+          },
+          {
+            "start": 10,
+            "value": "false"
+          }
+        ],
+        "position": [],
+        "particle": [
+          {
+            "startTime": 6,
+            "endTime": 10,
+            "easeIn": "Quad",
+            "quantity": 1,
+            "lifespan": 3000,
+            "speed": { "min": 300, "max": 600 },
+            "angle": { "min": -135, "max": -45 },
+            "scale": { "start": 0.2, "end": 0.1 },
+            "alpha": { "start": 1, "end": 1 },
+            "blendMode": "NORMAL",
+            "tint": ["0xFFD700", "0xDAA520", "0xB8860B", "0xCDAD00"],
+            "gravityY": 300,
+            "frequency": 10,
+            "rotate": { "min": -180, "max": 180 },
+            "moveToX": { "min": -150, "max": 150 },
+            "moveToY": { "min": -100, "max": 100 }
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "shine",
+      "assetType": "image",
+      "assetName": "shine",
+      "initialState": {
+        "position": {
+          "x": -180,
+          "y": 70,
+          "z": 0
+        },
+        "scale": {
+          "x": 5,
+          "y": 5
+        },
+        "anchor": {
+          "x": 1,
+          "y": 0.5
+        }
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 6,
+            "value": "true"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 6,
+            "endTime": 20,
+            "startValue": {
+              "x": 5,
+              "y": 5
+            },
+            "endValue": {
+              "x": 10,
+              "y": 10
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "rotation": [
+          {
+            "startTime": 6,
+            "endTime": 20,
+            "startValue": 0,
+            "endValue": 360,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "opacity": [
+          {
+            "startTime": 6,
+            "endTime": 20,
+            "startValue": 0,
+            "endValue": 0,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "tresure",
+      "assetType": "image",
+      "assetName": "tresure",
+      "initialState": {
+        "position": {
+          "x": -150,
+          "y": 200,
+          "z": 6
+        },
+        "scale": {
+          "x": 2,
+          "y": 2
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 6,
+            "value": "true"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 6,
+            "endTime": 7,
+            "startValue": {
+              "x": 2,
+              "y": 2
+            },
+            "endValue": {
+              "x": 2.5,
+              "y": 2.5
+            },
+            "easeIn": "Bounce.easeIn",
+            "easeOut": "Bounce.easeOut"
+          },
+          {
+            "startTime": 7,
+            "endTime": 8,
+            "startValue": {
+              "x": 2.5,
+              "y": 2.5
+            },
+            "endValue": {
+              "x": 2,
+              "y": 2
+            },
+            "easeIn": "Bounce.easeIn",
+            "easeOut": "Bounce.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "coffee",
+      "assetType": "text",
+      "assetName": "coffee",
+      "initialState": {
+        "position": {
+          "x": -300,
+          "y": 190,
+          "z": 10
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0
+        },
+        "opacity": 1,
+        "text": "WIN",
+        "fontSize": "100",
+        "color": "#ff69b4",
+        "fontWeight": "normal",
+        "fontStyle": "normal",
+        "textDecoration": "none"
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 1,
+            "value": "true"
+          }
+        ],
+        "rotation": [
+          {
+            "startTime": 5,
+            "endTime": 7,
+            "startValue": 0,
+            "endValue": -5,
+            "easeIn": "Cubic.easeIn",
+            "easeOut": "Cubic.easeOut"
+          }
+        ],
+
+        "text": [
+          {
+            "startTime": 1,
+            "endTime": 5,
+            "value": "GO",
+            "fontSize": {
+              "startValue": "100",
+              "endValue": "100"
+            },
+            "fontWeight": "bold",
+            "fontStyle": "italic",
+            "easeIn": "Sine.easeIn"
+          },
+          {
+            "startTime": 5,
+            "endTime": 20,
+            "value": "WIN",
+            "fontSize": {
+              "startValue": "100",
+              "endValue": "100"
+            },
+            "fontWeight": "bold",
+            "fontStyle": "italic",
+            "easeIn": "Sine.easeIn"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "tape_had",
+      "assetType": "image",
+      "assetName": "tape_had",
+      "initialState": {
+        "position": {
+          "x": -250,
+          "y": -250,
+          "z": 6
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 1,
+            "value": "true"
+          }
+        ],
+        "rotation": [
+          {
+            "startTime": 5,
+            "endTime": 7,
+            "startValue": 0,
+            "endValue": -5,
+            "easeIn": "Cubic.easeIn",
+            "easeOut": "Cubic.easeOut"
+          }
+        ],
+
+        "scale": [
+          {
+            "startTime": 2,
+            "endTime": 5,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 1.1,
+              "y": 1.1
+            },
+            "easeIn": "Bounce.easeIn",
+            "easeOut": "Bounce.easeOut"
+          },
+          {
+            "startTime": 5,
+            "endTime": 7,
+            "startValue": {
+              "x": 1.1,
+              "y": 1.1
+            },
+            "endValue": {
+              "x": 1,
+              "y": 1
+            },
+            "easeIn": "Bounce.easeIn",
+            "easeOut": "Bounce.easeOut"
+          }
+        ]
+      }
+    }
+  ]
+}

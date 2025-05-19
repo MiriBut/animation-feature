@@ -287,46 +287,6 @@ export class TimelineService {
         }
       }
 
-      // Validate TimelineElement.onScreen
-      // if (element.onScreen) {
-      //   if (!Array.isArray(element.onScreen)) {
-      //     errors.push(`${prefix}: 'onScreen' mus2
-      //       t be an array`);
-      //   } else {
-      //     element.onScreen.forEach(
-      //       (
-      //         onScreenItem: { time: number; value: boolean },
-      //         onScreenIndex: number
-      //       ) => {
-      //         if (
-      //           typeof onScreenItem.time !== "number" ||
-      //           onScreenItem.time < 0
-      //         ) {
-      //           errors.push(
-      //             `${prefix}: 'onScreen' item #${
-      //               onScreenIndex + 1
-      //             } - 'time' must be a non-negative number`
-      //           );
-      //         }
-      //         if (typeof onScreenItem.value !== "boolean") {
-      //           errors.push(
-      //             `${prefix}: 'onScreen' item #${
-      //               onScreenIndex + 1
-      //             } - 'value' must be a boolean`
-      //           );
-      //         }
-      //       }
-      //     );
-      //     for (let i = 1; i < element.onScreen.length; i++) {
-      //       if (element.onScreen[i].time <= element.onScreen[i - 1].time) {
-      //         errors.push(
-      //           `${prefix}: 'onScreen' items must be in ascending time order`
-      //         );
-      //       }
-      //     }
-      //   }
-      // }
-
       // Validate timeline.onScreen as TimelineAnimation[]
       if (element.timeline?.onScreen) {
         if (!Array.isArray(element.timeline.onScreen)) {

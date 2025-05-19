@@ -15,11 +15,22 @@
         "height": 8
       }
     },
+
     {
       "assetName": "title_text1",
       "assetType": "text",
       "fontFamily": "myfont2",
       "assetUrl": "assets/fonts/V5PRC___.TTF",
+      "aspect_ratio_override": {
+        "width": 6,
+        "height": 8
+      }
+    },
+    {
+      "assetName": "coffee",
+      "assetType": "text",
+      "fontFamily": "myfont4",
+      "assetUrl": "assets/fonts/CoffeeHealing-1GrKe.ttf",
       "aspect_ratio_override": {
         "width": 6,
         "height": 8
@@ -59,20 +70,17 @@
       }
     },
     {
-      "assetName": "penguin_spine",
+      "assetName": "penguin",
       "assetUrl": {
         "atlasUrl": "assets/spines/penguin/penguinBigPack.atlas",
-        "skeletonUrl": "assets/spines/penguin/penguinBigPack.skel",
+        "skeletonUrl": " assets/spines/penguin/penguinBigPack.skel",
         "skeletonType": "binary"
       },
       "assetType": "spine",
-      "scale_override": {
-        "x": 0.1,
-        "y": 0.8
-      },
-      "aspect_ratio_override": {
-        "width": 0.5,
-        "height": 0.5
+
+      "aspect_ratio_ override": {
+        "width": 1,
+        "height": 1
       },
       "pivot_override": {
         "x": 0.5,
@@ -121,6 +129,125 @@
         "x": 2,
         "y": 2
       },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "shine",
+      "assetUrl": "assets/images/shine.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "fish_coin",
+      "assetUrl": "assets/images/fish_coin.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "purple_diamond",
+      "assetUrl": "assets/images/purple_diamond.png",
+      "assetType": "particle",
+
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "tresure",
+      "assetUrl": "assets/images/tresure.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 9,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "tape_had",
+      "assetUrl": "assets/images/tape_had.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 9,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "seabackground",
+      "assetUrl": "assets/images/seabackground.png",
+      "assetType": "image",
+      "scale_override": {
+        "x": 1,
+        "y": 1
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+
+    {
+      "assetName": "blue_bubble",
+      "assetUrl": "assets/images/blue_bubble.png",
+      "assetType": "particle",
+      "scale_override": {
+        "x": 2,
+        "y": 2
+      },
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "fish_coin",
+      "assetUrl": "assets/images/fish_coin.png",
+      "assetType": "particle",
+
       "aspect_ratio_override": {
         "width": 16,
         "height": 9
