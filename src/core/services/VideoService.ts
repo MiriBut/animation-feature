@@ -636,18 +636,19 @@ export class VideoService {
     }
 
     if (timeline?.rotation) {
-      const RotationAnimation = timeline.rotation[0];
-      sequence.push({
-        type: "rotation",
-        config: {
-          property: "rotation",
-          startValue: RotationAnimation.startValue,
-          endValue: RotationAnimation.endValue,
-          duration:
-            (RotationAnimation.endTime - RotationAnimation.startTime) * 1000,
-          easing: RotationAnimation.easeIn || "Linear",
-          delay: RotationAnimation.startTime * 1000,
-        },
+      timeline.rotation.forEach((RotationAnimation) => {
+        sequence.push({
+          type: "rotation",
+          config: {
+            property: "rotation",
+            startValue: RotationAnimation.startValue,
+            endValue: RotationAnimation.endValue,
+            duration:
+              (RotationAnimation.endTime - RotationAnimation.startTime) * 1000,
+            easing: RotationAnimation.easeIn || "Linear",
+            delay: RotationAnimation.startTime * 1000,
+          },
+        });
       });
     }
 

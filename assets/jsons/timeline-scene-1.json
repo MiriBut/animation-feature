@@ -22,6 +22,32 @@
             "color": "0xFFFFFF",
             "easeIn": "Sine.easeIn",
             "easeOut": "Sine.easeOut"
+          },
+          {
+            "startTime": 10,
+            "endTime": 12,
+            "color": "0xFFFFFF",
+            "easeIn": "Sine.easeIn",
+            "easeOut": "Sine.easeOut"
+          }
+        ],
+
+        "zoom": [
+          {
+            "startTime": 10,
+            "endTime": 12,
+            "startValue": 1,
+            "endValue": 1.5,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          },
+          {
+            "startTime": 12,
+            "endTime": 14,
+            "startValue": 1.5,
+            "endValue": 1,
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
           }
         ]
       }
@@ -47,6 +73,10 @@
           {
             "start": 0,
             "value": "true"
+          },
+          {
+            "start": 20,
+            "value": "false"
           }
         ],
         "scale": [
@@ -67,6 +97,364 @@
         ]
       }
     },
+    {
+      "elementName": "board_element",
+      "assetType": "image",
+      "assetName": "board",
+      "initialState": {
+        "position": {
+          "x": 200,
+          "y": 0,
+          "z": -1
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 14,
+            "value": "true"
+          },
+          {
+            "start": 20,
+            "value": "false"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 14,
+            "endTime": 15,
+            "startValue": {
+              "x": 2,
+              "y": 2
+            },
+            "endValue": {
+              "x": 0.7,
+              "y": 0.7
+            },
+            "easeIn": "Circ.easeIn",
+            "easeOut": "Circ.easeOut"
+          },
+          {
+            "startTime": 15,
+            "endTime": 16,
+            "startValue": {
+              "x": 2,
+              "y": 2
+            },
+            "endValue": {
+              "x": 0.7,
+              "y": 0.7
+            },
+            "easeIn": "Circ.easeIn",
+            "easeOut": "Circ.easeOut"
+          }
+        ]
+      }
+    },
+
+    {
+      "elementName": "seret",
+      "assetType": "image",
+      "assetName": "seret",
+      "initialState": {
+        "position": {
+          "x": 450,
+          "y": -10,
+          "z": 3
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 15,
+            "value": "true"
+          },
+          {
+            "start": 20,
+            "value": "false"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 15,
+            "endTime": 17,
+            "startValue": {
+              "x": 2,
+              "y": 2
+            },
+            "endValue": {
+              "x": 0.7,
+              "y": 0.7
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "rotation": [
+          {
+            "startTime": 15,
+            "endTime": 17,
+            "startValue": 0,
+            "endValue": 720,
+            "easeIn": "Cubic.easeIn",
+            "easeOut": "Cubic.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "chest",
+      "assetType": "image",
+      "assetName": "chest",
+      "initialState": {
+        "position": {
+          "x": 190,
+          "y": 250,
+          "z": 3
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "scale": {
+          "x": 2,
+          "y": 2
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 15,
+            "value": "true"
+          },
+          {
+            "start": 20,
+            "value": "false"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 17,
+            "endTime": 17.5,
+            "startValue": {
+              "x": 2,
+              "y": 2
+            },
+            "endValue": {
+              "x": 1,
+              "y": 1
+            },
+            "easeIn": "Bounce.easeIn",
+            "easeOut": "Bounce.easeOut"
+          },
+          {
+            "startTime": 17.5,
+            "endTime": 18,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 2,
+              "y": 2
+            },
+            "easeIn": "Bounce.easeIn",
+            "easeOut": "Bounce.easeOut"
+          },
+          {
+            "startTime": 18.5,
+            "endTime": 19,
+            "startValue": {
+              "x": 1,
+              "y": 1
+            },
+            "endValue": {
+              "x": 2,
+              "y": 2
+            },
+            "easeIn": "Bounce.easeIn",
+            "easeOut": "Bounce.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "header1",
+      "assetType": "image",
+      "assetName": "header1",
+      "initialState": {
+        "position": {
+          "x": 210,
+          "y": -350,
+          "z": 3
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 14,
+            "value": "true"
+          },
+          {
+            "start": 20,
+            "value": "false"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 14,
+            "endTime": 16,
+            "startValue": {
+              "x": 2,
+              "y": 2
+            },
+            "endValue": {
+              "x": 0.7,
+              "y": 0.7
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "grand_prize",
+      "assetType": "image",
+      "assetName": "grand_prize",
+      "initialState": {
+        "position": {
+          "x": 200,
+          "y": -50,
+          "z": -1
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "scale": {
+          "x": 0.1,
+          "y": 0.1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 14,
+            "value": "true"
+          },
+          {
+            "start": 20,
+            "value": "false"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 14,
+            "endTime": 15,
+            "startValue": {
+              "x": 0.1,
+              "y": 0.1
+            },
+            "endValue": {
+              "x": 0.7,
+              "y": 0.7
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ],
+        "rotation": [
+          {
+            "startTime": 14,
+            "endTime": 14.5,
+            "startValue": 0,
+            "endValue": 45,
+            "easeIn": "Cubic.easeIn",
+            "easeOut": "Cubic.easeOut"
+          },
+          {
+            "startTime": 14.5,
+            "endTime": 15,
+            "startValue": 45,
+            "endValue": -45,
+            "easeIn": "Cubic.easeIn",
+            "easeOut": "Cubic.easeOut"
+          },
+          {
+            "startTime": 15,
+            "endTime": 15.5,
+            "startValue": -45,
+            "endValue": 0,
+            "easeIn": "Cubic.easeIn",
+            "easeOut": "Cubic.easeOut"
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "flash",
+      "assetType": "image",
+      "assetName": "flash",
+      "initialState": {
+        "position": {
+          "x": 190,
+          "y": -50,
+          "z": 3
+        },
+        "anchor": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onScreen": [
+          {
+            "start": 15,
+            "value": "true"
+          },
+          {
+            "start": 20,
+            "value": "false"
+          }
+        ],
+        "scale": [
+          {
+            "startTime": 15,
+            "endTime": 17,
+            "startValue": {
+              "x": 4,
+              "y": 4
+            },
+            "endValue": {
+              "x": 0.7,
+              "y": 0.7
+            },
+            "easeIn": "Quad.easeIn",
+            "easeOut": "Quad.easeOut"
+          }
+        ]
+      }
+    },
+
     {
       "elementName": "penguin_spine",
       "assetType": "spine",
@@ -92,6 +480,11 @@
           {
             "start": 0,
             "value": "true"
+          },
+
+          {
+            "start": 20,
+            "value": "false"
           }
         ],
         "scale": [
@@ -124,6 +517,20 @@
             },
             "easeIn": "Linear",
             "easeOut": "Linear"
+          },
+          {
+            "startTime": 10,
+            "endTime": 14,
+            "startValue": {
+              "x": 200,
+              "y": 550
+            },
+            "endValue": {
+              "x": -900,
+              "y": 550
+            },
+            "easeIn": "Linear",
+            "easeOut": "Linear"
           }
         ],
         "animation": [
@@ -151,17 +558,39 @@
             "endTime": 6,
             "loop": "true"
           },
-
           {
             "animationName": "dance",
             "startTime": 6,
             "endTime": 10,
             "loop": "true"
+          },
+          {
+            "animationName": "Point",
+            "startTime": 10,
+            "endTime": 14,
+            "loop": "true"
+          },
+          {
+            "animationName": "LookAround",
+            "startTime": 14,
+            "endTime": 16,
+            "loop": "true"
+          },
+          {
+            "animationName": "joy",
+            "startTime": 14,
+            "endTime": 16,
+            "loop": "true"
+          },
+          {
+            "animationName": "idle_simple",
+            "startTime": 16,
+            "endTime": 20,
+            "loop": "true"
           }
         ]
       }
     },
-
     {
       "elementName": "bubbleEffect",
       "assetType": "particle",
@@ -190,7 +619,7 @@
             "startTime": 0,
             "endTime": 6,
             "easeIn": "Linear",
-            "quantity": 30,
+            "quantity": 20,
             "lifespan": 100000,
             "speed": { "min": 260, "max": 600 },
             "angle": { "min": -360, "max": 280 },
@@ -213,6 +642,107 @@
               "width": 1800,
               "height": 100
             }
+          }
+        ]
+      }
+    },
+
+    {
+      "elementName": "magicSparklesEffect1",
+      "assetType": "particle",
+      "assetName": "sparkle_particle",
+      "initialState": {
+        "position": {
+          "x": 700,
+          "y": 100,
+          "z": 4
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onscreen": [
+          {
+            "start": 14,
+            "value": "true"
+          }
+        ],
+        "position": [],
+        "particle": [
+          {
+            "startTime": 14,
+            "endTime": 16,
+            "easeIn": "Quad",
+            "quantity": 10,
+            "lifespan": 9000,
+            "speed": { "min": 50, "max": 150 },
+            "angle": { "min": 0, "max": 360 },
+            "scale": { "start": 0.1, "end": 0.2 },
+            "alpha": { "start": 0, "end": 10.5, "ease": "Sine.easeIn" },
+            "blendMode": "ADD",
+            "tint": [
+              "0xFFD700",
+              "0xFFFACD",
+              "0xFFFFE0",
+              "0xFFFFF0",
+              "0xFFFFFF"
+            ],
+            "gravityY": -90,
+            "frequency": 200,
+            "accelerationY": -10
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "magicSparklesEffect2",
+      "assetType": "particle",
+      "assetName": "sparkle_particle",
+      "initialState": {
+        "position": {
+          "x": 400,
+          "y": 100,
+          "z": 4
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onscreen": [
+          {
+            "start": 14,
+            "value": "true"
+          }
+        ],
+        "position": [],
+        "particle": [
+          {
+            "startTime": 14,
+            "endTime": 16,
+            "easeIn": "Quad",
+            "quantity": 10,
+            "lifespan": 9000,
+            "speed": { "min": 50, "max": 150 },
+            "angle": { "min": 0, "max": 360 },
+            "scale": { "start": 0.1, "end": 0.2 },
+            "alpha": { "start": 0, "end": 10.5, "ease": "Sine.easeIn" },
+            "blendMode": "ADD",
+            "tint": [
+              "0xFFD700",
+              "0xFFFACD",
+              "0xFFFFE0",
+              "0xFFFFF0",
+              "0xFFFFFF"
+            ],
+            "gravityY": -90,
+            "frequency": 200,
+            "accelerationY": -10
           }
         ]
       }
@@ -263,6 +793,71 @@
             "rotate": { "min": -180, "max": 180 },
             "moveToX": { "min": -150, "max": 150 },
             "moveToY": { "min": -100, "max": 100 }
+          }
+        ]
+      }
+    },
+    {
+      "elementName": "fishCoinParticle2",
+      "assetType": "particle",
+      "assetName": "fish_coin",
+      "initialState": {
+        "position": {
+          "x": 800,
+          "y": 400,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1
+        },
+        "opacity": 1
+      },
+      "timeline": {
+        "onscreen": [
+          {
+            "start": 10,
+            "value": "true"
+          },
+          {
+            "start": 14,
+            "value": "false"
+          }
+        ],
+        "particle": [
+          {
+            "startTime": 10,
+            "endTime": 14,
+            "easeIn": "Quad",
+            "quantity": 1,
+            "lifespan": 3000,
+            "speed": { "min": 300, "max": 600 },
+            "angle": { "min": -135, "max": -45 },
+            "scale": { "start": 0.02, "end": 0.1 },
+            "alpha": { "start": 1, "end": 1 },
+            "blendMode": "NORMAL",
+            "tint": ["0xFFD700", "0xDAA520", "0xB8860B", "0xCDAD00"],
+            "gravityY": 300,
+            "frequency": 10,
+            "rotate": { "min": -180, "max": 180 },
+            "moveToX": { "min": -150, "max": 150 },
+            "moveToY": { "min": -100, "max": 100 }
+          }
+        ],
+        "position": [
+          {
+            "startTime": 10,
+            "endTime": 14,
+            "startValue": {
+              "x": 800,
+              "y": 400
+            },
+            "endValue": {
+              "x": 0,
+              "y": 400
+            },
+            "easeIn": "Linear",
+            "easeOut": "Linear"
           }
         ]
       }
@@ -341,6 +936,10 @@
           {
             "start": 6,
             "value": "true"
+          },
+          {
+            "start": 10,
+            "value": "false"
           }
         ],
         "scale": [
@@ -405,6 +1004,10 @@
           {
             "start": 6,
             "value": "true"
+          },
+          {
+            "start": 12,
+            "value": "false"
           }
         ],
         "scale": [
@@ -432,6 +1035,20 @@
             "endValue": {
               "x": 2,
               "y": 2
+            },
+            "easeIn": "Bounce.easeIn",
+            "easeOut": "Bounce.easeOut"
+          },
+          {
+            "startTime": 10,
+            "endTime": 11,
+            "startValue": {
+              "x": 2,
+              "y": 2
+            },
+            "endValue": {
+              "x": 0,
+              "y": 0
             },
             "easeIn": "Bounce.easeIn",
             "easeOut": "Bounce.easeOut"
@@ -470,6 +1087,10 @@
           {
             "start": 1,
             "value": "true"
+          },
+          {
+            "start": 10,
+            "value": "false"
           }
         ],
         "rotation": [
@@ -535,6 +1156,10 @@
           {
             "start": 1,
             "value": "true"
+          },
+          {
+            "start": 12,
+            "value": "false"
           }
         ],
         "rotation": [
@@ -547,7 +1172,15 @@
             "easeOut": "Cubic.easeOut"
           }
         ],
-
+        "opacity": [
+          {
+            "startTime": 10,
+            "endTime": 11,
+            "startValue": 1,
+            "endValue": 0,
+            "easeIn": "Linear"
+          }
+        ],
         "scale": [
           {
             "startTime": 2,
@@ -559,20 +1192,6 @@
             "endValue": {
               "x": 1.1,
               "y": 1.1
-            },
-            "easeIn": "Bounce.easeIn",
-            "easeOut": "Bounce.easeOut"
-          },
-          {
-            "startTime": 5,
-            "endTime": 7,
-            "startValue": {
-              "x": 1.1,
-              "y": 1.1
-            },
-            "endValue": {
-              "x": 1,
-              "y": 1
             },
             "easeIn": "Bounce.easeIn",
             "easeOut": "Bounce.easeOut"

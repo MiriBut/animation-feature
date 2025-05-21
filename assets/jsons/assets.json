@@ -167,6 +167,146 @@
       }
     },
     {
+      "assetName": "board",
+      "assetUrl": "assets/images/board.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 9,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "grand_prize",
+      "assetUrl": "assets/images/grand_prize.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 9,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "seret",
+      "assetUrl": "assets/images/seret.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 9,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "header1",
+      "assetUrl": "assets/images/header1.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 9,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "flash",
+      "assetUrl": "assets/images/flash.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 9,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "flash",
+      "assetUrl": "assets/images/flash.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 9,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "chest",
+      "assetUrl": "assets/images/chest.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 9,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "x_buttom",
+      "assetUrl": "assets/images/x_buttom.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 9,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "pink_line",
+      "assetUrl": "assets/images/pink_line.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
+      "assetName": "x_buttom",
+      "assetUrl": "assets/images/x_buttom.png",
+      "assetType": "image",
+
+      "aspect_ratio_override": {
+        "width": 16,
+        "height": 9
+      },
+      "pivot_override": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    {
       "assetName": "purple_diamond",
       "assetUrl": "assets/images/purple_diamond.png",
       "assetType": "particle",
