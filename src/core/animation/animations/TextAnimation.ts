@@ -135,21 +135,6 @@ export class TextAnimation {
       }
 
       this.tween = this.scene.tweens.add(tweenConfig);
-
-      // הסר את ההרס האוטומטי של הטקסט
-      // this.scene.time.addEvent({
-      //   delay: config.duration + (config.delay || 0),
-      //   callback: () => {
-      //     if (this.tween) {
-      //       this.tween.stop();
-      //       this.tween = undefined;
-      //     }
-      //     this.target.destroy();
-      //     this.removeUnderline();
-      //   },
-      //   callbackScope: this,
-      //   loop: false,
-      // });
     });
   }
 

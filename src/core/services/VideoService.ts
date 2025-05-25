@@ -390,29 +390,30 @@ export class VideoService {
       const assetInfo = this.assetService.getAssetInfo(
         timelineElement.assetName
       );
-      const particleAnimation = timeline.particle[0];
-      sequence.push({
-        type: "particle",
-        config: {
-          property: "particle",
-          easing: particleAnimation.easeIn || "Linear",
-          duration:
-            (particleAnimation.endTime - particleAnimation.startTime) * 1000,
-          delay: particleAnimation.startTime * 1000,
-          texture: (assetInfo as any).textureName,
-          quantity: particleAnimation.quantity,
-          lifespan: particleAnimation.lifespan,
-          speed: particleAnimation.speed,
-          angle: particleAnimation.angle,
-          scale: particleAnimation.scale,
-          alpha: particleAnimation.alpha,
-          blendMode: particleAnimation.blendMode,
-          color: particleAnimation.color,
-          tint: particleAnimation.tint,
-          gravityY: particleAnimation.gravityY,
-          rotate: particleAnimation.rotate,
-          emitZone: particleAnimation.emitZone,
-        } as ParticleConfig,
+      timeline.particle.forEach((particleAnimation) => {
+        sequence.push({
+          type: "particle",
+          config: {
+            property: "particle",
+            easing: particleAnimation.easeIn || "Linear",
+            duration:
+              (particleAnimation.endTime - particleAnimation.startTime) * 1000,
+            delay: particleAnimation.startTime * 1000,
+            texture: (assetInfo as any).textureName,
+            quantity: particleAnimation.quantity,
+            lifespan: particleAnimation.lifespan,
+            speed: particleAnimation.speed,
+            angle: particleAnimation.angle,
+            scale: particleAnimation.scale,
+            alpha: particleAnimation.alpha,
+            blendMode: particleAnimation.blendMode,
+            color: particleAnimation.color,
+            tint: particleAnimation.tint,
+            gravityY: particleAnimation.gravityY,
+            rotate: particleAnimation.rotate,
+            emitZone: particleAnimation.emitZone,
+          } as ParticleConfig,
+        });
       });
     }
 
@@ -586,17 +587,18 @@ export class VideoService {
 
     // Handle opacity
     if (timeline?.opacity) {
-      const opacityAnim = timeline.opacity[0];
-      sequence.push({
-        type: "opacity",
-        config: {
-          property: "opacity",
-          startValue: opacityAnim.startValue,
-          endValue: opacityAnim.endValue,
-          duration: (opacityAnim.endTime - opacityAnim.startTime) * 1000,
-          easing: opacityAnim.easeIn || "Linear",
-          delay: opacityAnim.startTime * 1000,
-        },
+      timeline.opacity.forEach((opacityAnim) => {
+        sequence.push({
+          type: "opacity",
+          config: {
+            property: "opacity",
+            startValue: opacityAnim.startValue,
+            endValue: opacityAnim.endValue,
+            duration: (opacityAnim.endTime - opacityAnim.startTime) * 1000,
+            easing: opacityAnim.easeIn || "Linear",
+            delay: opacityAnim.startTime * 1000,
+          },
+        });
       });
     }
 
@@ -667,8 +669,11 @@ export class VideoService {
           fontStyle: any;
           textDecoration: any;
           fontName: any;
+          fontFamily: any;
         }) => {
           //const TextAnimation = timeline.text[0];
+          const textSprite = sprite as Phaser.GameObjects.Text;
+          // console.log("fontFamily " + textSprite.style.fontFamily);
           sequence.push({
             type: "text",
             config: {
@@ -685,7 +690,7 @@ export class VideoService {
               fontWeight: text.fontWeight,
               fontStyle: text.fontStyle,
               textDecoration: text.textDecoration,
-              fontName: text.fontName,
+              fontName: textSprite.style.fontFamily,
             },
           });
         }

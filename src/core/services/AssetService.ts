@@ -318,20 +318,21 @@ export class AssetService {
 
     if (element instanceof Phaser.Sound.WebAudioSound) {
       this.applyAudioProperties(element, properties);
-    } else if (
-      element instanceof Phaser.GameObjects.Sprite ||
-      element instanceof Phaser.GameObjects.Video ||
-      element instanceof SpineGameObject ||
-      element instanceof Phaser.GameObjects.Text
-    ) {
+      this.applyAudioProperties(element, properties);
+    } else {
       element.name = elementName;
-      this.applyBasicProperties(element, properties, assetName);
-      element.setOrigin(properties.pivot?.x ?? 0.5, properties.pivot?.y ?? 0.5);
-    } else if (
-      element instanceof Phaser.GameObjects.Particles.ParticleEmitter
-    ) {
-      element.name = elementName;
-      this.applyBasicProperties(element, properties, assetName);
+      this.applyBasicProperties(element, properties, assetName); // Ensure applyBasicProperties is called for all non-audio elements
+      if (
+        element instanceof Phaser.GameObjects.Sprite ||
+        element instanceof Phaser.GameObjects.Video ||
+        element instanceof SpineGameObject ||
+        element instanceof Phaser.GameObjects.Text
+      ) {
+        element.setOrigin(
+          properties.pivot?.x ?? 0.5,
+          properties.pivot?.y ?? 0.5
+        );
+      }
     }
 
     const originalX = properties.x ?? this.scene.scale.width / 2;
@@ -452,6 +453,17 @@ export class AssetService {
 
     if (assetInfo.type === "text") {
       const textInfo = assetInfo as TextAssetInfo;
+
+      // Check if the font is loaded
+      const isFontLoaded =
+        textInfo.isSystemFont ||
+        document.fonts.check(`16px ${textInfo.fontFamily}`);
+      if (!isFontLoaded) {
+        console.warn(
+          `Font ${textInfo.fontFamily} is not loaded, falling back to Arial`
+        );
+        textInfo.fontFamily = "Arial";
+      }
 
       const style: Phaser.Types.GameObjects.Text.TextStyle & {
         fontWeight?: string;
